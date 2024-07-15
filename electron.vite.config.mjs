@@ -15,6 +15,15 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src')
       }
     },
-    plugins: [vue()]
+    plugins: [vue(),
+      [
+        "import",
+        {
+          libraryName: '@icon-park/vue',
+          libraryDirectory: 'es/icons',
+          camel2DashComponentName: false // default: true,
+        }
+      ]
+    ]
   }
 })
