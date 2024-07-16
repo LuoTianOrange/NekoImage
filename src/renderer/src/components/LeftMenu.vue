@@ -1,5 +1,5 @@
 <template>
-    <el-menu class="h-full min-h-screen w-[200px]" :collapse="isCollapsed">
+    <el-menu class="h-full min-h-screen w-[200px] flex-shrink-0 z-10" :collapse="isCollapsed">
         <el-menu-item index="1" @click="isCollapsed = !isCollapsed">
             <el-icon class="transform animate-in" :class="isCollapsed ? '-rotate-90' : 'rotate-90'">
                 <Download />
@@ -40,3 +40,14 @@ const goToPage = (path) => {
   router.push(path)
 }
 </script>
+<style scoped>
+:deep(.el-menu-item.is-active)::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--el-color-primary);
+}
+</style>

@@ -15,7 +15,7 @@ export default {
 
 <template>
   <div class="min-h-screen flex flex-row font-[MiSans-Normal]">
-    <LeftMenu />
+    <LeftMenu class="!sticky top-0 left-0" />
     <router-view v-slot="{ Component }">
       <keep-alive>
         <component :is="Component" />

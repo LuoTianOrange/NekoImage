@@ -11,14 +11,13 @@ const routes = [
         title: '图库',
         component: () => import('../pages/Gallery/GalleryPage.vue'),
         // redirect: '/gallery',
-        children: [
-            {
-                path: '/gallery/photo/:id',
-                name: 'Photo',
-                title: '图片',
-                component: () => import('../pages/Gallery/PhotoPage.vue'),
-            }
-        ]
+        // children: []
+    },
+    {
+        path: '/photo',
+        name: 'Photo',
+        title: '图片',
+        component: () => import('../pages/Gallery/PhotoPage.vue'),
     },
     {
         path: '/link',

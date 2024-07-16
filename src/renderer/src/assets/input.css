@@ -13,3 +13,8 @@
   font-family: MiSans-Normal;
   src: url("../assets/fonts/MiSans-Normal.otf");
 }
+
+/*滚动条隐藏*/
+::-webkit-scrollbar {
+  display: none;
+}

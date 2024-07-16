@@ -1,20 +1,34 @@
 <template>
   <div>
-    <el-breadcrumb :separator-icon="ArrowRight">
-      <el-breadcrumb-item :to="{ path: '/gallery' }">
-        <el-icon>
-          <House />
-        </el-icon>
-      </el-breadcrumb-item>
-      <el-breadcrumb-item>promotion management</el-breadcrumb-item>
-      <el-breadcrumb-item>promotion list</el-breadcrumb-item>
-      <el-breadcrumb-item>promotion detail</el-breadcrumb-item>
-    </el-breadcrumb>
+    <div class="flex flex-col w-full min-h-scree">
+      <div class="p-[20px]">
+        <div class="text-[20px]">{{ name }}</div>
+        <div class="mt-5">
+          <el-breadcrumb :separator-icon="ArrowRight">
+            <el-breadcrumb-item :to="{ path: '/gallery' }">
+              <div class="flex">
+                <el-icon>
+                  <House />
+                </el-icon>
+              </div>
+            </el-breadcrumb-item>
+            <el-breadcrumb-item>{{ name }}</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+      </div>
+    </div>
+  
   </div>
 </template>
 
-<script>
-export default {
-
-}
+<script setup>
+import { ref, watchEffect } from 'vue';
+import { useRoute } from 'vue-router';
+import { ArrowRight } from '@element-plus/icons-vue';
+const route = useRoute();
+const name = ref('');
+//监控路由变化，改变name的值
+watchEffect(() => {
+  name.value = route.query.name;
+});
 </script>

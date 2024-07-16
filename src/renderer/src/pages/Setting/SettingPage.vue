@@ -1,15 +1,33 @@
 <template>
-  <div>
     <div class="flex flex-col w-full min-h-scree">
         <div class="p-[20px]">
             <div class="text-[20px]">设置</div>
+            <div class="mt-5">
+              <el-tabs v-model="tabActiveItem" type="card">
+                <el-tab-pane label="默认" name="默认">
+
+                </el-tab-pane>
+                <el-tab-pane label="其他" name="其他">
+                  
+                </el-tab-pane>
+              </el-tabs>
+            </div>
         </div>
     </div>
-  </div>
 </template>
 
-<script>
-export default {
-
-}
+<script setup>
+import { ref } from "vue";
+const tabActiveItem = ref('默认')
 </script>
+<style scoped>
+:deep(.el-tabs--card>.el-tabs__header .el-tabs__item.is-active)::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #fff;
+}
+</style>
