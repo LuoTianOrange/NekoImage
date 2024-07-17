@@ -54,33 +54,28 @@ app.whenReady().then(() => {
   ipcMain.on('添加图库', (event, arg) => {
     const appPath = app.getAppPath();
     const filePath = path.join(appPath, './resources/json/data.json');
-    if (filePath) {
-      fs.writeFile(filePath, arg, (err) => {
-        if (err) {
-          event.reply('writeToFile-reply', '无法写入文件')
-        } else {
-          event.reply('writeToFile-reply', '成功添加图库')
+    fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+        event.reply('writeToFile-reply', { success: false, message: '无法读取文件', error: err });
+      } else {
+        let arr = [];
+        if (data) {
+          arr = JSON.parse(data);
         }
-      })
-    } else {
-      fs.mkdir(filePath, { recursive: true }, (err) => {
-        if (err) {
-          event.reply('writeToFile-reply', '无法创建文件')
-          throw err
-        } else {
-          console.log('文件夹创建成功');
-          fs.writeFile(filePath, arg, (err) => {
-            if (err) {
-              event.reply('writeToFile-reply', '无法写入文件')
-            } else {
-              event.reply('writeToFile-reply', '成功添加图库')
-            }
-          })
-        }
-      })
-    }
-  })
-  
+        let newArg = JSON.parse(arg);
+        newArg.id = arr.length > 0 ? arr[arr.length - 1].id + 1 : 0;
+        arr.push(newArg);
+        fs.writeFile(filePath, JSON.stringify(arr, null, 2), (err) => {
+          if (err) {
+            event.reply('writeToFile-reply', { success: false, message: '无法写入文件', error: err });
+          } else {
+            event.reply('writeToFile-reply', { success: true, message: '成功添加图库' });
+          }
+        });
+      }
+    });
+  });
+
   createWindow()
 
   app.on('activate', function () {

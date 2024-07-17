@@ -104,10 +104,11 @@ const saveSetting = () => {
 }
 //添加默认图库的数据
 const defaultGalleryData = {
-  id: 0,
-  name: '',
-  cover: '',
-  desc: ''
+  "id": 0,
+  "name": '',
+  "cover": '',
+  "desc": '',
+  "draws": []
 }
 //添加图库
 const AddNewGallery = () => {

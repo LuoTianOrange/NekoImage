@@ -1,6 +1,9 @@
-{
-  "id": 0,
-  "name": "test1",
-  "cover": "",
-  "desc": ""
-}
+[
+  {
+    "id": 0,
+    "name": "new",
+    "cover": "",
+    "desc": "",
+    "draws": []
+  }
+]
