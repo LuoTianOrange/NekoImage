@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
+// import bm from 'builtin-modules'
 
 export default defineConfig({
   main: {
@@ -25,5 +26,10 @@ export default defineConfig({
         }
       ]
     ]
-  }
+  },
+  build: {
+    rollupOptions: {
+      // external: bm.filter(module => module !== 'path'),
+    },
+  },
 })

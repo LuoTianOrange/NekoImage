@@ -36,8 +36,10 @@ import { Home } from "@icon-park/vue-next"
 import { useRouter } from "vue-router"
 const isCollapsed = ref(true)
 const router = useRouter()
-const goToPage = (path) => {
-  router.push(path)
+
+//跳转页面
+const goToPage = (routerpath) => {
+  router.push(routerpath)
 }
 </script>
 <style scoped>

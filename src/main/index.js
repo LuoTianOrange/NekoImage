@@ -2,7 +2,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-
+const fs = require('fs')
+const path = require('node:path')
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -13,7 +14,7 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
     }
   })
 
@@ -50,8 +51,36 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
+  ipcMain.on('添加图库', (event, arg) => {
+    const appPath = app.getAppPath();
+    const filePath = path.join(appPath, './resources/json/data.json');
+    if (filePath) {
+      fs.writeFile(filePath, arg, (err) => {
+        if (err) {
+          event.reply('writeToFile-reply', '无法写入文件')
+        } else {
+          event.reply('writeToFile-reply', '成功添加图库')
+        }
+      })
+    } else {
+      fs.mkdir(filePath, { recursive: true }, (err) => {
+        if (err) {
+          event.reply('writeToFile-reply', '无法创建文件')
+          throw err
+        } else {
+          console.log('文件夹创建成功');
+          fs.writeFile(filePath, arg, (err) => {
+            if (err) {
+              event.reply('writeToFile-reply', '无法写入文件')
+            } else {
+              event.reply('writeToFile-reply', '成功添加图库')
+            }
+          })
+        }
+      })
+    }
+  })
+  
   createWindow()
 
   app.on('activate', function () {

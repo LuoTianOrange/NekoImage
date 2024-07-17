@@ -562,6 +562,10 @@ video {
   position: absolute;
 }
 
+.relative {
+  position: relative;
+}
+
 .\!sticky {
   position: sticky !important;
 }
@@ -587,12 +591,24 @@ video {
   margin-bottom: 1.25rem;
 }
 
+.\!ml-2 {
+  margin-left: 0.5rem !important;
+}
+
 .ml-1 {
   margin-left: 0.25rem;
 }
 
 .ml-3 {
   margin-left: 0.75rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
 }
 
 .mt-5 {
@@ -607,16 +623,24 @@ video {
   display: flex;
 }
 
-.h-2 {
-  height: 0.5rem;
-}
-
 .h-\[100px\] {
   height: 100px;
 }
 
+.h-\[130px\] {
+  height: 130px;
+}
+
 .h-\[140px\] {
   height: 140px;
+}
+
+.h-\[180px\] {
+  height: 180px;
+}
+
+.h-\[40px\] {
+  height: 40px;
 }
 
 .h-full {
@@ -635,8 +659,16 @@ video {
   width: 100px;
 }
 
+.w-\[180px\] {
+  width: 180px;
+}
+
 .w-\[200px\] {
   width: 200px;
+}
+
+.w-auto {
+  width: auto;
 }
 
 .w-full {
@@ -679,12 +711,24 @@ video {
   flex-wrap: wrap;
 }
 
+.content-center {
+  align-content: center;
+}
+
 .items-start {
   align-items: flex-start;
 }
 
 .items-center {
   align-items: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.justify-center {
+  justify-content: center;
 }
 
 .justify-between {
@@ -699,8 +743,21 @@ video {
   border-radius: 0.375rem;
 }
 
+.border {
+  border-width: 1px;
+}
+
 .border-b {
   border-bottom-width: 1px;
+}
+
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+}
+
+.bg-opacity-75 {
+  --tw-bg-opacity: 0.75;
 }
 
 .object-cover {
@@ -708,9 +765,18 @@ video {
      object-fit: cover;
 }
 
+.object-scale-down {
+  -o-object-fit: scale-down;
+     object-fit: scale-down;
+}
+
 .object-center {
   -o-object-position: center;
      object-position: center;
+}
+
+.p-3 {
+  padding: 0.75rem;
 }
 
 .p-\[20px\] {
@@ -735,22 +801,16 @@ video {
   font-family: MiSans-Normal;
 }
 
-.text-\[20px\] {
-  font-size: 20px;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-  line-height: 1rem;
-}
-
 .text-\[14px\] {
   font-size: 14px;
 }
 
-.text-xl {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
+.text-\[16px\] {
+  font-size: 16px;
+}
+
+.text-\[20px\] {
+  font-size: 20px;
 }
 
 .shadow {
@@ -781,6 +841,20 @@ video {
   --tw-enter-rotate: initial;
   --tw-enter-translate-x: initial;
   --tw-enter-translate-y: initial;
+}
+
+.animate-out {
+  animation-name: exit;
+  animation-duration: 150ms;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+
+.zoom-in {
+  --tw-enter-scale: 0;
 }
 
 #app {
