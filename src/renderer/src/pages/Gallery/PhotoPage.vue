@@ -22,7 +22,7 @@
             <el-icon>
               <UploadFilled />
             </el-icon>
-            <div class="ml-1">上传</div>
+            <div class="ml-1">添加图片</div>
           </el-button>
           <el-button type="primary" plain class="flex flex-row">
             <el-icon>
@@ -51,6 +51,11 @@
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
             <div v-if="isEnterPictrue[index]" class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]">
+              <!--复制图片信息-->
+              <el-button class="" type="success" size="small" plain>
+                <el-icon><DocumentCopy /></el-icon>
+              </el-button>
+              <!--删除图片-->
               <el-button class="" type="danger" size="small" plain>
                 <el-icon><Delete /></el-icon>
               </el-button>

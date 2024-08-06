@@ -52,29 +52,53 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('添加图库', (event, arg) => {
-    const appPath = app.getAppPath();
-    const filePath = path.join(appPath, './resources/json/data.json');
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        event.reply('writeToFile-reply', { success: false, message: '无法读取文件', error: err });
-      } else {
-        let arr = [];
-        if (data) {
-          arr = JSON.parse(data);
-        }
-        let newArg = JSON.parse(arg);
-        newArg.id = arr.length > 0 ? arr[arr.length - 1].id + 1 : 0;
-        arr.push(newArg);
-        fs.writeFile(filePath, JSON.stringify(arr, null, 2), (err) => {
+    const appPath = app.getAppPath()
+    let newArg = JSON.parse(arg)
+    const filePath = path.join(appPath, `./resources/json/${newArg.name}.json`)
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err && err.code === 'ENOENT') {
+        // 文件不存在，创建新文件
+        fs.writeFile(filePath, JSON.stringify(newArg, null, 2), (err) => {
           if (err) {
-            event.reply('writeToFile-reply', { success: false, message: '无法写入文件', error: err });
+            event.reply('添加图库响应', { success: false, message: '无法写入文件', error: err })
           } else {
-            event.reply('writeToFile-reply', { success: true, message: '成功添加图库' });
+            event.reply('添加图库响应', { success: true, message: '成功添加图库' })
           }
-        });
+        })
+      } else if (err) {
+        // 其他错误
+        event.reply('添加图库响应', { success: false, message: '无法读取文件', error: err })
+      } else {
+        // 文件存在，不允许添加图库
+        event.reply('添加图库响应', { success: false, message: '图库已经存在' })
       }
-    });
-  });
+    })
+  })
+  ipcMain.on('读取全部图库', (event, arg) => {
+    const appPath = app.getAppPath()
+    const dirPath = path.join(appPath, `../../resources/json`)
+
+    fs.readdir(dirPath, (err, files) => {
+      if (err) {
+        event.reply('读取全部图库响应', { success: false, message: '无法读取文件夹', error: err })
+        return
+      }
+      let jsonsData = []
+      files.forEach((file) => {
+        if (path.extname(file) === '.json') {
+          const filePath = path.join(dirPath, file)
+          const data = fs.readFileSync(filePath, 'utf-8')
+          try {
+            const json = JSON.parse(data)
+            jsonsData.push(json)
+          } catch (err) {
+            console.log(`无法解析文件 ${file} 的 JSON 数据`, err);
+          }
+          event.reply('读取全部图库响应', { success: true, message: '成功读取全部图库', data: jsonsData })
+        }
+      })
+    })
+  })
 
   createWindow()
 

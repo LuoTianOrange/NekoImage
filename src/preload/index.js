@@ -4,6 +4,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   '添加图库': (data) => ipcRenderer.send('添加图库', data),
+  '读取全部图库': (data) => ipcRenderer.send('读取全部图库', data),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

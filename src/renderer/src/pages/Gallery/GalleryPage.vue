@@ -4,7 +4,8 @@
             <div class="text-[20px]">图库管理</div>
             <div class="my-5 flex">
                 <el-input v-model="input1" style="width: 200px;" placeholder="请输入名称"></el-input>
-                <el-button class="ml-3" type="primary" @click="AddNewGallery">添加图库</el-button>
+                <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!input1">添加图库</el-button>
+                <el-button class="ml-3" type="primary" @click="readGallery">读取图库</el-button>
             </div>
             <div class="flex flex-wrap items-start w-full">
                 <div v-for="item in galleryList" :key="item.id"
@@ -19,7 +20,7 @@
                                 <el-icon>
                                     <PictureFilled />
                                 </el-icon>
-                                <span class="ml-1 text-[14px]">{{ item.id }}</span>
+                                <span class="ml-1 text-[14px]">{{ item.draws.length }}</span>
                             </div>
                             <div class="flex">
                                 <el-button type="primary" class="" plain @click="clickSetting(item.name)">
@@ -58,36 +59,62 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref, watchEffect } from "vue";
 import { useRouter } from "vue-router"
-
+import { v4 as uuid } from 'uuid'
+import json from '../../../../../resources/json/test1.json'
 const router = useRouter()
 const input1 = ref('')
 const input2 = ref('')
 const input3 = ref('')
+
 //存放图库列表
 const galleryList = ref([
   {
-    id: 1,
-    name: '图库1',
-    cover: '../../assets/images/2025754-1.png'
+    "id": 1,
+    "name": '图库1',
+    "cover": '../../assets/images/2025754-1.png',
+    "craeteTime": "2024/7/21",
+    "draws": [
+      {
+        "no": uuid(),
+        "name": "no_name",
+        "author": "白樱索菲",
+        "authorid": "4",
+        "price": '1000RMB',
+        "time": "2022-01-08",
+        "url": "../../assets/images/2025754-1.png",
+        "type": "illustration",
+        "tag": [
+          { tno: 1, tname: "1 girl" },
+        ],
+        "intrduce": `无`
+      }
+    ]
   },
   {
-    id: 2,
-    name: '图库2',
-    cover: '../../assets/images/2025754-1.png'
+    "id": 2,
+    "name": '图库2',
+    "cover": '../../assets/images/2025754-1.png',
+    "craeteTime": "2024/7/21",
+    "draws": []
   },
   {
-    id: 3,
-    name: '图库3',
-    cover: '../../assets/images/2025754-1.png'
+    "id": 3,
+    "name": '图库3',
+    "cover": '../../assets/images/2025754-1.png',
+    "craeteTime": "2024/7/21",
+    "draws": []
   },
   {
-    id: 4,
-    name: '图库4',
-    cover: '../../assets/images/2025754-1.png'
+    "id": 4,
+    "name": '图库4',
+    "cover": '../../assets/images/2025754-1.png',
+    "craeteTime": "2024/7/21",
+    "draws": []
   }
 ])
+galleryList.value.push(json)
 //路由跳转
 const goToPage = (path, name) => {
   router.push({ path: path, query: { name: name } });
@@ -104,17 +131,23 @@ const saveSetting = () => {
 }
 //添加默认图库的数据
 const defaultGalleryData = {
-  "id": 0,
+  "id": uuid(),
   "name": '',
-  "cover": '',
+  "cover": './images/defaultImage.png',
   "desc": '',
+  "craeteTime": new Date().toLocaleDateString(),
   "draws": []
 }
 //添加图库
 const AddNewGallery = () => {
   defaultGalleryData.name = input1.value
   const defaultGalleryJSON = JSON.stringify(defaultGalleryData, null, 2)
-  // ipcRenderer.send('添加图库', defaultGalleryJSON)
   window.api['添加图库'](defaultGalleryJSON)
+}
+onMounted(() => {
+  window.api['读取全部图库']()
+})
+const readGallery = () => {
+  window.api['读取全部图库']()
 }
 </script>

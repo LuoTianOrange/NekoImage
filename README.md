@@ -1,34 +1,7 @@
-# nekoimage
+# NekoImage
 
-An Electron application with Vue
+基于Electron和Vite的图库管理系统，专门为[橘橘博客](https://blog.nekoorange.cn)设计
 
-## Recommended IDE Setup
+## 代办
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
-
-## Project Setup
-
-### Install
-
-```bash
-$ npm install
-```
-
-### Development
-
-```bash
-$ npm run dev
-```
-
-### Build
-
-```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
-```
+- [ ] 导入图库功能：导入文件夹内所有图库的json，并在图库页面解析
