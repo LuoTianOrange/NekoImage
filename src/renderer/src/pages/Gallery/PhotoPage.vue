@@ -18,7 +18,7 @@
         </div>
         <!--按钮组-->
         <div class="mt-3 flex">
-          <el-button type="primary" plain class="flex flex-row">
+          <el-button type="primary" plain class="flex flex-row" @click="showAddPictrueSetting = true">
             <el-icon>
               <UploadFilled />
             </el-icon>
@@ -50,14 +50,19 @@
             @mouseenter="Enterpictrue(index)" @mouseleave="Leavepictrue(index)">
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
-            <div v-if="isEnterPictrue[index]" class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]">
+            <div v-if="isEnterPictrue[index]"
+              class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]">
               <!--复制图片信息-->
               <el-button class="" type="success" size="small" plain>
-                <el-icon><DocumentCopy /></el-icon>
+                <el-icon>
+                  <DocumentCopy />
+                </el-icon>
               </el-button>
               <!--删除图片-->
               <el-button class="" type="danger" size="small" plain>
-                <el-icon><Delete /></el-icon>
+                <el-icon>
+                  <Delete />
+                </el-icon>
               </el-button>
             </div>
           </div>
@@ -80,14 +85,79 @@
         <el-button class="!ml-2" type="" @click="showForm = false">取消</el-button>
       </div>
     </el-dialog>
+    <!--添加图片弹窗-->
+    <el-dialog v-model="showAddPictrueSetting">
+      <div class="text-[20px] flex flex-col">添加图片</div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">上传图片</div>
+        <el-upload class="avatar-uploader border h-[140px]">
+          <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon">
+            <Plus />
+          </el-icon>
+        </el-upload>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">画作名称</div>
+        <el-input v-model="PhotoInfo.name" style="width: 200px;" placeholder="请输入名称" clearable></el-input>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">画作描述</div>
+        <el-input v-model="PhotoInfo.desc" style="width: 200px;" placeholder="画作描述" clearable></el-input>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">画师名称</div>
+        <el-input v-model="PhotoInfo.author" style="width: 200px;" placeholder="画师名称" clearable></el-input>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">开始时间</div>
+        <el-date-picker v-model="PhotoInfo.startTime" style="width: 200px;" type="date" size="default" placeholder="开始时间">
+        </el-date-picker>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">交付时间</div>
+        <el-date-picker v-model="PhotoInfo.endTime" style="width: 200px;" type="date" size="default" placeholder="交付时间">
+        </el-date-picker>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">画作类型</div>
+        <el-select v-model="PhotoInfo.type" style="width: 200px;" placeholder="选择画作类型">
+          <el-option v-for="i in PictureType" :label="i.label" :value="i.value"></el-option>
+        </el-select>
+      </div>
+      <div class="mt-2 flex justify-between">
+        <div class="text-[16px]">标签</div>
+        <div class="flex flex-col">
+          <el-input v-model="tagStore" placeholder="输入标签"  clearable style="width: 200px">
+            <template #append>
+              <el-button type="primary" @click="AddTag">
+                <el-icon>
+                  <Plus />
+                </el-icon>
+              </el-button>
+            </template>
+          </el-input>
+        </div>
+      </div>
+      <div class="flex justify-end flex-wrap mt-2">
+        <el-tag class="m-[4px]" v-for="(tag,index) in PhotoInfo.tag" :key="index" 
+        closable @close="DeleteTag(index)" :style="{ backgroundColor: tag.color }" effect="dark">{{ tag.text }}</el-tag>
+      </div>
+
+      <div class="mt-5 flex flex-row justify-end">
+        <el-button class="!ml-2" type="primary" @click="">保存</el-button>
+        <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false">取消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue';
+import { ref, watchEffect,reactive } from 'vue';
 import { useRoute } from 'vue-router';
-import { ArrowRight } from '@element-plus/icons-vue';
+import { ArrowRight, Plus } from '@element-plus/icons-vue';
 import { DownPicture } from '@icon-park/vue-next'
+import { ElMessage, ElDatePicker } from 'element-plus'
 
 import image1 from '../../assets/images/2025754-1.png';
 import image2 from '../../assets/images/PSD.jpg';
@@ -127,8 +197,96 @@ const clickSetting = (name) => {
   showForm.value = true;
   input1.value = name;
 };
+//添加图片设置
+const showAddPictrueSetting = ref(false)
+
+const PhotoInfo = reactive({
+  name: '',
+  cover: '',
+  desc: '',
+  author: '',
+  type: '',
+  startTime: '',
+  endTime: '',
+  tag: []
+})
+const imageUrl = ref('')
+const PictureType = [
+  {
+    label: '插画',
+    value: '1'
+  },
+  {
+    label: '立绘',
+    value: '2'
+  },
+  {
+    label: '头像',
+    value: '3'
+  },
+  {
+    label: 'Q版',
+    value: '4'
+  },
+]
+const tagStore = ref('')
+const AddTag = () => {
+  if(!PhotoInfo.tag.includes(tagStore.value)){
+    PhotoInfo.tag.push({
+      text: tagStore.value,
+      color: randomColor(),
+    })
+  }
+  console.log(PhotoInfo.tag);
+}
+const DeleteTag = (index) =>{
+  PhotoInfo.tag.splice(index, 1);
+  console.log(PhotoInfo.tag);
+}
+const TagColor = ['#8c939d','#86cae7','#ffc283','#fc3945','#29af44']
+const randomColor = () => {
+  // const letters = '0123456789ABCDEF';
+  // let color = '#';
+  // for (let i = 0; i < 6; i++) {
+  //   color += letters[Math.floor(Math.random() * 16)];
+  // }
+  // return color;
+  const index = Math.floor(Math.random() * TagColor.length);
+  return TagColor[index];
+}
 //保存图库设置
 const saveSetting = () => {
   showForm.value = false;
 }
 </script>
+<style scoped>
+.avatar-uploader .avatar {
+  width: 140px;
+  height: 140px;
+  display: block;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.el-icon.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 140px;
+  height: 140px;
+  text-align: center;
+}
+.el-tag--dark.el-tag--primary{
+  border: none
+}
+</style>

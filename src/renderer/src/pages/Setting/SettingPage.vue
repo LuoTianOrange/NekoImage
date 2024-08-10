@@ -8,7 +8,7 @@
                   <div>NekoImage版本:{{ version }}</div>
                 </el-tab-pane>
                 <el-tab-pane label="其他" name="其他">
-                  
+                  <div>没有了</div>
                 </el-tab-pane>
               </el-tabs>
             </div>
