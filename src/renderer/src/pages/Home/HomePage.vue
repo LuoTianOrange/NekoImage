@@ -8,7 +8,7 @@
             </div>
             <div>
                 <div class="text-[20px]">不知道放什么，放张图好了</div>
-                <img src="../../assets/images/2025754-1.png" class="w-full h-[400px] object-cover"></img>
+                <img src="../../assets/images/2025754-1.png" class="w-full max-h-[calc(100vh-200px)] h-full object-cover object-top"></img>
             </div>
         </div>
     </div>

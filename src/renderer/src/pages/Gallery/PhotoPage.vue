@@ -229,6 +229,7 @@ const PictureType = [
     value: '4'
   },
 ]
+//添加标签
 const tagStore = ref('')
 const AddTag = () => {
   if(!PhotoInfo.tag.includes(tagStore.value)){
@@ -239,10 +240,12 @@ const AddTag = () => {
   }
   console.log(PhotoInfo.tag);
 }
+//删除标签
 const DeleteTag = (index) =>{
   PhotoInfo.tag.splice(index, 1);
   console.log(PhotoInfo.tag);
 }
+//随机标签颜色
 const TagColor = ['#8c939d','#86cae7','#ffc283','#fc3945','#29af44']
 const randomColor = () => {
   // const letters = '0123456789ABCDEF';

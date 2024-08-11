@@ -21,6 +21,6 @@ export default {
         <component :is="Component" />
       </keep-alive>
     </router-view>
-    <img src="../src/assets/bg.png" class="h-full w-full object-cover object-top z-[-1] absolute left-0 opacity-30"></img>
+    <img src="../src/assets/bg.png" class="h-full w-full object-cover object-top z-[-1] fixed left-0 opacity-30"></img>
   </div>
 </template>

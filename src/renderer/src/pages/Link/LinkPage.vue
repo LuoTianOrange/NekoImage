@@ -273,4 +273,17 @@ const tableData = [
 :deep(.el-select) {
     width: 100%;
 }
+:deep(.el-table){
+  background: none;
+}
+:deep(.el-table tr){
+  background: none;
+}
+:deep(.el-table th.el-table__cell){
+  background: none;
+}
+:deep(.el-table__row:hover){
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.5)!important;
+  background-color: rgba(255, 255, 255, 0.5)!important;
+}
 </style>

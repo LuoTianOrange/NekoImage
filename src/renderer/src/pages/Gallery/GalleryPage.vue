@@ -3,8 +3,8 @@
     <div class="p-[20px]">
       <div class="text-[20px]">图库管理</div>
       <div class="my-5 flex">
-        <el-input v-model="input1" style="width: 200px;" placeholder="请输入名称"></el-input>
-        <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!input1">添加图库</el-button>
+        <el-input v-model="NewGalleryName" style="width: 200px;" placeholder="请输入名称"></el-input>
+        <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!NewGalleryName">添加图库</el-button>
         <el-upload action="" multiple :show-file-list=false :on-success="handleSuccess" on-remove="" on-error=""
           @click="handleSuccess">
           <el-button class="ml-3" type="primary" @click="readGallery">读取图库</el-button>
@@ -45,18 +45,18 @@
         <div class="text-[20px] flex flex-col">编辑图库</div>
         <div class="mt-2 flex justify-between">
           <div class="text-[16px]">图库名称</div>
-          <el-input v-model="input2" style="width: 200px;" placeholder="请输入名称" :value="input2" clearable></el-input>
+          <el-input v-model="GallertInfo.name" style="width: 200px;" placeholder="请输入名称" :value="GallertInfo.name" clearable></el-input>
         </div>
         <div class="mt-2 flex justify-between">
           <div class="text-[16px]">图库描述</div>
-          <el-input v-model="input3" style="width: 200px;" placeholder="图库描述" clearable></el-input>
+          <el-input v-model="GallertInfo.desc" style="width: 200px;" placeholder="图库描述" clearable></el-input>
         </div>
         <div class="mt-5 flex flex-row justify-end">
           <el-button class="!ml-2" type="primary" @click="saveSetting">保存</el-button>
           <el-button class="!ml-2" type="" @click="showForm = false">取消</el-button>
         </div>
       </el-dialog>
-      <el-dialog v-model="deleteDialog">
+      <el-dialog v-model="deleteDialog" style="max-width: 500px;">
         <div class="text-[20px] flex flex-col">删除图库</div>
         <div class="mt-2 flex justify-between">
           <div class="text-[16px]">确定要删掉这个图库吗？</div>
@@ -72,13 +72,20 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watchEffect } from "vue";
+import { onMounted, ref, watchEffect, reactive } from "vue";
 import { useRouter } from "vue-router"
 import { v4 as uuid } from 'uuid'
 import json from '../../../../../resources/json/test1.json'
 import { ElMessageBox } from 'element-plus';
 const router = useRouter()
-const input1 = ref('')
+const NewGalleryName = ref('')
+const GallertInfo = reactive({
+  name: '',
+  cover: '',
+  desc: '',
+  craeteTime: '',
+  draws: []
+})
 const input2 = ref('')
 const input3 = ref('')
 const deleteinput = ref('')
@@ -137,12 +144,11 @@ const goToPage = (path, name) => {
 const showForm = ref(false)
 const clickSetting = (name) => {
   showForm.value = true;
-  input2.value = name;
+  GallertInfo.name = name;
 }
 //确认删除
 const deleteDialog = ref(false)
-const clickDialogSetting = () =>
-{
+const clickDialogSetting = () => {
   deleteDialog.value = true
 }
 
@@ -161,7 +167,7 @@ const defaultGalleryData = {
 }
 //添加图库
 const AddNewGallery = () => {
-  defaultGalleryData.name = input1.value
+  defaultGalleryData.name = NewGalleryName.value
   const defaultGalleryJSON = JSON.stringify(defaultGalleryData, null, 2)
   window.api['添加图库'](defaultGalleryJSON)
 }
@@ -182,3 +188,8 @@ const handleSuccess = (res) => {
 }
 /* —————————————————————————— */
 </script>
+<style>
+:deep(.el-dialog) {
+  max-width: 500px !important
+}
+</style>
