@@ -41,7 +41,7 @@
           </div>
         </div>
       </div>
-      <el-dialog v-model="showForm">
+      <el-dialog v-model="showForm" :width="600">
         <div class="text-[20px] flex flex-col">编辑图库</div>
         <div class="mt-2 flex justify-between">
           <div class="text-[16px]">图库名称</div>

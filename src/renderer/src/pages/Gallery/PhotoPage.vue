@@ -70,7 +70,7 @@
       </div>
     </div>
     <!--设置弹窗-->
-    <el-dialog v-model="showForm">
+    <el-dialog v-model="showForm" :width="600">
       <div class="text-[20px] flex flex-col">编辑图库</div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">图库名称</div>
@@ -86,11 +86,11 @@
       </div>
     </el-dialog>
     <!--添加图片弹窗-->
-    <el-dialog v-model="showAddPictrueSetting">
+    <el-dialog v-model="showAddPictrueSetting" :width="600">
       <div class="text-[20px] flex flex-col">添加图片</div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">上传图片</div>
-        <el-upload class="avatar-uploader border h-[140px]">
+        <el-upload class="avatar-uploader border h-[100px]">
           <img v-if="imageUrl" :src="imageUrl" class="avatar" />
           <el-icon v-else class="avatar-uploader-icon">
             <Plus />
@@ -264,8 +264,8 @@ const saveSetting = () => {
 </script>
 <style scoped>
 .avatar-uploader .avatar {
-  width: 140px;
-  height: 140px;
+  width: 100px;
+  height: 100px;
   display: block;
 }
 
@@ -285,8 +285,8 @@ const saveSetting = () => {
 .el-icon.avatar-uploader-icon {
   font-size: 28px;
   color: #8c939d;
-  width: 140px;
-  height: 140px;
+  width: 100px;
+  height: 100px;
   text-align: center;
 }
 .el-tag--dark.el-tag--primary{

@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col w-full min-h-scree">
         <div class="p-[20px]">
-            <div class="text-[20px]">导入/导出</div>
+            <div class="text-[20px]">导出</div>
             <div class="mt-5">
                 <el-select v-model="value" placeholder="选择一个图库" style="width: 240px;" clearable multiple collapse-tags
                     collapse-tags-tooltip :max-collapse-tags="2">

@@ -18,9 +18,9 @@
             </el-icon>
             <span class="select-none">图库管理</span>
         </el-menu-item>
-        <el-menu-item index="4" @click="goToPage('/link')">
+        <el-menu-item index="4" @click="goToPage('/export')">
             <el-icon><Link /></el-icon>
-            <span class="select-none">导入/导出</span>
+            <span class="select-none">导出</span>
         </el-menu-item>
         <el-menu-item index="9" @click="goToPage('/setting')">
             <el-icon><Tools /></el-icon>

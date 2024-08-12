@@ -20,10 +20,10 @@ const routes = [
         component: () => import('../pages/Gallery/PhotoPage.vue'),
     },
     {
-        path: '/link',
-        name: 'Link',
+        path: '/export',
+        name: 'Export',
         title: '导入导出',
-        component: () => import('../pages/Link/LinkPage.vue'),
+        component: () => import('../pages/Export/ExportPage.vue'),
     },
     {
         path: '/setting',
