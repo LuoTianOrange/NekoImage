@@ -74,32 +74,39 @@ app.whenReady().then(() => {
       }
     })
   })
-  ipcMain.on('读取全部图库', (event, arg) => {
+  ipcMain.handle('读取全部图库', async (event, arg) => {
     const appPath = app.getAppPath()
-    const dirPath = path.join(appPath, `../../resources/json`)
+    const dirPath = path.join(appPath, `/resources/json`)
 
-    fs.readdir(dirPath, (err, files) => {
-      if (err) {
-        event.reply('读取全部图库响应', { success: false, message: '无法读取文件夹', error: err })
-        return
-      }
-      let jsonsData = []
-      files.forEach((file) => {
-        if (path.extname(file) === '.json') {
-          const filePath = path.join(dirPath, file)
-          const data = fs.readFileSync(filePath, 'utf-8')
-          try {
-            const json = JSON.parse(data)
-            jsonsData.push(json)
-          } catch (err) {
-            console.log(`无法解析文件 ${file} 的 JSON 数据`, err);
-          }
-          event.reply('读取全部图库响应', { success: true, message: '成功读取全部图库', data: jsonsData })
+    return new Promise((resolve, reject) => {
+      fs.readdir(dirPath, (err, files) => {
+        if (err) {
+          reject({ success: false, message: '无法读取文件夹', error: err });
+        } else {
+          let jsonsData = [];
+          files.forEach((file) => {
+            if (path.extname(file) === '.json') {
+              const filePath = path.join(dirPath, file);
+              const data = fs.readFileSync(filePath, 'utf-8');
+              try {
+                const json = JSON.parse(data);
+                jsonsData.push(json);
+              } catch (err) {
+                console.log(`无法解析文件 ${file} 的 JSON 数据`, err);
+              }
+            }
+          });
+          resolve({ success: true, message: '成功读取全部图库', data: jsonsData });
         }
-      })
-    })
+      });
+    });
   })
+  ipcMain.handle('读取指定图库',(event,arg)=>{
+    
+  })
+  ipcMain.handle('删除指定图库',(event,arg)=>{
 
+  })
   createWindow()
 
   app.on('activate', function () {

@@ -4,9 +4,11 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   '添加图库': (data) => ipcRenderer.send('添加图库', data),
-  '读取全部图库': (data) => ipcRenderer.send('读取全部图库', data),
+  '读取全部图库': async(data) => {
+    const result = await ipcRenderer.invoke('读取全部图库', data)
+    return result
+  },
 }
-
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.

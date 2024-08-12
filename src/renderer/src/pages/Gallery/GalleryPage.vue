@@ -6,7 +6,7 @@
         <el-input v-model="NewGalleryName" style="width: 200px;" placeholder="请输入名称"></el-input>
         <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!NewGalleryName">添加图库</el-button>
         <el-upload action="" multiple :show-file-list=false :on-success="handleSuccess" on-remove="" on-error=""
-          @click="handleSuccess">
+          >
           <el-button class="ml-3" type="primary" @click="readGallery">读取图库</el-button>
         </el-upload>
       </div>
@@ -14,7 +14,8 @@
         <div v-for="item in galleryList" :key="item.id"
           class="transform animate-in w-[200px] min-h-[200px] m-2 rounded-md overflow-hidden shadow ">
           <div class="w-full h-[140px] overflow-hidden border-b" @click="goToPage('/photo',item.name)">
-            <img class="w-full h-full object-cover object-center" src="../../assets/images/2025754-1.png"></img>
+            <img v-if="item.draws.length == 0" class="w-full h-full object-cover object-center" src="../../assets/bloghover.png"></img>
+            <img v-else class="w-full h-full object-cover object-center" :src="item.draws[0]"></img>
           </div>
           <div class="px-2 bg-white">
             <div class="pt-1">{{ item.name }}</div>
@@ -72,12 +73,16 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watchEffect, reactive } from "vue";
-import { useRouter } from "vue-router"
+import { onMounted, ref, watchEffect, reactive, onBeforeMount, watch } from "vue";
+import { useRouter,useRoute } from "vue-router"
 import { v4 as uuid } from 'uuid'
-import json from '../../../../../resources/json/test1.json'
 import { ElMessageBox } from 'element-plus';
 const router = useRouter()
+const route = useRoute()
+watch(route, (to, from) => {
+  router.go(0)
+})
+
 const NewGalleryName = ref('')
 const GallertInfo = reactive({
   name: '',
@@ -86,56 +91,8 @@ const GallertInfo = reactive({
   craeteTime: '',
   draws: []
 })
-const input2 = ref('')
-const input3 = ref('')
 const deleteinput = ref('')
-//存放图库列表
-const galleryList = ref([
-  {
-    "id": 1,
-    "name": '图库1',
-    "cover": '../../assets/images/2025754-1.png',
-    "craeteTime": "2024/7/21",
-    "draws": [
-      {
-        "no": uuid(),
-        "name": "no_name",
-        "author": "白樱索菲",
-        "authorid": "4",
-        "price": '1000RMB',
-        "time": "2022-01-08",
-        "url": "../../assets/images/2025754-1.png",
-        "type": "illustration",
-        "tag": [
-          { tno: 1, tname: "1 girl" },
-        ],
-        "intrduce": `无`
-      }
-    ]
-  },
-  {
-    "id": 2,
-    "name": '图库2',
-    "cover": '../../assets/images/2025754-1.png',
-    "craeteTime": "2024/7/21",
-    "draws": []
-  },
-  {
-    "id": 3,
-    "name": '图库3',
-    "cover": '../../assets/images/2025754-1.png',
-    "craeteTime": "2024/7/21",
-    "draws": []
-  },
-  {
-    "id": 4,
-    "name": '图库4',
-    "cover": '../../assets/images/2025754-1.png',
-    "craeteTime": "2024/7/21",
-    "draws": []
-  }
-])
-galleryList.value.push(json)
+
 //路由跳转
 const goToPage = (path, name) => {
   router.push({ path: path, query: { name: name } });
@@ -166,17 +123,34 @@ const defaultGalleryData = {
   "draws": []
 }
 //添加图库
-const AddNewGallery = () => {
+const AddNewGallery = async() => {
   defaultGalleryData.name = NewGalleryName.value
   const defaultGalleryJSON = JSON.stringify(defaultGalleryData, null, 2)
   window.api['添加图库'](defaultGalleryJSON)
+
+    ElMessageBox.alert('成功添加图库', '提示', {
+      confirmButtonText: '确定',
+      type: 'success'
+    })
+    setTimeout(() => {
+      router.go(0)
+    }, 1000)
 }
-//读取图库相关
-// onMounted(() => {
-//   window.api['读取全部图库']()
-// })
+//存放图库列表
+const galleryList = ref([])
+
+//读取全部图库
+onMounted(async () => {
+  const response = await window.api['读取全部图库']()
+  response.data.forEach(element => {
+    galleryList.value.push(element)
+  });
+  console.log(response);
+})
+
+//读取指定图库
 const readGallery = () => {
-  window.api['读取全部图库']()
+
 }
 //读取图库成功回调函数
 const handleSuccess = (res) => {
@@ -184,6 +158,14 @@ const handleSuccess = (res) => {
   ElMessageBox.alert('读取成功', '提示', {
     confirmButtonText: '确定',
     type: 'success'
+  })
+}
+//读取图库失败回调函数
+const handleError = (res) => {
+  console.log(res)
+  ElMessageBox.alert('读取失败', '提示', {
+    confirmButtonText: '确定',
+    type: 'error'
   })
 }
 /* —————————————————————————— */

@@ -19,31 +19,41 @@
             <span class="select-none">图库管理</span>
         </el-menu-item>
         <el-menu-item index="4" @click="goToPage('/export')">
-            <el-icon><Link /></el-icon>
+            <el-icon>
+                <Link />
+            </el-icon>
             <span class="select-none">导出</span>
         </el-menu-item>
         <el-menu-item index="9" @click="goToPage('/setting')">
-            <el-icon><Tools /></el-icon>
+            <el-icon>
+                <Tools />
+            </el-icon>
             <span class="select-none">设置</span>
         </el-menu-item>
     </el-menu>
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, watchEffect } from "vue"
 import { ElButton, ElMenu, ElSubMenu, ElMenuItem } from "element-plus"
 import { Home } from "@icon-park/vue-next"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 const isCollapsed = ref(true)
 const router = useRouter()
-
+const route = useRoute()
 //跳转页面
 const goToPage = (routerpath) => {
-  router.push(routerpath)
+  router.push({
+    path: routerpath,
+    query: {
+      data: new Date().getTime()
+    },
+  })
 }
+
 </script>
 <style scoped>
-:deep(.el-menu-item.is-active)::before{
+:deep(.el-menu-item.is-active)::before {
     content: "";
     position: absolute;
     left: 0;
