@@ -2,8 +2,13 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-const fs = require('fs')
-const path = require('node:path')
+// const trash = require('trash')
+// const fs = require('fs')
+// const path = require('node:path')
+import trash from 'trash'
+import fs from 'fs'
+import path from 'path'
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -13,7 +18,7 @@ function createWindow() {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,
     }
   })
@@ -104,8 +109,18 @@ app.whenReady().then(() => {
   ipcMain.handle('读取指定图库',(event,arg)=>{
     
   })
-  ipcMain.handle('删除指定图库',(event,arg)=>{
-
+  ipcMain.handle('删除指定图库',async(event,arg)=>{
+    const appPath = app.getAppPath()
+    const filePath = path.join(appPath, `/resources/json/${arg}.json`)
+    return new Promise((resolve, reject) => {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          reject({ success: false, message: '无法删除文件', error: err });
+        } else {
+          resolve({ success: true, message: '成功删除图库' });
+        }
+      });
+    });
   })
   createWindow()
 

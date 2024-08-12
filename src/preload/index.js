@@ -8,6 +8,10 @@ const api = {
     const result = await ipcRenderer.invoke('读取全部图库', data)
     return result
   },
+  '删除指定图库': async(data) => {
+    const result = await ipcRenderer.invoke('删除指定图库', data)
+    return result
+  },
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
