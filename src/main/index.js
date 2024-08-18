@@ -5,7 +5,6 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 // const trash = require('trash')
 // const fs = require('fs')
 // const path = require('node:path')
-import trash from 'trash'
 import fs from 'fs'
 import path from 'path'
 
@@ -18,7 +17,7 @@ function createWindow() {
     autoHideMenuBar: true,
     // ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       // webSecurity: false
     }
@@ -139,19 +138,22 @@ app.whenReady().then(() => {
       });
     });
   })
-  ipcMain.handle('上传图片到指定文件夹', async (event, file) => {
+  ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
     const appPath = app.getAppPath()
-    const filePath = path.join(appPath, `/resources/json/${file.name}`)
-    return new Promise((resolve, reject) => {
-      fs.readFile(file.path, (err, data) => {
-        if (err) {
-          reject({ success: false, message: '无法读取文件', error: err });
-        } else {
-          ipcMain.send('读取图片', { data, picpath })
-        }
-      });
+    const destinationPath = path.join(appPath, `resources/json/${folderName}/${fileName}`);
+    return new Promise(async (resolve, reject) => {
+      try {
+        await fs.copyFile(filePath, destinationPath,(err)=>{
+          if(err){
+            reject({ success: false, message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` })
+          }
+        })
+        resolve({ success: true, message: '成功上传图片', path: destinationPath })
+      } catch (error) {
+        reject({ success: false, message: '错误：' + error + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` })
+      }
     });
-  })
+  });
   createWindow()
 
   app.on('activate', function () {

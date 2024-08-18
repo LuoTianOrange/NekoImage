@@ -90,9 +90,17 @@
       <div class="text-[20px] flex flex-col">添加图片</div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">上传图片</div>
-        <el-upload class="avatar-uploader border h-[100px]" :http-request="uploadFile" :limit="1"
-          :before-remove="beforeRemove" :on-success="handleSuccess" :on-error="handleError">
-          <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+        <el-upload ref="uploadRef" class="avatar-uploader border h-[100px]" action="#" :http-request="uploadFile" :limit="1"
+          :show-file-list="false" :before-upload="beforeUpload" :on-success="handleSuccess"
+          :on-error="handleError" :on-change="handleChange" :auto-upload="false">
+          <div class="relative" v-if="imageUrl" @mouseenter="disabledHover = false" @mouseleave="disabledHover = true">
+            <img :src="imageUrl" class="avatar" />
+            <span v-if="!disabledHover" class="avatar-icon-bg" @click.stop="handleRemove">
+              <el-icon class="" :size="25">
+                <Delete />
+              </el-icon>
+            </span>
+          </div>
           <el-icon v-else class="avatar-uploader-icon">
             <Plus />
           </el-icon>
@@ -146,8 +154,9 @@
       </div>
   
       <div class="mt-5 flex flex-row justify-end">
-        <el-button class="!ml-2" type="primary" @click="AddPhotoInfo(PhotoInfo)" :disabled="!(PhotoInfo.name && PhotoInfo.author && PhotoInfo.type)">保存</el-button>
-        <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false">取消</el-button>
+        <el-button class="!ml-2" type="primary" @click="AddPhotoInfo(PhotoInfo)"
+          :disabled="!(PhotoInfo.name && PhotoInfo.author && PhotoInfo.type)">保存</el-button>
+        <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false,cancelUpload()">取消</el-button>
       </div>
     </el-dialog>
   </div>
@@ -162,8 +171,7 @@ import { ElMessage, ElDatePicker } from 'element-plus'
 
 import image1 from '../../assets/images/2025754-1.png';
 import image2 from '../../assets/images/PSD.jpg';
-
-import { moveFile } from 'move-file'
+const uploadRef = ref(null)
 const route = useRoute();
 
 const input1 = ref('');
@@ -188,6 +196,16 @@ const Enterpictrue = (index) => {
 const Leavepictrue = (index) => {
   isEnterPictrue.value[index] = false
 }
+
+const disabledHover = ref(true)
+const handleRemove = () => {
+  if (uploadRef.value) {
+    uploadRef.value.clearFiles() // 取消上传
+  }
+  imageUrl.value = ''
+  ElMessage.error('图片已从上传队列移除');
+}
+
 //监控路由变化，改变name的值
 watchEffect(() => {
   name.value = route.query.name;
@@ -216,31 +234,36 @@ const imageUrl = ref('')
 const PictureType = [
   {
     label: '插画',
-    value: '1'
+    value: '插画'
   },
   {
     label: '立绘',
-    value: '2'
+    value: '立绘'
   },
   {
     label: '头像',
-    value: '3'
+    value: '头像'
   },
   {
     label: 'Q版',
-    value: '4'
+    value: 'Q版'
   },
 ]
 //添加标签
 const tagStore = ref('')
 const AddTag = () => {
-  if (!PhotoInfo.tag.includes(tagStore.value)) {
+  if (!PhotoInfo.tag.some(tag => tag.text === tagStore.value) && tagStore.value) {
     PhotoInfo.tag.push({
       text: tagStore.value,
       color: randomColor(),
     })
+  } else if (PhotoInfo.tag.some(tag => tag.text === tagStore.value)) {
+    ElMessage.error('标签已存在')
   }
-  console.log(PhotoInfo.tag);
+  else {
+    ElMessage.error('标签不能为空')
+  }
+  // console.log(PhotoInfo.tag);
 }
 //删除标签
 const DeleteTag = (index) => {
@@ -257,24 +280,59 @@ const randomColor = () => {
 const saveSetting = () => {
   showForm.value = false;
 }
-//添加图片信息
+
+const beforeRemove = (file, uploadFiles) => {
+  console.log("beforeRemove:", file, uploadFiles)
+}
+//上传图片时把图片作为封面
+const handleChange = (file, fileList) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imageUrl.value = e.target.result;
+  };
+  reader.readAsDataURL(file.raw);
+}
+//取消上传
+const cancelUpload = () => {
+  imageUrl.value = ''
+  PhotoInfo.cover = ''
+  PhotoInfo.name = ''
+  PhotoInfo.desc = ''
+  PhotoInfo.author = ''
+  PhotoInfo.type = ''
+  PhotoInfo.startTime = ''
+  PhotoInfo.endTime = ''
+  tagStore = ''
+  PhotoInfo.tag = []
+  if (uploadRef.value) {
+    uploadRef.value.clearFiles() // 取消上传
+  }
+}
+//添加图片信息，手动上传图片
 const AddPhotoInfo = (PhotoInfo) => {
+  if (uploadRef.value) {
+    uploadRef.value.submit()
+  } else {
+    console.log('没有文件被上传')
+  }
   console.log(PhotoInfo);
 }
-const beforeRemove = (file, uploadFiles) => {
-  console.log(file, uploadFiles)
-}
-
 //上传图片
 /**
- * 通过前端获取文件路径，再通过nodejs获取要上传到的文件夹的路径，使用move-file库移动文件
- * @param file 
+ * 第一步：通过前端获取文件路径，再通过nodejs获取要上传到的文件夹的路径，使用move-file库移动文件 [√]
+ * 第二步：nodejs添加图片信息到对应json里 [x]
+ * @param file 上传的图片文件
  */
-const uploadFile = (file) => {
+const uploadFile = async (file) => {
   const filepath = file.file.path;
+  const filename = file.file.name;
   console.log(file);
-  console.log(filepath)
-  // window.api['上传图片到指定文件夹'](file)
+  const res = { path: filepath, name: filename, folderName: name.value }
+  // console.log(res);
+  window.api['上传图片到指定文件夹'](res).then((res) => {
+    PhotoInfo.cover = res.path
+    console.log("res:", res);
+  })
 }
 const handleSuccess = () => {
   ElMessage.success('文件上传成功');
@@ -283,12 +341,22 @@ const handleSuccess = () => {
 const handleError = () => {
   ElMessage.error('文件上传失败');
 };
+
+const beforeUpload = (rawfile) => {
+  if (rawfile.type !== 'image/jpeg' && rawfile.type !== 'image/png') {
+    ElMessage.error('图片必须是jpeg格式或者png格式')
+    return false
+  }
+}
 </script>
 <style scoped>
 .avatar-uploader .avatar {
   width: 100px;
   height: 100px;
   display: block;
+  object-fit: cover;
+  overflow: hidden;
+  position: relative;
 }
 
 .avatar-uploader .el-upload {
@@ -314,5 +382,20 @@ const handleError = () => {
 
 .el-tag--dark.el-tag--primary {
   border: none
+}
+
+.avatar-icon-bg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: #fff;
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 10;
 }
 </style>

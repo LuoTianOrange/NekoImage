@@ -4,18 +4,18 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   '添加图库': (data) => ipcRenderer.send('添加图库', data),
-  '读取全部图库': async(data) => {
+  '读取全部图库': async (data) => {
     const result = await ipcRenderer.invoke('读取全部图库', data)
     return result
   },
-  '删除指定图库': async(data) => {
+  '删除指定图库': async (data) => {
     const result = await ipcRenderer.invoke('删除指定图库', data)
     return result
   },
-  '上传图片到指定文件夹': async(data) => {
-    const result = await ipcRenderer.invoke('上传图片到指定文件夹', data)
+  '上传图片到指定文件夹': async ({ path, name, folderName }) => {
+    const result = await ipcRenderer.invoke('上传图片到指定文件夹', { path, name, folderName });
     console.log(result);
-    return result
+    return result;
   }
 
 }
