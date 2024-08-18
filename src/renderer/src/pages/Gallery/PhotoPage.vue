@@ -46,7 +46,7 @@
         <!--图片展示区-->
         <div class="mt-5 flex flex-wrap items-start w-full">
           <div v-for="(item, index) in image"
-            class="w-[180px] h-[180px] flex flex-col justify-between items-center p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
+            class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
             @mouseenter="Enterpictrue(index)" @mouseleave="Leavepictrue(index)">
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
@@ -90,7 +90,8 @@
       <div class="text-[20px] flex flex-col">添加图片</div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">上传图片</div>
-        <el-upload class="avatar-uploader border h-[100px]">
+        <el-upload class="avatar-uploader border h-[100px]" :http-request="uploadFile" :limit="1"
+          :before-remove="beforeRemove" :on-success="handleSuccess" :on-error="handleError">
           <img v-if="imageUrl" :src="imageUrl" class="avatar" />
           <el-icon v-else class="avatar-uploader-icon">
             <Plus />
@@ -128,7 +129,7 @@
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">标签</div>
         <div class="flex flex-col">
-          <el-input v-model="tagStore" placeholder="输入标签"  clearable style="width: 200px">
+          <el-input v-model="tagStore" placeholder="输入标签" clearable style="width: 200px">
             <template #append>
               <el-button type="primary" @click="AddTag">
                 <el-icon>
@@ -140,12 +141,12 @@
         </div>
       </div>
       <div class="flex justify-end flex-wrap mt-2">
-        <el-tag class="m-[4px]" v-for="(tag,index) in PhotoInfo.tag" :key="index" 
-        closable @close="DeleteTag(index)" :style="{ backgroundColor: tag.color }" effect="dark">{{ tag.text }}</el-tag>
+        <el-tag class="m-[4px]" v-for="(tag,index) in PhotoInfo.tag" :key="index" closable @close="DeleteTag(index)"
+          :style="{ backgroundColor: tag.color }" effect="dark">{{ tag.text }}</el-tag>
       </div>
-
+  
       <div class="mt-5 flex flex-row justify-end">
-        <el-button class="!ml-2" type="primary" @click="">保存</el-button>
+        <el-button class="!ml-2" type="primary" @click="AddPhotoInfo(PhotoInfo)" :disabled="!(PhotoInfo.name && PhotoInfo.author && PhotoInfo.type)">保存</el-button>
         <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false">取消</el-button>
       </div>
     </el-dialog>
@@ -153,7 +154,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect,reactive } from 'vue';
+import { ref, watchEffect, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 import { ArrowRight, Plus } from '@element-plus/icons-vue';
 import { DownPicture } from '@icon-park/vue-next'
@@ -162,6 +163,7 @@ import { ElMessage, ElDatePicker } from 'element-plus'
 import image1 from '../../assets/images/2025754-1.png';
 import image2 from '../../assets/images/PSD.jpg';
 
+import { moveFile } from 'move-file'
 const route = useRoute();
 
 const input1 = ref('');
@@ -232,7 +234,7 @@ const PictureType = [
 //添加标签
 const tagStore = ref('')
 const AddTag = () => {
-  if(!PhotoInfo.tag.includes(tagStore.value)){
+  if (!PhotoInfo.tag.includes(tagStore.value)) {
     PhotoInfo.tag.push({
       text: tagStore.value,
       color: randomColor(),
@@ -241,19 +243,13 @@ const AddTag = () => {
   console.log(PhotoInfo.tag);
 }
 //删除标签
-const DeleteTag = (index) =>{
+const DeleteTag = (index) => {
   PhotoInfo.tag.splice(index, 1);
   console.log(PhotoInfo.tag);
 }
 //随机标签颜色
-const TagColor = ['#8c939d','#86cae7','#ffc283','#fc3945','#29af44']
+const TagColor = ['#8c939d', '#86cae7', '#ffc283', '#fc3945', '#29af44']
 const randomColor = () => {
-  // const letters = '0123456789ABCDEF';
-  // let color = '#';
-  // for (let i = 0; i < 6; i++) {
-  //   color += letters[Math.floor(Math.random() * 16)];
-  // }
-  // return color;
   const index = Math.floor(Math.random() * TagColor.length);
   return TagColor[index];
 }
@@ -261,6 +257,32 @@ const randomColor = () => {
 const saveSetting = () => {
   showForm.value = false;
 }
+//添加图片信息
+const AddPhotoInfo = (PhotoInfo) => {
+  console.log(PhotoInfo);
+}
+const beforeRemove = (file, uploadFiles) => {
+  console.log(file, uploadFiles)
+}
+
+//上传图片
+/**
+ * 通过前端获取文件路径，再通过nodejs获取要上传到的文件夹的路径，使用move-file库移动文件
+ * @param file 
+ */
+const uploadFile = (file) => {
+  const filepath = file.file.path;
+  console.log(file);
+  console.log(filepath)
+  // window.api['上传图片到指定文件夹'](file)
+}
+const handleSuccess = () => {
+  ElMessage.success('文件上传成功');
+};
+
+const handleError = () => {
+  ElMessage.error('文件上传失败');
+};
 </script>
 <style scoped>
 .avatar-uploader .avatar {
@@ -289,7 +311,8 @@ const saveSetting = () => {
   height: 100px;
   text-align: center;
 }
-.el-tag--dark.el-tag--primary{
+
+.el-tag--dark.el-tag--primary {
   border: none
 }
 </style>

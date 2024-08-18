@@ -12,6 +12,12 @@ const api = {
     const result = await ipcRenderer.invoke('删除指定图库', data)
     return result
   },
+  '上传图片到指定文件夹': async(data) => {
+    const result = await ipcRenderer.invoke('上传图片到指定文件夹', data)
+    console.log(result);
+    return result
+  }
+
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

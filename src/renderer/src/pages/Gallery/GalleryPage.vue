@@ -90,6 +90,7 @@ const route = useRoute()
 // })
 
 const NewGalleryName = ref('')
+//图库基本信息
 const GallertInfo = reactive({
   name: '',
   cover: '',

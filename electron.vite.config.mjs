@@ -4,6 +4,7 @@ import vue from '@vitejs/plugin-vue'
 // import bm from 'builtin-modules'
 
 export default defineConfig({
+  base: './',
   main: {
     plugins: [externalizeDepsPlugin()]
   },

@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+// import icon from '../../resources/icon.png?asset'
 // const trash = require('trash')
 // const fs = require('fs')
 // const path = require('node:path')
@@ -16,12 +16,15 @@ function createWindow() {
     height: 700,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    // ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,
+      // webSecurity: false
     }
   })
+  //打开调试工具
+  mainWindow.webContents.openDevTools()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -60,6 +63,7 @@ app.whenReady().then(() => {
     const appPath = app.getAppPath()
     let newArg = JSON.parse(arg)
     const filePath = path.join(appPath, `./resources/json/${newArg.name}.json`)
+    const dirPath = path.join(appPath, `./resources/json/${newArg.name}`)
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err && err.code === 'ENOENT') {
         // 文件不存在，创建新文件
@@ -67,7 +71,13 @@ app.whenReady().then(() => {
           if (err) {
             event.reply('添加图库响应', { success: false, message: '无法写入文件', error: err })
           } else {
-            event.reply('添加图库响应', { success: true, message: '成功添加图库' })
+            fs.mkdir(dirPath, (err) => {
+              if (err) {
+                event.reply('添加图库响应', { success: false, message: '无法创建文件夹', error: err })
+              } else {
+                event.reply('添加图库响应', { success: true, message: '成功添加图库' })
+              }
+            })
           }
         })
       } else if (err) {
@@ -106,18 +116,38 @@ app.whenReady().then(() => {
       });
     });
   })
-  ipcMain.handle('读取指定图库',(event,arg)=>{
-    
+  ipcMain.handle('读取指定图库', (event, arg) => {
+
   })
-  ipcMain.handle('删除指定图库',async(event,arg)=>{
+  ipcMain.handle('删除指定图库', async (event, arg) => {
     const appPath = app.getAppPath()
     const filePath = path.join(appPath, `/resources/json/${arg}.json`)
+    const dirPath = path.join(appPath, `./resources/json/${arg}`)
     return new Promise((resolve, reject) => {
       fs.unlink(filePath, (err) => {
         if (err) {
           reject({ success: false, message: '无法删除文件', error: err });
         } else {
-          resolve({ success: true, message: '成功删除图库' });
+          fs.rmdir(dirPath, { recursive: true }, (err) => {
+            if (err) {
+              reject({ success: false, message: '无法删除文件夹', error: err });
+            } else {
+              resolve({ success: true, message: '成功删除图库' });
+            }
+          });
+        }
+      });
+    });
+  })
+  ipcMain.handle('上传图片到指定文件夹', async (event, file) => {
+    const appPath = app.getAppPath()
+    const filePath = path.join(appPath, `/resources/json/${file.name}`)
+    return new Promise((resolve, reject) => {
+      fs.readFile(file.path, (err, data) => {
+        if (err) {
+          reject({ success: false, message: '无法读取文件', error: err });
+        } else {
+          ipcMain.send('读取图片', { data, picpath })
         }
       });
     });
@@ -142,3 +172,9 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+//在ready事件里
+app.on('ready', async () => {
+  globalShortcut.register('CommandOrControl+Shift+i', function () {
+    mainWindow.webContents.openDevTools()
+  })
+})
