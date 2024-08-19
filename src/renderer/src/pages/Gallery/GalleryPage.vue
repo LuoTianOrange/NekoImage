@@ -9,6 +9,7 @@
           :on-error="handleError">
           <el-button class="ml-3" type="primary" @click="readGallery">读取图库</el-button>
         </el-upload>
+        <el-button class="ml-3" type="success" @click="ReadAllGallery">更新图库</el-button>
       </div>
       <div class="flex flex-wrap items-start w-full">
         <div v-for="item in galleryList" :key="item.id"

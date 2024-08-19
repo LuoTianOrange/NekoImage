@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 // import icon from '../../resources/icon.png?asset'
@@ -6,6 +6,8 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 // const fs = require('fs')
 // const path = require('node:path')
 import fs from 'fs'
+import { to } from 'await-to-js'
+import fsPromises from 'fs/promises'
 import path from 'path'
 
 function createWindow() {
@@ -59,10 +61,16 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('添加图库', (event, arg) => {
-    const appPath = app.getAppPath()
+    let appPath
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      appPath = app.getAppPath()
+    }
+    else {
+      appPath = path.dirname(app.getPath('exe'))
+    }
     let newArg = JSON.parse(arg)
-    const filePath = path.join(appPath, `./resources/json/${newArg.name}.json`)
-    const dirPath = path.join(appPath, `./resources/json/${newArg.name}`)
+    const filePath = path.join(appPath, `./appData/${newArg.name}.json`)
+    const dirPath = path.join(appPath, `./appData/${newArg.name}`)
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err && err.code === 'ENOENT') {
         // 文件不存在，创建新文件
@@ -89,45 +97,77 @@ app.whenReady().then(() => {
     })
   })
   ipcMain.handle('读取全部图库', async (event, arg) => {
-    const appPath = app.getAppPath()
-    const dirPath = path.join(appPath, `/resources/json`)
+    var appPath
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      appPath = app.getAppPath()
 
-    return new Promise((resolve, reject) => {
-      fs.readdir(dirPath, (err, files) => {
-        if (err) {
-          reject({ success: false, message: '无法读取文件夹', error: err });
-        } else {
-          let jsonsData = [];
-          files.forEach((file) => {
-            if (path.extname(file) === '.json') {
-              const filePath = path.join(dirPath, file);
-              const data = fs.readFileSync(filePath, 'utf-8');
-              try {
-                const json = JSON.parse(data);
-                jsonsData.push(json);
-              } catch (err) {
-                console.log(`无法解析文件 ${file} 的 JSON 数据`, err);
-              }
-            }
-          });
-          resolve({ success: true, message: '成功读取全部图库', data: jsonsData });
+    } else {
+      appPath = path.dirname(app.getPath('exe'))
+    }
+    const dirPath = path.join(appPath, `/appData`)
+
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
+    }
+    //判断是否存在文件夹
+    if (!fs.existsSync(dirPath)) {
+      const exeDirPath = path.dirname(app.getPath('exe'))
+      const dirPath = path.join(exeDirPath, 'appData')
+      const [err] = await to(fsPromises.mkdir(dirPath, { recursive: true }));
+      if (err) {
+        handleErr('创建目录失败', err)
+        return { success: false, message: '创建目录失败', data: [dirPath] }
+      }
+    }
+
+    const getFilesList = async () => {
+      const files = await fsPromises.readdir(dirPath)
+      const jsonDataList = []
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (path.extname(file) !== '.json') { continue }
+        const filePath = path.join(dirPath, file);
+        try{
+          const data = await fsPromises.readFile(filePath, 'utf-8')
+          const json = JSON.parse(data);
+          jsonDataList.push(json);
+        }catch(err){
+          handleErr('读取全部图库失败', err)
         }
-      });
-    });
+
+      }
+      return jsonDataList
+    }
+
+    const [err, res] = await to(getFilesList())
+    if (err) {
+      handleErr('读取全部图库失败', err)
+      return { success: false, message: '读取全部图库失败', data: [] }
+    }
+    return { success: true, message: '成功读取全部图库', data: res }
   })
+
   ipcMain.handle('读取指定图库', (event, arg) => {
 
   })
   ipcMain.handle('删除指定图库', async (event, arg) => {
-    const appPath = app.getAppPath()
-    const filePath = path.join(appPath, `/resources/json/${arg}.json`)
-    const dirPath = path.join(appPath, `./resources/json/${arg}`)
+    var appPath
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      appPath = app.getAppPath()
+    } else {
+      appPath = path.dirname(app.getPath('exe'))
+    }
+    const filePath = path.join(appPath, `/appData/${arg}.json`)
+    const dirPath = path.join(appPath, `./appData/${arg}`)
     return new Promise((resolve, reject) => {
       fs.unlink(filePath, (err) => {
         if (err) {
           reject({ success: false, message: '无法删除文件', error: err });
         } else {
-          fs.rmdir(dirPath, { recursive: true }, (err) => {
+          fs.rm(dirPath, { recursive: true }, (err) => {
             if (err) {
               reject({ success: false, message: '无法删除文件夹', error: err });
             } else {
@@ -139,12 +179,17 @@ app.whenReady().then(() => {
     });
   })
   ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
-    const appPath = app.getAppPath()
-    const destinationPath = path.join(appPath, `resources/json/${folderName}/${fileName}`);
+    var appPath
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      appPath = app.getAppPath()
+    } else {
+      appPath = path.dirname(app.getPath('exe'))
+    }
+    const destinationPath = path.join(appPath, `/appData/${folderName}/${fileName}`);
     return new Promise(async (resolve, reject) => {
       try {
-        await fs.copyFile(filePath, destinationPath,(err)=>{
-          if(err){
+        await fs.copyFile(filePath, destinationPath, (err) => {
+          if (err) {
             reject({ success: false, message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` })
           }
         })
@@ -175,8 +220,8 @@ app.on('window-all-closed', () => {
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 //在ready事件里
-app.on('ready', async () => {
-  globalShortcut.register('CommandOrControl+Shift+i', function () {
-    mainWindow.webContents.openDevTools()
-  })
-})
+// app.on('ready', async () => {
+//   globalShortcut.register('CommandOrControl+Shift+i', function () {
+//     mainWindow.webContents.openDevTools()
+//   })
+// })

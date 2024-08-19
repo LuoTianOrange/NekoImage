@@ -292,8 +292,8 @@ const handleChange = (file, fileList) => {
   };
   reader.readAsDataURL(file.raw);
 }
-//取消上传
-const cancelUpload = () => {
+//清空输入框
+const ClearInputBox = ()=>{
   imageUrl.value = ''
   PhotoInfo.cover = ''
   PhotoInfo.name = ''
@@ -302,8 +302,12 @@ const cancelUpload = () => {
   PhotoInfo.type = ''
   PhotoInfo.startTime = ''
   PhotoInfo.endTime = ''
-  tagStore = ''
+  tagStore.value = ''
   PhotoInfo.tag = []
+}
+//取消上传
+const cancelUpload = () => {
+  ClearInputBox()
   if (uploadRef.value) {
     uploadRef.value.clearFiles() // 取消上传
   }
@@ -312,6 +316,10 @@ const cancelUpload = () => {
 const AddPhotoInfo = (PhotoInfo) => {
   if (uploadRef.value) {
     uploadRef.value.submit()
+    ClearInputBox()
+    
+    showAddPictrueSetting.value = false
+    
   } else {
     console.log('没有文件被上传')
   }
