@@ -9,6 +9,7 @@ import fs from 'fs'
 import { to } from 'await-to-js'
 import fsPromises from 'fs/promises'
 import path from 'path'
+import { v4 as uuid } from 'uuid'
 
 function createWindow() {
   // Create the browser window.
@@ -97,13 +98,9 @@ app.whenReady().then(() => {
     })
   })
   ipcMain.handle('读取全部图库', async (event, arg) => {
-    var appPath
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      appPath = app.getAppPath()
-
-    } else {
-      appPath = path.dirname(app.getPath('exe'))
-    }
+    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
+      app.getAppPath()
+      : path.dirname(app.getPath('exe'))
     const dirPath = path.join(appPath, `/appData`)
 
     const handleErr = (title, err) => {
@@ -130,11 +127,11 @@ app.whenReady().then(() => {
         const file = files[i]
         if (path.extname(file) !== '.json') { continue }
         const filePath = path.join(dirPath, file);
-        try{
+        try {
           const data = await fsPromises.readFile(filePath, 'utf-8')
           const json = JSON.parse(data);
           jsonDataList.push(json);
-        }catch(err){
+        } catch (err) {
           handleErr('读取全部图库失败', err)
         }
 
@@ -154,12 +151,9 @@ app.whenReady().then(() => {
 
   })
   ipcMain.handle('删除指定图库', async (event, arg) => {
-    var appPath
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      appPath = app.getAppPath()
-    } else {
-      appPath = path.dirname(app.getPath('exe'))
-    }
+    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
+      app.getAppPath()
+      : path.dirname(app.getPath('exe'))
     const filePath = path.join(appPath, `/appData/${arg}.json`)
     const dirPath = path.join(appPath, `./appData/${arg}`)
     return new Promise((resolve, reject) => {
@@ -179,26 +173,63 @@ app.whenReady().then(() => {
     });
   })
   ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
-    var appPath
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      appPath = app.getAppPath()
-    } else {
-      appPath = path.dirname(app.getPath('exe'))
+    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
+      app.getAppPath()
+      : path.dirname(app.getPath('exe'))
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
     }
-    const destinationPath = path.join(appPath, `/appData/${folderName}/${fileName}`);
-    return new Promise(async (resolve, reject) => {
-      try {
-        await fs.copyFile(filePath, destinationPath, (err) => {
-          if (err) {
-            reject({ success: false, message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` })
-          }
-        })
-        resolve({ success: true, message: '成功上传图片', path: destinationPath })
-      } catch (error) {
-        reject({ success: false, message: '错误：' + error + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` })
-      }
-    });
+    //复制图片到目标文件夹
+    async function copyFile(filePath, folderName, fileName) {
+      const destinationPath = path.join(appPath, `/appData/${folderName}/${fileName}`);
+      const [err] = await to(fsPromises.copyFile(filePath, destinationPath));
+      return { err, destinationPath };
+    }
+
+    const { err, destinationPath } = await copyFile(filePath, folderName, fileName)
+    if (err) {
+      handleErr('读取全部图库失败', err)
+      return { success: false, message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` };
+    }
+    return { success: true, message: '成功上传图片', path: destinationPath }
   });
+  ipcMain.handle('将图片信息写入json', async (event, { folderName, PhotoInfo }) => {
+    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
+      app.getAppPath()
+      : path.dirname(app.getPath('exe'))
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
+    }
+    const writeJsonFile = async () => {
+      const jsonPath = path.join(appPath, `/appData/${folderName}.json`);
+      const [readErr, data] = await to(fsPromises.readFile(jsonPath, 'utf-8'));
+      if (readErr) {
+        handleErr('读取json失败', readErr)
+        return { success: false, message: '读取json失败', error: readErr }
+      }
+      const jsonData = data ? JSON.parse(data) : [PhotoInfo]
+      const pid = uuid()
+      jsonData.draws.push({...PhotoInfo,pid})
+      console.log(jsonData, PhotoInfo)
+      const [writeErr] = await to(fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2)), 'utf8')
+      if (writeErr) {
+        handleErr('写入json失败', writeErr)
+        return { success: false, message: '写入json失败', error: writeErr }
+      }
+      return { success: true, message: '成功写入json文件', data: jsonData }
+    }
+    const { err, data } = await writeJsonFile()
+    if (err) {
+      return { success: false, message: '更新json失败', error: err };
+    }
+    return { success: true, message: '成功更新json文件', data: data };
+  })
   createWindow()
 
   app.on('activate', function () {

@@ -16,6 +16,10 @@ const api = {
     const result = await ipcRenderer.invoke('上传图片到指定文件夹', { path, name, folderName });
     console.log(result);
     return result;
+  },
+  '将图片信息写入json': async ({ folderName, PhotoInfo }) => {
+    const result = await ipcRenderer.invoke('将图片信息写入json', { folderName, PhotoInfo });
+    return result;
   }
 
 }

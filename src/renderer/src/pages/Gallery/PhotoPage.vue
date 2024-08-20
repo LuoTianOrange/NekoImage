@@ -90,8 +90,8 @@
       <div class="text-[20px] flex flex-col">添加图片</div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">上传图片</div>
-        <el-upload ref="uploadRef" class="avatar-uploader border h-[100px]" action="#" :http-request="uploadFile" :limit="1"
-          :show-file-list="false" :before-upload="beforeUpload" :on-success="handleSuccess"
+        <el-upload ref="uploadRef" class="avatar-uploader border h-[100px]" action="#" :http-request="uploadFile"
+          :limit="1" :show-file-list="false" :before-upload="beforeUpload" :on-success="handleSuccess"
           :on-error="handleError" :on-change="handleChange" :auto-upload="false">
           <div class="relative" v-if="imageUrl" @mouseenter="disabledHover = false" @mouseleave="disabledHover = true">
             <img :src="imageUrl" class="avatar" />
@@ -164,15 +164,17 @@
 
 <script setup>
 import { ref, watchEffect, reactive } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ArrowRight, Plus } from '@element-plus/icons-vue';
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
+import _ from 'lodash'
 
 import image1 from '../../assets/images/2025754-1.png';
 import image2 from '../../assets/images/PSD.jpg';
 const uploadRef = ref(null)
 const route = useRoute();
+const router = useRouter()
 
 const input1 = ref('');
 const input2 = ref('');
@@ -220,7 +222,7 @@ const clickSetting = (name) => {
 //添加图片设置
 const showAddPictrueSetting = ref(false)
 
-const PhotoInfo = reactive({
+const PhotoInfo = ref({
   name: '',
   cover: '',
   desc: '',
@@ -252,12 +254,12 @@ const PictureType = [
 //添加标签
 const tagStore = ref('')
 const AddTag = () => {
-  if (!PhotoInfo.tag.some(tag => tag.text === tagStore.value) && tagStore.value) {
-    PhotoInfo.tag.push({
+  if (!PhotoInfo.value.tag.some(tag => tag.text === tagStore.value) && tagStore.value) {
+    PhotoInfo.value.tag.push({
       text: tagStore.value,
       color: randomColor(),
     })
-  } else if (PhotoInfo.tag.some(tag => tag.text === tagStore.value)) {
+  } else if (PhotoInfo.value.tag.some(tag => tag.text === tagStore.value)) {
     ElMessage.error('标签已存在')
   }
   else {
@@ -267,8 +269,8 @@ const AddTag = () => {
 }
 //删除标签
 const DeleteTag = (index) => {
-  PhotoInfo.tag.splice(index, 1);
-  console.log(PhotoInfo.tag);
+  PhotoInfo.value.tag.splice(index, 1);
+  console.log(PhotoInfo.value.tag);
 }
 //随机标签颜色
 const TagColor = ['#8c939d', '#86cae7', '#ffc283', '#fc3945', '#29af44']
@@ -293,17 +295,17 @@ const handleChange = (file, fileList) => {
   reader.readAsDataURL(file.raw);
 }
 //清空输入框
-const ClearInputBox = ()=>{
+const ClearInputBox = () => {
   imageUrl.value = ''
-  PhotoInfo.cover = ''
-  PhotoInfo.name = ''
-  PhotoInfo.desc = ''
-  PhotoInfo.author = ''
-  PhotoInfo.type = ''
-  PhotoInfo.startTime = ''
-  PhotoInfo.endTime = ''
+  PhotoInfo.value.cover = ''
+  PhotoInfo.value.name = ''
+  PhotoInfo.value.desc = ''
+  PhotoInfo.value.author = ''
+  PhotoInfo.value.type = ''
+  PhotoInfo.value.startTime = ''
+  PhotoInfo.value.endTime = ''
   tagStore.value = ''
-  PhotoInfo.tag = []
+  PhotoInfo.value.tag = []
 }
 //取消上传
 const cancelUpload = () => {
@@ -313,16 +315,14 @@ const cancelUpload = () => {
   }
 }
 //添加图片信息，手动上传图片
-const AddPhotoInfo = (PhotoInfo) => {
-  if (uploadRef.value) {
-    uploadRef.value.submit()
-    ClearInputBox()
-    
-    showAddPictrueSetting.value = false
-    
-  } else {
-    console.log('没有文件被上传')
+const AddPhotoInfo =  (PhotoInfo) => {
+  const info = _.cloneDeep(PhotoInfo)
+  if (_.isEmpty(info)) {
+    ElMessage.error('请填写完整信息')
+    return
   }
+  uploadRef.value.submit()
+  showAddPictrueSetting.value = false
   console.log(PhotoInfo);
 }
 //上传图片
@@ -334,16 +334,25 @@ const AddPhotoInfo = (PhotoInfo) => {
 const uploadFile = async (file) => {
   const filepath = file.file.path;
   const filename = file.file.name;
-  console.log(file);
-  const res = { path: filepath, name: filename, folderName: name.value }
-  // console.log(res);
-  window.api['上传图片到指定文件夹'](res).then((res) => {
-    PhotoInfo.cover = res.path
-    console.log("res:", res);
-  })
+  const folderName = name.value;
+  // console.log(file);
+  //上传图片到指定文件夹
+  const response1 = { path: filepath, name: filename, folderName }
+  const res = await window.api['上传图片到指定文件夹'](response1)
+  console.log("res:", res.path);
+  // console.log("res:", res);
+
+  //将图片信息写入json
+  const safePhotoInfo = _.cloneDeep(PhotoInfo.value)
+  safePhotoInfo.cover = res.path
+  const fileInfo = { folderName, PhotoInfo: safePhotoInfo }
+  console.log("fileInfo", fileInfo);
+  const jsonResponse = await window.api['将图片信息写入json'](fileInfo)
+  console.log(jsonResponse);
 }
 const handleSuccess = () => {
   ElMessage.success('文件上传成功');
+  ClearInputBox()
 };
 
 const handleError = () => {

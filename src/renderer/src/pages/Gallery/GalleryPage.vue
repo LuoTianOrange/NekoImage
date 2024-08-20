@@ -3,7 +3,7 @@
     <div class="p-[20px]">
       <div class="text-[20px]">图库管理</div>
       <div class="my-5 flex">
-        <el-input v-model="NewGalleryName" style="width: 200px;" placeholder="请输入名称"></el-input>
+        <el-input v-model="NewGalleryName" style="width: 200px;" placeholder="请输入名称" clearable></el-input>
         <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!NewGalleryName">添加图库</el-button>
         <el-upload action="" multiple :show-file-list=false :on-success="handleSuccess" on-remove=""
           :on-error="handleError">
@@ -139,10 +139,10 @@ const validateGalleryName = (input) => {
 }
 //删除指定图库
 const deleteDialog = ref(false)
-const deleteGallery = (name) => {
-  window.api['删除指定图库'](name)
-  deleteDialog.value = false
+const deleteGallery = async (name) => {
   NProgress.start();
+  await window.api['删除指定图库'](name)
+  deleteDialog.value = false
   ElMessageBox.alert('成功删除图库', '提示', {
     confirmButtonText: '确定',
     type: 'success',
@@ -152,10 +152,9 @@ const deleteGallery = (name) => {
       }
     }
   })
-  setTimeout(() => {
-    NProgress.done();
-    router.go(0)
-  }, 1200)
+  await ReadAllGallery()
+  NProgress.done();
+  router.go(0)
   console.log('删除指定图库', name)
 }
 /**
@@ -207,17 +206,15 @@ const handleError = (res) => {
 const AddNewGallery = async () => {
   defaultGalleryData.name = NewGalleryName.value
   const defaultGalleryJSON = JSON.stringify(defaultGalleryData, null, 2)
-  window.api['添加图库'](defaultGalleryJSON)
   NProgress.start();
+  await window.api['添加图库'](defaultGalleryJSON)
   ElMessageBox.alert('成功添加图库', '提示', {
     confirmButtonText: '确定',
     type: 'success'
   })
-  ReadAllGallery()
-  setTimeout(() => {
-    NProgress.done();
-    router.go(0)
-  }, 1200)
+  NProgress.done();
+  await ReadAllGallery()
+  router.go(0)
 }
 /* —————————————————————————— */
 </script>
@@ -233,11 +230,13 @@ const AddNewGallery = async () => {
   border: none !important;
   z-index: 9999;
 }
+
 #nprogress .spinner-icon {
   border-top-color: #ffa73b !important;
   border-left-color: #ffa73b !important;
   z-index: 9999;
 }
+
 #nprogress .peg {
   box-shadow: 0 0 10px #ffa73b, 0 0 5px #ffa73b !important;
   z-index: 9999;
