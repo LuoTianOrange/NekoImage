@@ -20,6 +20,10 @@ const api = {
   '将图片信息写入json': async ({ folderName, PhotoInfo }) => {
     const result = await ipcRenderer.invoke('将图片信息写入json', { folderName, PhotoInfo });
     return result;
+  },
+  '读取全部图片': async (data) => {
+    const result = await ipcRenderer.invoke('读取全部图片', data);
+    return result;
   }
 
 }

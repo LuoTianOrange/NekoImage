@@ -22,7 +22,8 @@ function createWindow() {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      // webSecurity: false
+      webSecurity: false,
+      allowRunningInsecureContent: false
     }
   })
   //打开调试工具
@@ -215,7 +216,7 @@ app.whenReady().then(() => {
       }
       const jsonData = data ? JSON.parse(data) : [PhotoInfo]
       const pid = uuid()
-      jsonData.draws.push({...PhotoInfo,pid})
+      jsonData.draws.push({ ...PhotoInfo, pid })
       console.log(jsonData, PhotoInfo)
       const [writeErr] = await to(fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2)), 'utf8')
       if (writeErr) {
@@ -229,6 +230,31 @@ app.whenReady().then(() => {
       return { success: false, message: '更新json失败', error: err };
     }
     return { success: true, message: '成功更新json文件', data: data };
+  })
+  ipcMain.handle('读取全部图片', async (event,allPhoto) => {
+    const { fileName } = allPhoto
+    console.log(allPhoto)
+    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
+      app.getAppPath()
+      : path.dirname(app.getPath('exe'))
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
+    }
+    const readAllJsonFile = async () => {
+      const jsonPath = path.join(appPath, `/appData/${fileName}.json`)
+      console.log(fileName)
+      const data = await fsPromises.readFile(jsonPath, 'utf-8')
+      return data
+    }
+    const [err, data] = await to(readAllJsonFile())
+    if (err) {
+      handleErr('读取json失败', err)
+      return { success: false, message: '读取json失败', error: err };
+    }
+    return { success: true, message: '成功读取json文件', data: JSON.parse(data) };
   })
   createWindow()
 

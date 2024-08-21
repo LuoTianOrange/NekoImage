@@ -14,7 +14,8 @@
 
 #### 图片管理
 
-- [x] 添加图片功能：上传指定图片，并且填入图片信息到对应的图库json
+- [x] 添加图片功能：上传指定图片，并且填入图片信息到对应的图库json，将文件名字自动填入输入框
+- [ ] 读取全部图片功能：从json读取所有图片的路径并返回前端渲染
 - [ ] 删除图片功能：从图库中删除指定图片，并从json中删除对应信息
 - [ ] 修改图片功能：从json中修改图片的信息
 - [ ] 导出图库功能：导出指定图库的json
@@ -26,9 +27,9 @@
 
 ## 踩坑
 
-> 采用hash路由模式，打包后，使用router.go(0)刷新页面白屏
+> 采用history路由模式，打包后，使用router.go(0)刷新页面白屏
 
-需要使用history路由模式。由于vue是单页面应用，刷新页面后服务器请求了一个不存在的页面，导致白屏
+需要使用memory路由模式。由于vue是单页面应用，刷新页面后服务器请求了一个不存在的页面，导致白屏
 
 > 用app.getAppPath()打包出来的目录找不到对应文件夹
 
@@ -47,3 +48,39 @@ if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
   }
 ```
 
+> 无法加载本地文件
+>
+> `violates the following Content Security Policy directive`(浏览器)
+>
+> `Not allowed to load local resource`(electron)
+
+
+
+首先electron有自己的安全策略，可以在`main.js`的`webPreferences`使用`webSecurity: false`关闭
+
+```js
+    webPreferences: {
+      webSecurity: false
+    }
+```
+
+其次浏览器有自己的安全策略，可以在`index.html`的`<meta http-equiv="Content-Security-Policy" content="img-src 'self' file: data:;"`关闭
+
+```html
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:;"
+    />
+```
+
+中关闭
+
+`file:`用于file类型的文件通过CSP，`data:`用于data类型的文件通过CSP(如base64)
+
+> 使用router.push()路由跳转后没有刷新数据
+
+要使用`onActive()`重新获取数据
+
+> 打包提示：`remove app.asar: The process cannot access the file because it is being used by another process`
+
+可能是`README.md`这种文件在vscode以外的软件正在使用，因为打包的时候也会把readme打包进去

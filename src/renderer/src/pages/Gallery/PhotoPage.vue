@@ -42,15 +42,21 @@
             </el-icon>
             <div class="ml-1">删除图库</div>
           </el-button>
+          <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
+            <el-icon>
+              <Tools />
+            </el-icon>
+            <div class="ml-1">刷新</div>
+          </el-button>
         </div>
         <!--图片展示区-->
         <div class="mt-5 flex flex-wrap items-start w-full">
           <div v-for="(item, index) in image"
             class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
-            @mouseenter="Enterpictrue(index)" @mouseleave="Leavepictrue(index)">
+            @mouseenter="EnterPicture(index)" @mouseleave="LeavePicture(index)">
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
-            <div v-if="isEnterPictrue[index]"
+            <div v-if="isEnterPicture[index]"
               class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]">
               <!--复制图片信息-->
               <el-button class="" type="success" size="small" plain>
@@ -163,8 +169,8 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated } from 'vue';
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
 import { ArrowRight, Plus } from '@element-plus/icons-vue';
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
@@ -180,23 +186,27 @@ const input1 = ref('');
 const input2 = ref('');
 const name = ref('');
 
-const image = ref([
-  {
-    cover: image1,
-    name: '图片1'
-  },
-  {
-    cover: image2,
-    name: '图片2'
-  }
-])
-//图片悬浮框相关
-const isEnterPictrue = ref([])
-const Enterpictrue = (index) => {
-  isEnterPictrue.value[index] = true
+const image = ref([])
+//获取全部图片
+const getAllImages = async () => {
+  const fileName = name.value;
+  console.log("fileName:", fileName);
+  const response = await window.api['读取全部图片']({ fileName })
+  image.value = response.data.draws
+  console.log(response.data.draws);
 }
-const Leavepictrue = (index) => {
-  isEnterPictrue.value[index] = false
+//监测路由变化更新图片
+onActivated(() => {
+  getAllImages()
+})
+
+//图片悬浮框相关
+const isEnterPicture = ref([])
+const EnterPicture = (index) => {
+  isEnterPicture.value[index] = true
+}
+const LeavePicture = (index) => {
+  isEnterPicture.value[index] = false
 }
 
 const disabledHover = ref(true)
@@ -315,7 +325,7 @@ const cancelUpload = () => {
   }
 }
 //添加图片信息，手动上传图片
-const AddPhotoInfo =  (PhotoInfo) => {
+const AddPhotoInfo = (PhotoInfo) => {
   const info = _.cloneDeep(PhotoInfo)
   if (_.isEmpty(info)) {
     ElMessage.error('请填写完整信息')
@@ -323,6 +333,7 @@ const AddPhotoInfo =  (PhotoInfo) => {
   }
   uploadRef.value.submit()
   showAddPictrueSetting.value = false
+
   console.log(PhotoInfo);
 }
 //上传图片
@@ -353,6 +364,8 @@ const uploadFile = async (file) => {
 const handleSuccess = () => {
   ElMessage.success('文件上传成功');
   ClearInputBox()
+  getAllImages()
+
 };
 
 const handleError = () => {

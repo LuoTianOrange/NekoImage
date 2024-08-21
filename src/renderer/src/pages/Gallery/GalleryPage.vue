@@ -17,7 +17,7 @@
           <div class="w-full h-[140px] overflow-hidden border-b" @click="goToPage('/photo',item.name)">
             <img v-if="item.draws.length == 0" class="w-full h-full object-cover object-center"
               src="../../assets/bloghover.png"></img>
-            <img v-else class="w-full h-full object-cover object-center" :src="item.draws[0]"></img>
+            <img v-else class="w-full h-full object-cover object-center" :src="item.draws[0].cover"></img>
           </div>
           <div class="px-2 bg-white">
             <div class="pt-1">{{ item.name }}</div>
@@ -66,6 +66,7 @@
           <div class="text-[16px]">确定要删掉这个图库吗？</div>
           <el-input v-model="deleteinput" style="width: 200px;" placeholder="输入图库名字" clearable></el-input>
         </div>
+        <div class="text-[16px] text-red-400">一旦删除无法找回！</div>
         <div class="mt-5 flex flex-row justify-end">
           <el-button class="!ml-2" type="danger" @click="deleteGallery(deleteinput)"
             :disabled="validateGalleryName(deleteinput)">删除</el-button>
@@ -77,7 +78,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watchEffect, reactive, onBeforeMount, watch } from "vue";
+import { onMounted, ref, watchEffect, reactive, onBeforeMount, watch, onActivated } from "vue";
 import { useRouter, useRoute } from "vue-router"
 import { v4 as uuid } from 'uuid'
 import { ElMessageBox } from 'element-plus';
@@ -103,7 +104,7 @@ const deleteinput = ref('')
 
 //路由跳转
 const goToPage = (path, name) => {
-  router.push({ path: path, query: { name: name } });
+  router.push({ path: path, query: { date: new Date().getTime(), name: name } });
 }
 //设置相关
 const showForm = ref(false)
@@ -143,6 +144,7 @@ const deleteGallery = async (name) => {
   NProgress.start();
   await window.api['删除指定图库'](name)
   deleteDialog.value = false
+  deleteinput.value = ''
   ElMessageBox.alert('成功删除图库', '提示', {
     confirmButtonText: '确定',
     type: 'success',
@@ -170,17 +172,16 @@ const clickDeleteDialogSetting = (data) => {
 const galleryList = ref([])
 
 //读取全部图库
-onMounted(async () => {
-  const response = await window.api['读取全部图库']()
-  response.data.forEach(element => {
-    galleryList.value.push(element)
-  });
-  console.log(response);
-})
-const ReadAllGallery = async () => {
+const ReadAllGallery = onActivated(async () => {
   const response = await window.api['读取全部图库']()
   galleryList.value = response.data
-}
+  console.log(response);
+  console.log("draw[0]:",galleryList.value[0].draws[0].cover)
+})
+// const ReadAllGallery = async () => {
+//   const response = await window.api['读取全部图库']()
+//   galleryList.value = response.data
+// }
 
 //读取指定图库
 const readGallery = () => {
