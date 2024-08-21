@@ -53,7 +53,8 @@
         <div class="mt-5 flex flex-wrap items-start w-full">
           <div v-for="(item, index) in image"
             class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
-            @mouseenter="EnterPicture(index)" @mouseleave="LeavePicture(index)">
+            @mouseenter="EnterPicture(index)" @mouseleave="LeavePicture(index)"
+            @click="goToPage('/photoInfo',{name: name,itemName: item.name})">
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
             <div v-if="isEnterPicture[index]"
@@ -176,8 +177,6 @@ import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
 import _ from 'lodash'
 
-import image1 from '../../assets/images/2025754-1.png';
-import image2 from '../../assets/images/PSD.jpg';
 const uploadRef = ref(null)
 const route = useRoute();
 const router = useRouter()
@@ -222,6 +221,13 @@ const handleRemove = () => {
 watchEffect(() => {
   name.value = route.query.name;
 });
+
+//路由跳转
+const itemName = ref('')
+const goToPage = (path, { name, itemName }) => {
+  console.log("name:", { name, itemName });
+  router.push({ path: path, query: { name, itemName } });
+}
 
 //设置相关
 const showForm = ref(false)
@@ -365,7 +371,9 @@ const handleSuccess = () => {
   ElMessage.success('文件上传成功');
   ClearInputBox()
   getAllImages()
-
+  imageUrl.value = ''
+  router.go(0)
+  // cancelUpload()
 };
 
 const handleError = () => {

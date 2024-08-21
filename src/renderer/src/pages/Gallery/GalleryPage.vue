@@ -104,7 +104,8 @@ const deleteinput = ref('')
 
 //路由跳转
 const goToPage = (path, name) => {
-  router.push({ path: path, query: { date: new Date().getTime(), name: name } });
+  router.push({ path: path, query: { date: new Date().getTime(), name: name } })
+  console.log(name);
 }
 //设置相关
 const showForm = ref(false)
@@ -209,6 +210,7 @@ const AddNewGallery = async () => {
   const defaultGalleryJSON = JSON.stringify(defaultGalleryData, null, 2)
   NProgress.start();
   await window.api['添加图库'](defaultGalleryJSON)
+  NewGalleryName.value = ''
   ElMessageBox.alert('成功添加图库', '提示', {
     confirmButtonText: '确定',
     type: 'success'

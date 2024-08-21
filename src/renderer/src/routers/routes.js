@@ -20,6 +20,12 @@ const routes = [
         component: () => import('../pages/Gallery/PhotoPage.vue'),
     },
     {
+        path: '/photoinfo',
+        name: 'PhotoInfo',
+        title: '图片信息',
+        component: () => import('../pages/Gallery/PhotoInfo.vue'),
+    },
+    {
         path: '/export',
         name: 'Export',
         title: '导入导出',

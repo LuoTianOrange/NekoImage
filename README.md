@@ -10,7 +10,7 @@
 - [x] 添加全部图库功能：读取文件夹内所有图库的json文件并渲染到页面
 - [ ] 添加指定图库功能：读取指定图库的json文件
 - [x] 删除图库功能：删除指定图库的json文件和文件夹
-- [ ] 修改图库功能：修改指定图库的信息
+- [ ] 修改图库功能：修改指定图库的名字和描述
 
 #### 图片管理
 
@@ -19,11 +19,14 @@
 - [ ] 删除图片功能：从图库中删除指定图片，并从json中删除对应信息
 - [ ] 修改图片功能：从json中修改图片的信息
 - [ ] 导出图库功能：导出指定图库的json
+- [ ] 检测图片重名：上传图片后要检测图片是否有同名，否则删除时会报错
+- [ ] 查看图片详细信息：点击图片可以查看图片的详细信息
 
 #### 软件管理
 
 - [ ] 设置存储路径功能：选择图库存储的默认路径
 - [ ] 设置背景功能：修改软件的背景
+- [ ] 夜间模式
 
 ## 踩坑
 
@@ -64,7 +67,7 @@ if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     }
 ```
 
-其次浏览器有自己的安全策略，可以在`index.html`的`<meta http-equiv="Content-Security-Policy" content="img-src 'self' file: data:;"`关闭
+其次浏览器有自己的安全策略，可以在`index.html`的`<meta http-equiv="Content-Security-Policy" content="img-src 'self' file: data:;"`
 
 ```html
     <meta
@@ -123,3 +126,54 @@ png调整尺寸网站：https://www.iloveimg.com/zh-cn/resize-image/resize-png
   }
 ```
 
+## 页面
+
+### 首页：MainPage
+
+暂时没什么用的首页
+
+------
+
+
+
+### 图库页面：GalleryPage
+
+渲染所有的图库。
+
+------
+
+
+
+### 图片页面：PhotoPage
+
+渲染图库里面的图片。
+
+
+
+------
+
+#### 必要参数
+
+##### name
+
+- name：当前图库的名称
+
+
+
+### 图片详细页面：PhotoInfo
+
+展示图片的详细信息。
+
+
+
+------
+
+#### 必要参数
+
+##### name
+
+- name：图库的名称
+
+##### itemName
+
+- itemName：当前图片的名称

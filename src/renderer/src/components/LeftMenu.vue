@@ -1,6 +1,6 @@
 <template>
     <el-menu class="h-full min-h-screen w-[200px] flex-shrink-0 z-10" :collapse="isCollapsed">
-        <el-menu-item index="1" @click="isCollapsed = !isCollapsed">
+        <el-menu-item index="1" @click="isCollapsed = !isCollapsed" class="index-1">
             <el-icon class="transform animate-in" :class="isCollapsed ? '-rotate-90' : 'rotate-90'">
                 <Download />
             </el-icon>
@@ -61,5 +61,9 @@ const goToPage = (routerpath) => {
     bottom: 0;
     width: 4px;
     background-color: var(--el-color-primary);
+}
+
+:deep(.el-menu-item.index-1.is-active)::before {
+    content: none;
 }
 </style>
