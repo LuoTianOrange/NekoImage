@@ -30,7 +30,6 @@
 <script setup>
 import { ref } from "vue";
 import { v4 as uuid } from 'uuid'
-const importAll = import.meta.glob('/src/renderer/src/assets/images/*.{jpg,jpeg,png,gif}');
 
 const value = ref([])
 //选择框数组

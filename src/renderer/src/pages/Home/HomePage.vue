@@ -4,11 +4,13 @@
             <div class="text-[20px]">首页</div>
             <el-input class="w-full mt-[10px]" v-model="searchbox" size="large" placeholder="搜索图片" clearable></el-input>
             <div class="mt-5">
-                <div>常用功能</div>
+                <div class="text-[20px]">常用功能</div>
             </div>
             <div>
-                <div class="text-[20px]">不知道放什么，放张图好了</div>
-                <img src="../../assets/images/2025754-1.png" class="w-full max-h-[calc(100vh-200px)] h-full object-cover object-top"></img>
+                <div class="text-[16px]">数据统计</div>
+                <div>
+                    <div>图库数量：</div>
+                </div>
             </div>
         </div>
     </div>

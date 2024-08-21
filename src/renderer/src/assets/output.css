@@ -663,6 +663,10 @@ video {
   height: 40px;
 }
 
+.h-auto {
+  height: auto;
+}
+
 .h-full {
   height: 100%;
 }
@@ -689,6 +693,10 @@ video {
 
 .w-\[200px\] {
   width: 200px;
+}
+
+.w-\[500px\] {
+  width: 500px;
 }
 
 .w-auto {
@@ -804,6 +812,10 @@ video {
   padding: 0.75rem;
 }
 
+.p-\[10px\] {
+  padding: 10px;
+}
+
 .p-\[20px\] {
   padding: 20px;
 }
@@ -836,11 +848,6 @@ video {
 
 .text-\[20px\] {
   font-size: 20px;
-}
-
-.text-red-500 {
-  --tw-text-opacity: 1;
-  color: rgb(239 68 68 / var(--tw-text-opacity));
 }
 
 .text-red-400 {

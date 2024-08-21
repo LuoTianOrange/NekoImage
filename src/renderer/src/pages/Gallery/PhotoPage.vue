@@ -54,7 +54,7 @@
           <div v-for="(item, index) in image"
             class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
             @mouseenter="EnterPicture(index)" @mouseleave="LeavePicture(index)"
-            @click="goToPage('/photoInfo',{name: name,itemName: item.name})">
+            @click="goToPage('/photoInfo',{name: name,item: item})">
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
             <div v-if="isEnterPicture[index]"
@@ -170,29 +170,29 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated } from 'vue';
-import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router';
-import { ArrowRight, Plus } from '@element-plus/icons-vue';
+import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated, toRaw } from 'vue'
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
+import { ArrowRight, Plus } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
 import _ from 'lodash'
 
 const uploadRef = ref(null)
-const route = useRoute();
+const route = useRoute()
 const router = useRouter()
 
-const input1 = ref('');
-const input2 = ref('');
-const name = ref('');
+const input1 = ref('')
+const input2 = ref('')
+const name = ref('')
 
 const image = ref([])
 //获取全部图片
 const getAllImages = async () => {
-  const fileName = name.value;
-  console.log("fileName:", fileName);
+  const fileName = name.value
+  console.log("fileName:", fileName)
   const response = await window.api['读取全部图片']({ fileName })
   image.value = response.data.draws
-  console.log(response.data.draws);
+  console.log(response.data.draws)
 }
 //监测路由变化更新图片
 onActivated(() => {
@@ -214,27 +214,29 @@ const handleRemove = () => {
     uploadRef.value.clearFiles() // 取消上传
   }
   imageUrl.value = ''
-  ElMessage.error('图片已从上传队列移除');
+  ElMessage.error('图片已从上传队列移除')
 }
 
 //监控路由变化，改变name的值
 watchEffect(() => {
-  name.value = route.query.name;
-});
+  name.value = route.query.name
+})
 
 //路由跳转
-const itemName = ref('')
-const goToPage = (path, { name, itemName }) => {
-  console.log("name:", { name, itemName });
-  router.push({ path: path, query: { name, itemName } });
+const item = ref('')
+const goToPage = (path, { name, item }) => {
+  const itemInfo = toRaw(item)
+  console.log(itemInfo)
+  console.log("name:", { name, itemInfo })
+  router.push({ path, query: { name,item:JSON.stringify(itemInfo) } })
 }
 
 //设置相关
 const showForm = ref(false)
 const clickSetting = (name) => {
-  showForm.value = true;
-  input1.value = name;
-};
+  showForm.value = true
+  input1.value = name
+}
 //添加图片设置
 const showAddPictrueSetting = ref(false)
 
@@ -281,22 +283,22 @@ const AddTag = () => {
   else {
     ElMessage.error('标签不能为空')
   }
-  // console.log(PhotoInfo.tag);
+  // console.log(PhotoInfo.tag)
 }
 //删除标签
 const DeleteTag = (index) => {
-  PhotoInfo.value.tag.splice(index, 1);
-  console.log(PhotoInfo.value.tag);
+  PhotoInfo.value.tag.splice(index, 1)
+  console.log(PhotoInfo.value.tag)
 }
 //随机标签颜色
 const TagColor = ['#8c939d', '#86cae7', '#ffc283', '#fc3945', '#29af44']
 const randomColor = () => {
-  const index = Math.floor(Math.random() * TagColor.length);
-  return TagColor[index];
+  const index = Math.floor(Math.random() * TagColor.length)
+  return TagColor[index]
 }
 //保存图库设置
 const saveSetting = () => {
-  showForm.value = false;
+  showForm.value = false
 }
 
 const beforeRemove = (file, uploadFiles) => {
@@ -304,11 +306,11 @@ const beforeRemove = (file, uploadFiles) => {
 }
 //上传图片时把图片作为封面
 const handleChange = (file, fileList) => {
-  const reader = new FileReader();
+  const reader = new FileReader()
   reader.onload = (e) => {
-    imageUrl.value = e.target.result;
-  };
-  reader.readAsDataURL(file.raw);
+    imageUrl.value = e.target.result
+  }
+  reader.readAsDataURL(file.raw)
 }
 //清空输入框
 const ClearInputBox = () => {
@@ -332,7 +334,7 @@ const cancelUpload = () => {
 }
 //添加图片信息，手动上传图片
 const AddPhotoInfo = (PhotoInfo) => {
-  const info = _.cloneDeep(PhotoInfo)
+  const info = toRaw(PhotoInfo)
   if (_.isEmpty(info)) {
     ElMessage.error('请填写完整信息')
     return
@@ -340,7 +342,7 @@ const AddPhotoInfo = (PhotoInfo) => {
   uploadRef.value.submit()
   showAddPictrueSetting.value = false
 
-  console.log(PhotoInfo);
+  console.log(PhotoInfo)
 }
 //上传图片
 /**
@@ -349,36 +351,36 @@ const AddPhotoInfo = (PhotoInfo) => {
  * @param file 上传的图片文件
  */
 const uploadFile = async (file) => {
-  const filepath = file.file.path;
-  const filename = file.file.name;
-  const folderName = name.value;
-  // console.log(file);
+  const filepath = file.file.path
+  const filename = file.file.name
+  const folderName = name.value
+  // console.log(file)
   //上传图片到指定文件夹
   const response1 = { path: filepath, name: filename, folderName }
   const res = await window.api['上传图片到指定文件夹'](response1)
-  console.log("res:", res.path);
-  // console.log("res:", res);
+  console.log("res:", res.path)
+  // console.log("res:", res)
 
   //将图片信息写入json
-  const safePhotoInfo = _.cloneDeep(PhotoInfo.value)
+  const safePhotoInfo = toRaw(PhotoInfo.value)
   safePhotoInfo.cover = res.path
   const fileInfo = { folderName, PhotoInfo: safePhotoInfo }
-  console.log("fileInfo", fileInfo);
+  console.log("fileInfo", fileInfo)
   const jsonResponse = await window.api['将图片信息写入json'](fileInfo)
-  console.log(jsonResponse);
+  console.log(jsonResponse)
 }
 const handleSuccess = () => {
-  ElMessage.success('文件上传成功');
+  ElMessage.success('文件上传成功')
   ClearInputBox()
   getAllImages()
   imageUrl.value = ''
   router.go(0)
   // cancelUpload()
-};
+}
 
 const handleError = () => {
-  ElMessage.error('文件上传失败');
-};
+  ElMessage.error('文件上传失败')
+}
 
 const beforeUpload = (rawfile) => {
   if (rawfile.type !== 'image/jpeg' && rawfile.type !== 'image/png') {
