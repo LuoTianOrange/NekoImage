@@ -15,7 +15,7 @@
 #### 图片管理
 
 - [x] 添加图片功能：上传指定图片，并且填入图片信息到对应的图库json，将文件名字自动填入输入框
-- [ ] 读取全部图片功能：从json读取所有图片的路径并返回前端渲染
+- [x] 读取全部图片功能：从json读取所有图片的路径并返回前端渲染
 - [ ] 删除图片功能：从图库中删除指定图片，并从json中删除对应信息
 - [ ] 修改图片功能：从json中修改图片的信息
 - [ ] 导出图库功能：导出指定图库的json
@@ -84,3 +84,42 @@ if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
 > 打包提示：`remove app.asar: The process cannot access the file because it is being used by another process`
 
 可能是`README.md`这种文件在vscode以外的软件正在使用，因为打包的时候也会把readme打包进去
+
+> 如何设置软件图标？
+
+图标要求：小于256px，格式为png或ico
+
+转ico网站：https://redketchup.io/icon-converter
+
+png调整尺寸网站：https://www.iloveimg.com/zh-cn/resize-image/resize-png
+
+
+
+软件左上角：
+
+在`main.js`中，
+
+```js
+  const mainWindow = new BrowserWindow({
+    icon: path.join(__dirname, 'icon.png'),
+  })
+```
+
+软件打包图标：
+
+在`package.json`中，在`build`下添加
+
+`"win":{
+      "icon": "build/图标路径"
+    }`
+
+```json
+"scripts":{...}
+"dependencies":{...}
+"build": {
+    "win":{
+      "icon": "build/icons/icon.ico"
+    }
+  }
+```
+

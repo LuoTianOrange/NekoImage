@@ -15,7 +15,7 @@ extraFiles:
 asarUnpack:
   - resources/**
 win:
-  icon: resources/icons/icons.png
+  icon: resources/icons/icons.ico
   executableName: 橘橘图库
   artifactName: ${productName}-win-${version}-${arch}.${ext}
   target:

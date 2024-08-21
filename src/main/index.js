@@ -19,11 +19,12 @@ function createWindow() {
     show: false,
     autoHideMenuBar: true,
     // ...(process.platform === 'linux' ? { icon } : {}),
+    icon: path.join(__dirname, '../../resources/icons/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       webSecurity: false,
-      allowRunningInsecureContent: false
+      allowRunningInsecureContent: false,
     }
   })
   //打开调试工具

@@ -172,16 +172,16 @@ const clickDeleteDialogSetting = (data) => {
 const galleryList = ref([])
 
 //读取全部图库
-const ReadAllGallery = onActivated(async () => {
+onActivated(async () => {
   const response = await window.api['读取全部图库']()
   galleryList.value = response.data
   console.log(response);
   console.log("draw[0]:",galleryList.value[0].draws[0].cover)
 })
-// const ReadAllGallery = async () => {
-//   const response = await window.api['读取全部图库']()
-//   galleryList.value = response.data
-// }
+const ReadAllGallery = async () => {
+  const response = await window.api['读取全部图库']()
+  galleryList.value = response.data
+}
 
 //读取指定图库
 const readGallery = () => {
