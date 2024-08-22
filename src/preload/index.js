@@ -24,7 +24,15 @@ const api = {
   '读取全部图片': async (data) => {
     const result = await ipcRenderer.invoke('读取全部图片', data);
     return result;
-  }
+  },
+  '读取图库路径': async (data) => {
+    const result = await ipcRenderer.invoke('读取图库路径', data);
+    return result;
+  },
+  '读取应用版本': async (data) => {
+    const result = await ipcRenderer.invoke('读取应用版本', data);
+    return result;
+  },
 
 }
 // Use `contextBridge` APIs to expose Electron APIs to

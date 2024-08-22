@@ -177,7 +177,7 @@ onActivated(async () => {
   const response = await window.api['读取全部图库']()
   galleryList.value = response.data
   console.log(response);
-  console.log("draw[0]:",galleryList.value[0].draws[0].cover)
+  // console.log("draw[0]:",galleryList.value[0].draws[0].cover)
 })
 const ReadAllGallery = async () => {
   const response = await window.api['读取全部图库']()

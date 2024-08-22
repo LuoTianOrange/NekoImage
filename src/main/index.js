@@ -63,14 +63,14 @@ app.whenReady().then(() => {
   })
 
   // IPC test
+  /**
+   * 应用路径，开发环境和生产环境使用不同的路径
+   * @appPath
+   */
+  const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ? app.getAppPath() : path.dirname(app.getPath('exe'))
+
   ipcMain.on('添加图库', (event, arg) => {
-    let appPath
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      appPath = app.getAppPath()
-    }
-    else {
-      appPath = path.dirname(app.getPath('exe'))
-    }
+
     let newArg = JSON.parse(arg)
     const filePath = path.join(appPath, `./appData/${newArg.name}.json`)
     const dirPath = path.join(appPath, `./appData/${newArg.name}`)
@@ -100,9 +100,7 @@ app.whenReady().then(() => {
     })
   })
   ipcMain.handle('读取全部图库', async (event, arg) => {
-    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
-      app.getAppPath()
-      : path.dirname(app.getPath('exe'))
+
     const dirPath = path.join(appPath, `/appData`)
 
     const handleErr = (title, err) => {
@@ -153,9 +151,7 @@ app.whenReady().then(() => {
 
   })
   ipcMain.handle('删除指定图库', async (event, arg) => {
-    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
-      app.getAppPath()
-      : path.dirname(app.getPath('exe'))
+
     const filePath = path.join(appPath, `/appData/${arg}.json`)
     const dirPath = path.join(appPath, `./appData/${arg}`)
     return new Promise((resolve, reject) => {
@@ -175,9 +171,7 @@ app.whenReady().then(() => {
     });
   })
   ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
-    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
-      app.getAppPath()
-      : path.dirname(app.getPath('exe'))
+
     const handleErr = (title, err) => {
       const notification = new Notification()
       notification.title = title
@@ -199,9 +193,7 @@ app.whenReady().then(() => {
     return { success: true, message: '成功上传图片', path: destinationPath }
   });
   ipcMain.handle('将图片信息写入json', async (event, { folderName, PhotoInfo }) => {
-    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
-      app.getAppPath()
-      : path.dirname(app.getPath('exe'))
+
     const handleErr = (title, err) => {
       const notification = new Notification()
       notification.title = title
@@ -218,7 +210,7 @@ app.whenReady().then(() => {
       const jsonData = data ? JSON.parse(data) : [PhotoInfo]
       const pid = uuid()
       jsonData.draws.push({ ...PhotoInfo, pid })
-      console.log(jsonData, PhotoInfo)
+      // console.log(jsonData, PhotoInfo)
       const [writeErr] = await to(fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2)), 'utf8')
       if (writeErr) {
         handleErr('写入json失败', writeErr)
@@ -232,12 +224,10 @@ app.whenReady().then(() => {
     }
     return { success: true, message: '成功更新json文件', data: data };
   })
-  ipcMain.handle('读取全部图片', async (event,allPhoto) => {
+  ipcMain.handle('读取全部图片', async (event, allPhoto) => {
     const { fileName } = allPhoto
     console.log(allPhoto)
-    const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ?
-      app.getAppPath()
-      : path.dirname(app.getPath('exe'))
+
     const handleErr = (title, err) => {
       const notification = new Notification()
       notification.title = title
@@ -246,7 +236,7 @@ app.whenReady().then(() => {
     }
     const readAllJsonFile = async () => {
       const jsonPath = path.join(appPath, `/appData/${fileName}.json`)
-      console.log(fileName)
+      // console.log(fileName)
       const data = await fsPromises.readFile(jsonPath, 'utf-8')
       return data
     }
@@ -256,6 +246,13 @@ app.whenReady().then(() => {
       return { success: false, message: '读取json失败', error: err };
     }
     return { success: true, message: '成功读取json文件', data: JSON.parse(data) };
+  })
+  ipcMain.handle('读取图库路径', async () => {
+    return { success: true, message: '成功读取图库路径', data: appPath }
+  })
+  ipcMain.handle('读取应用版本', async () => {
+    const appVersion = app.getVersion()
+    return { success: true, message: '成功读取应用版本', data: appVersion }
   })
   createWindow()
 
