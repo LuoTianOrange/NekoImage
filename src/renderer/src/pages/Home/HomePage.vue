@@ -20,7 +20,7 @@
 
 <script setup>
 import { forEach } from "lodash";
-import { onActivated, onMounted, ref } from "vue"
+import { onActivated, onDeactivated, onMounted, ref } from "vue"
 const searchbox = ref("")
 const GalleryCount = ref(0)
 const PhotoCount = ref(0)
@@ -41,6 +41,9 @@ onActivated(async () => {
     // console.log(res);
     // console.log(res.data.draws.length);
   })
-
+})
+onDeactivated(() => {
+  GalleryCount.value = 0
+  PhotoCount.value = 0
 })
 </script>

@@ -34,6 +34,15 @@
           </el-tab-pane>
           <el-tab-pane label="外观" name="外观">
             <div class="text-[22px] font-bold">外观</div>
+            <div class="flex flex-col px-2 text-[14px]">
+              <div class="flex flex-row items-center w-[300px] justify-between">
+                <div class="font-bold">主题</div>
+                <el-radio-group v-model="LightTheme">
+                  <el-radio-button label="浅色" value="LightTheme" />
+                  <el-radio-button label="深色" value="DarkTheme" />
+                </el-radio-group>
+              </div>
+            </div>
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -49,9 +58,13 @@ import _ from 'lodash'
 const tabActiveItem = ref('默认')
 const version = ref('')
 const NewVersion = ref('')
-NewVersion.value = '1.0.0'
+NewVersion.value = '0.1.0'
 const GalleryPath = ref('')
 const GithubUrl = ref('https://github.com/LuoTianOrange/NekoImage')
+
+const LightTheme = ref('LightTheme')
+const DarkTheme = ref('DarkTheme')
+
 onMounted(() => {
   window.api['读取图库路径']().then(res => {
     GalleryPath.value = res.data
