@@ -24,6 +24,12 @@
             </el-icon>
             <span class="select-none">导出</span>
         </el-menu-item>
+        <el-menu-item index="5" @click="goToPage('/tools')">
+            <el-icon>
+                <Crop />
+            </el-icon>
+            <span class="select-none">工具</span>
+        </el-menu-item>
         <el-menu-item index="9" @click="goToPage('/setting')">
             <el-icon>
                 <Tools />

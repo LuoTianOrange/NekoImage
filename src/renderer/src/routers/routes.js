@@ -32,6 +32,12 @@ const routes = [
         component: () => import('../pages/Export/ExportPage.vue'),
     },
     {
+        path: '/tools',
+        name: 'Tools',
+        title: '工具',
+        component: () => import('../pages/Tools/ToolsPage.vue'),
+    },
+    {
         path: '/setting',
         name: 'Setting',
         title: '设置',

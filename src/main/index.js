@@ -25,7 +25,8 @@ function createWindow() {
       sandbox: false,
       webSecurity: false,
       allowRunningInsecureContent: false,
-    }
+    },
+    resizable: false //禁止改变主窗口尺寸
   })
   //打开调试工具
   mainWindow.webContents.openDevTools()

@@ -14,7 +14,7 @@
 
 #### 图片管理
 
-- [x] 添加图片功能：上传指定图片，并且填入图片信息到对应的图库json，将文件名字自动填入输入框
+- [x] 添加图片功能：上传指定图片，并且填入图片信息到对应的图库json，将文件名字自动填入输入框，要检查是否有同名图库
 - [x] 读取全部图片功能：从json读取所有图片的路径并返回前端渲染
 - [ ] 删除图片功能：从图库中删除指定图片，并从json中删除对应信息
 - [ ] 修改图片功能：从json中修改图片的信息
@@ -139,6 +139,15 @@ png调整尺寸网站：https://www.iloveimg.com/zh-cn/resize-image/resize-png
     }
   }
 ```
+
+## 第三方库
+
+图像处理：
+
+- Pica：https://github.com/nodeca/pica
+- Blurify：https://github.com/JustClear/blurify
+- Cropper.js：https://github.com/fengyuanchen/cropperjs
+- CamanJS：https://github.com/meltingice/CamanJS/
 
 ## 页面
 
