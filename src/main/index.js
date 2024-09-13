@@ -15,7 +15,9 @@ function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1000,
+    minWidth: 1000,
     height: 700,
+    minHeight: 700,
     show: false,
     autoHideMenuBar: true,
     // ...(process.platform === 'linux' ? { icon } : {}),
@@ -26,7 +28,7 @@ function createWindow() {
       webSecurity: false,
       allowRunningInsecureContent: false,
     },
-    resizable: false //禁止改变主窗口尺寸
+    // resizable: false //禁止改变主窗口尺寸
   })
   //打开调试工具
   mainWindow.webContents.openDevTools()

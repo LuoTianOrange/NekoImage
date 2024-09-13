@@ -16,8 +16,8 @@
           class="transform animate-in w-[200px] min-h-[200px] m-2 rounded-md overflow-hidden shadow ">
           <div class="w-full h-[140px] overflow-hidden border-b" @click="goToPage('/photo',item.name)">
             <img v-if="item.draws.length == 0" class="w-full h-full object-cover object-center"
-              src="../../assets/bloghover.png"></img>
-            <img v-else class="w-full h-full object-cover object-center" :src="item.draws[0].cover"></img>
+              src="../../assets/bloghover.png" />
+            <img v-else class="w-full h-full object-cover object-center" :src="item.draws[0].cover" />
           </div>
           <div class="px-2 bg-white">
             <div class="pt-1">{{ item.name }}</div>

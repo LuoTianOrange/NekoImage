@@ -22,7 +22,13 @@
             <el-icon>
               <UploadFilled />
             </el-icon>
-            <div class="ml-1">添加图片</div>
+            <div class="ml-1">添加单张图片</div>
+          </el-button>
+          <el-button type="primary" plain class="flex flex-row" @click="">
+            <el-icon>
+              <UploadFilled />
+            </el-icon>
+            <div class="ml-1">添加多张图片</div>
           </el-button>
           <el-button type="primary" plain class="flex flex-row">
             <el-icon>
@@ -42,19 +48,19 @@
             </el-icon>
             <div class="ml-1">删除图库</div>
           </el-button>
-          <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
+          <!-- <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
             <el-icon>
               <Tools />
             </el-icon>
             <div class="ml-1">刷新</div>
-          </el-button>
+          </el-button> -->
         </div>
         <!--图片展示区-->
         <div class="mt-5 flex flex-wrap items-start w-full">
           <div v-for="(item, index) in image"
             class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
             @mouseenter="EnterPicture(index)" @mouseleave="LeavePicture(index)"
-            @click="goToPage('/photoInfo',{name: name,item: item})">
+            @click.stop="goToPage('/photoInfo',{name: name,item: item})">
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
             <span>{{ item.name }}</span>
             <div v-if="isEnterPicture[index]"
@@ -66,7 +72,7 @@
                 </el-icon>
               </el-button>
               <!--删除图片-->
-              <el-button class="" type="danger" size="small" plain>
+              <el-button class="" type="danger" size="small" plain @click.stop="deletePhoto(index)">
                 <el-icon>
                   <Delete />
                 </el-icon>
@@ -96,7 +102,7 @@
     <el-dialog v-model="showAddPictrueSetting" :width="600">
       <div class="text-[20px] flex flex-col">添加图片</div>
       <div class="mt-2 flex justify-between">
-        <div class="text-[16px]">上传图片</div>
+        <div class="text-[16px]">上传图片<span class="text-red-600">*</span></div>
         <el-upload ref="uploadRef" class="avatar-uploader border h-[100px]" action="#" :http-request="uploadFile"
           :limit="1" :show-file-list="false" :before-upload="beforeUpload" :on-success="handleSuccess"
           :on-error="handleError" :on-change="handleChange" :auto-upload="false">
@@ -114,7 +120,7 @@
         </el-upload>
       </div>
       <div class="mt-2 flex justify-between">
-        <div class="text-[16px]">画作名称</div>
+        <div class="text-[16px]">画作名称<span class="text-red-600">*</span></div>
         <el-input v-model="PhotoInfo.name" style="width: 200px;" placeholder="请输入名称" clearable></el-input>
       </div>
       <div class="mt-2 flex justify-between">
@@ -122,7 +128,7 @@
         <el-input v-model="PhotoInfo.desc" style="width: 200px;" placeholder="画作描述" clearable></el-input>
       </div>
       <div class="mt-2 flex justify-between">
-        <div class="text-[16px]">画师名称</div>
+        <div class="text-[16px]">画师名称<span class="text-red-600">*</span></div>
         <el-input v-model="PhotoInfo.author" style="width: 200px;" placeholder="画师名称" clearable></el-input>
       </div>
       <div class="mt-2 flex justify-between">
@@ -136,7 +142,7 @@
         </el-date-picker>
       </div>
       <div class="mt-2 flex justify-between">
-        <div class="text-[16px]">画作类型</div>
+        <div class="text-[16px]">画作类型<span class="text-red-600">*</span></div>
         <el-select v-model="PhotoInfo.type" style="width: 200px;" placeholder="选择画作类型">
           <el-option v-for="i in PictureType" :label="i.label" :value="i.value"></el-option>
         </el-select>
@@ -172,7 +178,7 @@
 <script setup>
 import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated, toRaw } from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { ArrowRight, Plus } from '@element-plus/icons-vue'
+import { ArrowRight } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
 import _ from 'lodash'
@@ -387,6 +393,11 @@ const beforeUpload = (rawfile) => {
     ElMessage.error('图片必须是jpeg格式或者png格式')
     return false
   }
+}
+
+//删除图片
+const deletePhoto = (index) => {
+  console.log("删除图片", index)
 }
 </script>
 <style scoped>

@@ -3,14 +3,16 @@
         <div class="p-[20px]">
             <!-- <div class="text-[20px]">首页</div> -->
             <!-- <el-input class="w-full mt-[10px]" v-model="searchbox" size="large" placeholder="搜索图片" clearable></el-input> -->
-            <div class="h-[260px] overflow-hidden rounded-lg ">
+            <div class="h-[260px] overflow-hidden rounded-lg relative">
+                <div class="absolute top-10 left-10 text-[30px] text-white font-bold z-20">橘橘博客<br />图片管理工具</div>
+                <div class="absolute bg-black w-full h-full opacity-20 z-10"></div>
                 <el-image :src="bg" class="object-cover"></el-image>
             </div>
             <div class="mt-5">
                 <div class="text-[22px] font-bold">文件夹</div>
                 <div class="flex flex-row flex-wrap">
-                    <div v-for="item in 6"
-                        class="w-[200px] h-[60px] bg-gray-200 rounded-lg flex flex-row items-center justify-between p-3 m-1">
+                    <div v-for="item in 1" class="w-[200px] h-[60px] bg-gray-200 rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer
+                            hover:bg-gray-300">
                         <div class="flex flex-row items-center">
                             <el-icon :size="22">
                                 <Folder />
@@ -28,12 +30,18 @@
             </div>
             <div class="mt-2">
                 <div class="text-[22px] font-bold">数据统计</div>
-                <div>
-                    <div>图库数量：{{ GalleryCount }}</div>
-                    <div>图片数量：{{ PhotoCount }}</div>
-                    <div v-for="item in PhotoType" class="flex flex-row">
-                        <div>{{ item.name }}：</div>
-                        <div>{{ item.count }}</div>
+                <div class="flex flex-row flex-wrap">
+                    <div class="w-[200px] h-[70px] bg-gray-200 rounded-lg p-3 m-1">
+                        <div class="flex flex-col">
+                            <div>图库数量</div>
+                            <div> {{ GalleryCount }}</div>
+                        </div>
+                    </div>
+                    <div class="w-[200px] h-[70px] bg-gray-200 rounded-lg p-3 m-1">
+                        <div class="flex flex-col">
+                            <div>图片数量</div>
+                            <div> {{ PhotoCount }}</div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -148,6 +148,7 @@ png调整尺寸网站：https://www.iloveimg.com/zh-cn/resize-image/resize-png
 - Blurify：https://github.com/JustClear/blurify
 - Cropper.js：https://github.com/fengyuanchen/cropperjs
 - CamanJS：https://github.com/meltingice/CamanJS/
+- Sharp：https://sharp.nodejs.cn/install
 
 ## 页面
 

@@ -10,31 +10,36 @@
             <el-icon>
                 <Home />
             </el-icon>
-            <span class="select-none">首页</span>
+            <!-- <span class="select-none">首页</span> -->
+            <template #title class="select-none">首页</template>
         </el-menu-item>
         <el-menu-item index="3" @click="goToPage('/gallery')">
             <el-icon>
                 <Picture />
             </el-icon>
-            <span class="select-none">图库管理</span>
+            <!-- <span class="select-none">图库管理</span> -->
+            <template #title class="select-none">图库管理</template>
         </el-menu-item>
         <el-menu-item index="4" @click="goToPage('/export')">
             <el-icon>
                 <Link />
             </el-icon>
-            <span class="select-none">导出</span>
+            <!-- <span class="select-none">导出</span> -->
+            <template #title class="select-none">导出</template>
         </el-menu-item>
         <el-menu-item index="5" @click="goToPage('/tools')">
             <el-icon>
                 <Crop />
             </el-icon>
-            <span class="select-none">工具</span>
+            <!-- <span class="select-none">工具</span> -->
+            <template #title class="select-none">工具</template>
         </el-menu-item>
         <el-menu-item index="9" @click="goToPage('/setting')">
             <el-icon>
                 <Tools />
             </el-icon>
-            <span class="select-none">设置</span>
+            <!-- <span class="select-none">设置</span> -->
+            <template #title class="select-none">设置</template>
         </el-menu-item>
     </el-menu>
 </template>

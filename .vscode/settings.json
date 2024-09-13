@@ -10,6 +10,7 @@
   },
   "css.lint.unknownAtRules": "ignore",
   "cSpell.words": [
-    "asar"
+    "asar",
+    "bloghover"
   ]
 }
