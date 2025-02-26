@@ -172,6 +172,7 @@
         <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false,cancelUpload()">取消</el-button>
       </div>
     </el-dialog>
+    <RightMenu :MenuItem="MenuItem"></RightMenu>
   </div>
 </template>
 
@@ -181,6 +182,7 @@ import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
+import RightMenu from '../../components/RightMenu.vue'
 import _ from 'lodash'
 
 const uploadRef = ref(null)
@@ -192,13 +194,23 @@ const input2 = ref('')
 const name = ref('')
 
 const image = ref([])
+const MenuItem = ref({
+  name: '基本信息',
+  count: null,
+  size: 10,
+  pageID: 1
+})
 //获取全部图片
 const getAllImages = async () => {
+  /**
+   * 图库名称
+   */
   const fileName = name.value
-  console.log("fileName:", fileName)
+  // console.log("fileName:", fileName)
   const response = await window.api['读取全部图片']({ fileName })
   image.value = response.data.draws
-  console.log(response.data.draws)
+  MenuItem.value.count = response.data.draws.length
+  console.log("读取全部图片:",response.data.draws)
 }
 //监测路由变化更新图片
 onActivated(() => {
@@ -348,7 +360,7 @@ const AddPhotoInfo = (PhotoInfo) => {
   uploadRef.value.submit()
   showAddPictrueSetting.value = false
 
-  console.log(PhotoInfo)
+  console.log("rawPhotoInfo:",PhotoInfo)
 }
 //上传图片
 /**
@@ -388,8 +400,8 @@ const handleError = () => {
   ElMessage.error('文件上传失败')
 }
 
-const beforeUpload = (rawfile) => {
-  if (rawfile.type !== 'image/jpeg' && rawfile.type !== 'image/png') {
+const beforeUpload = (rawFile) => {
+  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
     ElMessage.error('图片必须是jpeg格式或者png格式')
     return false
   }

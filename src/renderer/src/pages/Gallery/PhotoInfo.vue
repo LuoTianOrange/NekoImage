@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="flex flex-col w-full min-h-scree">
+        <div class="flex flex-col w-full min-h-screen">
             <div class="p-[20px]">
                 <div class="text-[20px]">{{ item.name }}</div>
                 <div class="mt-5"></div>
@@ -41,6 +41,7 @@
                 </div>
             </div>
         </div>
+        <RightMenu :MenuItem="MenuItem"></RightMenu>
     </div>
 </template>
 
@@ -48,6 +49,7 @@
 import { ArrowRight } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { watchEffect, ref, onActivated, onMounted } from 'vue'
+import RightMenu from '../../components/RightMenu.vue'
 import _ from 'lodash'
 
 const route = useRoute()
@@ -55,6 +57,14 @@ const router = useRouter()
 const name = ref('')
 const item = ref('')
 const photoPreview = []
+
+const MenuItem = ref({
+  name: '基本信息',
+  size: 10,
+  pageID: 0,
+  format: 'jpg',
+})
+
 watchEffect(() => {
   name.value = route.query.name
   if (!route.query.item) {
@@ -66,8 +76,16 @@ watchEffect(() => {
   console.log(route.query);
   console.log(photoPreview);
 })
+const getFileInfo = async () => {
+    const filePath = item.value.cover
+    console.log(typeof filePath)
+    const response = await window.api['读取文件信息'](filePath.toString())
+    console.log(response);
+    return response
+}
 onMounted(() => {
   photoPreview.push(item.value.cover)
+  getFileInfo()
 })
 const goToPage = (path, name) => {
   router.push({ path: path, query: { name } })

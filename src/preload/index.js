@@ -33,6 +33,10 @@ const api = {
     const result = await ipcRenderer.invoke('读取应用版本', data);
     return result;
   },
+  '读取文件信息': async (filePath) => {
+    const result = await ipcRenderer.invoke('读取文件信息', filePath);
+    return result;
+  },
 
 }
 // Use `contextBridge` APIs to expose Electron APIs to

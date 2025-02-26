@@ -257,6 +257,14 @@ app.whenReady().then(() => {
     const appVersion = app.getVersion()
     return { success: true, message: '成功读取应用版本', data: appVersion }
   })
+  ipcMain.handle('读取文件信息', async (filePath) => {
+    await fsPromises.readFile(filePath,'utf-8', (err, data) => {
+      if (err) {
+        return { success: false, message: '读取文件失败', error: err }
+      }
+      return { success: true, message: '成功读取文件', data }
+    })
+  })
   createWindow()
 
   app.on('activate', function () {
