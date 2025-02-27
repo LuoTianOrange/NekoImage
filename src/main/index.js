@@ -1,15 +1,22 @@
 import { app, shell, BrowserWindow, ipcMain, Notification } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-// import icon from '../../resources/icon.png?asset'
-// const trash = require('trash')
-// const fs = require('fs')
-// const path = require('node:path')
 import fs from 'fs'
 import { to } from 'await-to-js'
 import fsPromises from 'fs/promises'
 import path from 'path'
 import { v4 as uuid } from 'uuid'
+import Store from 'electron-store'
+
+// 初始化配置存储
+const store = new Store()
+
+// 路径构建工具函数
+const pathUtil = {
+  gallery: (name) => path.join(getStorageRoot(), 'Galleries', name),
+  meta: (name) => path.join(getStorageRoot(), 'Galleries', name, 'data.json'),
+  images: (name) => path.join(getStorageRoot(), 'Galleries', name, 'images')
+}
 
 function createWindow() {
   // Create the browser window.
@@ -23,7 +30,7 @@ function createWindow() {
     // ...(process.platform === 'linux' ? { icon } : {}),
     icon: path.join(__dirname, '../../resources/icons/icon.png'),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,
       webSecurity: false,
       allowRunningInsecureContent: false,
@@ -48,6 +55,22 @@ function createWindow() {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+}
+
+// 获取存储路径（核心修改）
+const getStoragePath = () => {
+  const customPath = store.get('storagePath')
+  return customPath || path.join(app.getPath('documents'), 'ElectronGalleryData')
+}
+
+// 路径验证函数
+const validatePath = (targetPath) => {
+  if (!fs.existsSync(path.dirname(targetPath))) {
+    throw new Error('父目录不存在')
+  }
+  if (targetPath.includes('..')) {
+    throw new Error('非法路径')
   }
 }
 

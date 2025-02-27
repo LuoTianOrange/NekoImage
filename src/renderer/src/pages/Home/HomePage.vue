@@ -1,10 +1,8 @@
 <template>
-    <div class="flex flex-col w-full min-h-scree">
+    <div class="flex flex-col w-full min-h-screen">
         <div class="p-[20px]">
-            <!-- <div class="text-[20px]">首页</div> -->
-            <!-- <el-input class="w-full mt-[10px]" v-model="searchbox" size="large" placeholder="搜索图片" clearable></el-input> -->
-            <div class="h-[260px] overflow-hidden rounded-lg relative">
-                <div class="absolute top-10 left-10 text-[30px] text-white font-bold z-20">橘橘博客<br />图片管理工具</div>
+            <div class="h-[200px] overflow-hidden rounded-lg relative">
+                <div class="absolute top-10 left-10 text-[30px] text-white font-bold z-20">绘枢<br />图片管理工具</div>
                 <div class="absolute bg-black w-full h-full opacity-20 z-10"></div>
                 <el-image :src="bg" class="object-cover"></el-image>
             </div>
