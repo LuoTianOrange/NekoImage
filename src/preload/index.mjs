@@ -29,6 +29,10 @@ const api = {
     const result = await ipcRenderer.invoke('读取图库路径', data);
     return result;
   },
+  '设置图库路径': async (newPath) => {
+    const result = await ipcRenderer.invoke('设置图库路径', newPath);
+    return result;
+  },
   '读取应用版本': async (data) => {
     const result = await ipcRenderer.invoke('读取应用版本', data);
     return result;

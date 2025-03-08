@@ -57,8 +57,7 @@ import _ from 'lodash'
 
 const tabActiveItem = ref('默认')
 const version = ref('')
-const NewVersion = ref('')
-NewVersion.value = '0.1.0'
+const NewVersion = ref('0.1.1')
 const GalleryPath = ref('')
 const GithubUrl = ref('https://github.com/LuoTianOrange/NekoImage')
 

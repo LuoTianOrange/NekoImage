@@ -18,6 +18,40 @@ const pathUtil = {
   images: (name) => path.join(getStorageRoot(), 'Galleries', name, 'images')
 }
 
+// 获取存储路径
+const getStoragePath = () => {
+  const customPath = store.get('storagePath')
+  const defaultPath = path.join(app.getPath('documents'), 'ElectronGalleryData')
+  const storagePath = customPath || defaultPath
+
+  // 确保路径存在
+  if (!fs.existsSync(storagePath)) {
+    try {
+      fs.mkdirSync(storagePath, { recursive: true })
+      console.log(`目录已创建: ${storagePath}`)
+    } catch (err) {
+      console.error(`无法创建目录: ${storagePath}`, err)
+    }
+  }
+
+  return storagePath
+}
+
+// 设置存储路径
+const setStoragePath = (newPath) => {
+  store.set('storagePath', newPath)
+}
+
+// 路径验证函数
+const validatePath = (targetPath) => {
+  if (!fs.existsSync(path.dirname(targetPath))) {
+    throw new Error('父目录不存在')
+  }
+  if (targetPath.includes('..')) {
+    throw new Error('非法路径')
+  }
+}
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -33,8 +67,8 @@ function createWindow() {
       preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false,
       webSecurity: false,
-      allowRunningInsecureContent: false,
-    },
+      allowRunningInsecureContent: false
+    }
     // resizable: false //禁止改变主窗口尺寸
   })
   //打开调试工具
@@ -58,28 +92,15 @@ function createWindow() {
   }
 }
 
-// 获取存储路径（核心修改）
-const getStoragePath = () => {
-  const customPath = store.get('storagePath')
-  return customPath || path.join(app.getPath('documents'), 'ElectronGalleryData')
-}
-
-// 路径验证函数
-const validatePath = (targetPath) => {
-  if (!fs.existsSync(path.dirname(targetPath))) {
-    throw new Error('父目录不存在')
-  }
-  if (targetPath.includes('..')) {
-    throw new Error('非法路径')
-  }
-}
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+
+  const storagePath = getStoragePath()
+  console.log(`当前图库路径: ${storagePath}`)
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -93,13 +114,16 @@ app.whenReady().then(() => {
    * 应用路径，开发环境和生产环境使用不同的路径
    * @appPath
    */
-  const appPath = is.dev && process.env['ELECTRON_RENDERER_URL'] ? app.getAppPath() : path.dirname(app.getPath('exe'))
+  const appPath =
+    is.dev && process.env['ELECTRON_RENDERER_URL']
+      ? app.getAppPath()
+      : path.dirname(app.getPath('exe'))
 
   ipcMain.on('添加图库', (event, arg) => {
-
     let newArg = JSON.parse(arg)
-    const filePath = path.join(appPath, `./appData/${newArg.name}.json`)
-    const dirPath = path.join(appPath, `./appData/${newArg.name}`)
+    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+    const filePath = path.join(storagePath, 'Galleries', `${newArg.name}.json`) // 图库元数据文件路径
+    const dirPath = path.join(storagePath, 'Galleries', newArg.name) // 图库图片目录路径
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err && err.code === 'ENOENT') {
         // 文件不存在，创建新文件
@@ -109,7 +133,11 @@ app.whenReady().then(() => {
           } else {
             fs.mkdir(dirPath, (err) => {
               if (err) {
-                event.reply('添加图库响应', { success: false, message: '无法创建文件夹', error: err })
+                event.reply('添加图库响应', {
+                  success: false,
+                  message: '无法创建文件夹',
+                  error: err
+                })
               } else {
                 event.reply('添加图库响应', { success: true, message: '成功添加图库' })
               }
@@ -125,9 +153,10 @@ app.whenReady().then(() => {
       }
     })
   })
-  ipcMain.handle('读取全部图库', async (event, arg) => {
 
-    const dirPath = path.join(appPath, `/appData`)
+  ipcMain.handle('读取全部图库', async (event, arg) => {
+    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+    const dirPath = path.join(storagePath, 'Galleries') // 图库目录
 
     const handleErr = (title, err) => {
       const notification = new Notification()
@@ -135,32 +164,35 @@ app.whenReady().then(() => {
       notification.body = err?.message
       notification.show()
     }
-    //判断是否存在文件夹
+
+    // 判断图库目录是否存在，如果不存在则创建
     if (!fs.existsSync(dirPath)) {
-      const exeDirPath = path.dirname(app.getPath('exe'))
-      const dirPath = path.join(exeDirPath, 'appData')
-      const [err] = await to(fsPromises.mkdir(dirPath, { recursive: true }));
-      if (err) {
-        handleErr('创建目录失败', err)
-        return { success: false, message: '创建目录失败', data: [dirPath] }
+      try {
+        fs.mkdirSync(dirPath, { recursive: true })
+        console.log(`图库目录已创建: ${dirPath}`)
+      } catch (err) {
+        handleErr('创建图库目录失败', err)
+        return { success: false, message: '创建图库目录失败', error: err }
       }
     }
 
+    // 读取图库目录下的所有 JSON 文件
     const getFilesList = async () => {
       const files = await fsPromises.readdir(dirPath)
       const jsonDataList = []
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        if (path.extname(file) !== '.json') { continue }
-        const filePath = path.join(dirPath, file);
+        if (path.extname(file) !== '.json') {
+          continue
+        }
+        const filePath = path.join(dirPath, file)
         try {
           const data = await fsPromises.readFile(filePath, 'utf-8')
-          const json = JSON.parse(data);
-          jsonDataList.push(json);
+          const json = JSON.parse(data)
+          jsonDataList.push(json)
         } catch (err) {
-          handleErr('读取全部图库失败', err)
+          handleErr('读取图库文件失败', err)
         }
-
       }
       return jsonDataList
     }
@@ -173,53 +205,65 @@ app.whenReady().then(() => {
     return { success: true, message: '成功读取全部图库', data: res }
   })
 
-  ipcMain.handle('读取指定图库', (event, arg) => {
-
+  ipcMain.handle('读取图库路径', async () => {
+    return { success: true, message: '成功读取图库路径', data: getStoragePath() }
   })
-  ipcMain.handle('删除指定图库', async (event, arg) => {
 
-    const filePath = path.join(appPath, `/appData/${arg}.json`)
-    const dirPath = path.join(appPath, `./appData/${arg}`)
+  ipcMain.handle('设置图库路径', async (event, newPath) => {
+    setStoragePath(newPath)
+    return { success: true, message: '成功设置图库路径', data: newPath }
+  })
+
+  ipcMain.handle('删除指定图库', async (event, arg) => {
+    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+    const filePath = path.join(storagePath, 'Galleries', `${arg}.json`) // 图库元数据文件路径
+    const dirPath = path.join(storagePath, 'Galleries', arg)
     return new Promise((resolve, reject) => {
       fs.unlink(filePath, (err) => {
         if (err) {
-          reject({ success: false, message: '无法删除文件', error: err });
+          reject({ success: false, message: '无法删除文件', error: err })
         } else {
           fs.rm(dirPath, { recursive: true }, (err) => {
             if (err) {
-              reject({ success: false, message: '无法删除文件夹', error: err });
+              reject({ success: false, message: '无法删除文件夹', error: err })
             } else {
-              resolve({ success: true, message: '成功删除图库' });
+              resolve({ success: true, message: '成功删除图库' })
             }
-          });
+          })
         }
-      });
-    });
+      })
+    })
   })
-  ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
 
-    const handleErr = (title, err) => {
-      const notification = new Notification()
-      notification.title = title
-      notification.body = err?.message
-      notification.show()
-    }
-    //复制图片到目标文件夹
-    async function copyFile(filePath, folderName, fileName) {
-      const destinationPath = path.join(appPath, `/appData/${folderName}/${fileName}`);
-      const [err] = await to(fsPromises.copyFile(filePath, destinationPath));
-      return { err, destinationPath };
-    }
+  ipcMain.handle('上传图片到指定文件夹',
+    async (event, { path: filePath, name: fileName, folderName }) => {
+      const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+      const destinationPath = path.join(storagePath, 'Galleries', folderName, fileName) // 目标文件路径
+      const handleErr = (title, err) => {
+        const notification = new Notification()
+        notification.title = title
+        notification.body = err?.message
+        notification.show()
+      }
+      //复制图片到目标文件夹
+      async function copyFile(filePath, folderName, fileName) {
+        const [err] = await to(fsPromises.copyFile(filePath, destinationPath))
+        return { err, destinationPath }
+      }
 
-    const { err, destinationPath } = await copyFile(filePath, folderName, fileName)
-    if (err) {
-      handleErr('读取全部图库失败', err)
-      return { success: false, message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}` };
+      const { err } = await copyFile(filePath, folderName, fileName)
+      if (err) {
+        handleErr('读取全部图库失败', err)
+        return {
+          success: false,
+          message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}`
+        }
+      }
+      return { success: true, message: '成功上传图片', path: destinationPath }
     }
-    return { success: true, message: '成功上传图片', path: destinationPath }
-  });
+  )
+
   ipcMain.handle('将图片信息写入json', async (event, { folderName, PhotoInfo }) => {
-
     const handleErr = (title, err) => {
       const notification = new Notification()
       notification.title = title
@@ -227,17 +271,25 @@ app.whenReady().then(() => {
       notification.show()
     }
     const writeJsonFile = async () => {
-      const jsonPath = path.join(appPath, `/appData/${folderName}.json`);
-      const [readErr, data] = await to(fsPromises.readFile(jsonPath, 'utf-8'));
+      const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+      const jsonPath = path.join(storagePath, 'Galleries', `${folderName}.json`) // 图库元数据文件路径
+      const [readErr, data] = await to(fsPromises.readFile(jsonPath, 'utf-8'))
       if (readErr) {
         handleErr('读取json失败', readErr)
         return { success: false, message: '读取json失败', error: readErr }
       }
       const jsonData = data ? JSON.parse(data) : [PhotoInfo]
+
+      // 添加图片信息
       const pid = uuid()
       jsonData.draws.push({ ...PhotoInfo, pid })
       // console.log(jsonData, PhotoInfo)
-      const [writeErr] = await to(fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2)), 'utf8')
+
+      // 写入 JSON 文件
+      const [writeErr] = await to(
+        fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2)),
+        'utf8'
+      )
       if (writeErr) {
         handleErr('写入json失败', writeErr)
         return { success: false, message: '写入json失败', error: writeErr }
@@ -246,10 +298,11 @@ app.whenReady().then(() => {
     }
     const { err, data } = await writeJsonFile()
     if (err) {
-      return { success: false, message: '更新json失败', error: err };
+      return { success: false, message: '更新json失败', error: err }
     }
-    return { success: true, message: '成功更新json文件', data: data };
+    return { success: true, message: '成功更新json文件', data: data }
   })
+
   ipcMain.handle('读取全部图片', async (event, allPhoto) => {
     const { fileName } = allPhoto
     console.log(allPhoto)
@@ -261,7 +314,8 @@ app.whenReady().then(() => {
       notification.show()
     }
     const readAllJsonFile = async () => {
-      const jsonPath = path.join(appPath, `/appData/${fileName}.json`)
+      const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+      const jsonPath = path.join(storagePath, 'Galleries', `${fileName}.json`)
       // console.log(fileName)
       const data = await fsPromises.readFile(jsonPath, 'utf-8')
       return data
@@ -269,24 +323,23 @@ app.whenReady().then(() => {
     const [err, data] = await to(readAllJsonFile())
     if (err) {
       handleErr('读取json失败', err)
-      return { success: false, message: '读取json失败', error: err };
+      return { success: false, message: '读取json失败', error: err }
     }
-    return { success: true, message: '成功读取json文件', data: JSON.parse(data) };
+    return { success: true, message: '成功读取json文件', data: JSON.parse(data) }
   })
-  ipcMain.handle('读取图库路径', async () => {
-    return { success: true, message: '成功读取图库路径', data: appPath }
-  })
+
   ipcMain.handle('读取应用版本', async () => {
     const appVersion = app.getVersion()
     return { success: true, message: '成功读取应用版本', data: appVersion }
   })
-  ipcMain.handle('读取文件信息', async (filePath) => {
-    await fsPromises.readFile(filePath,'utf-8', (err, data) => {
-      if (err) {
-        return { success: false, message: '读取文件失败', error: err }
-      }
+
+  ipcMain.handle('读取文件信息', async (event, filePath) => {
+    try {
+      const data = await fsPromises.readFile(filePath, 'utf-8')
       return { success: true, message: '成功读取文件', data }
-    })
+    } catch (err) {
+      return { success: false, message: '读取文件失败', error: err }
+    }
   })
   createWindow()
 
