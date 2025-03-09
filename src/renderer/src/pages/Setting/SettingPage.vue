@@ -27,7 +27,7 @@
                 <div class="flex flex-row items-end">
                   <el-input class="mt-2 flex" v-model="GalleryPath" placeholder="图库路径" style="width: 300px;"
                     disabled></el-input>
-                  <el-button type="primary" class="w-[100px] ml-3">修改图库路径</el-button>
+                  <el-button type="primary" @click="selectAndChangeGalleryPath" class="w-[100px] ml-3">修改图库路径</el-button>
                 </div>
               </div>
             </div>
@@ -74,6 +74,26 @@ onMounted(() => {
     console.log(res);
   })
 })
+
+async function selectAndChangeGalleryPath() {
+  // 打开资源管理器选择路径
+  const selectResult = await window.api.打开资源管理器选择路径()
+  if (!selectResult.success) {
+    console.error('用户取消选择路径')
+    return
+  }
+
+  const newPath = selectResult.data // 用户选择的路径
+
+  // 调用修改图库路径功能
+  const changeResult = await window.api.修改图库路径(newPath)
+  if (changeResult.success) {
+    console.log('图库路径修改成功:', changeResult.data)
+    GalleryPath.value = changeResult.data // 更新图库路径显示
+  } else {
+    console.error('图库路径修改失败:', changeResult.message)
+  }
+}
 </script>
 <style scoped>
 :deep(.el-tabs--card>.el-tabs__header .el-tabs__item.is-active)::before {

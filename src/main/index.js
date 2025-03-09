@@ -1,7 +1,8 @@
-import { app, shell, BrowserWindow, ipcMain, Notification } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification,dialog  } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'fs'
+import fse from 'fs-extra'
 import { to } from 'await-to-js'
 import fsPromises from 'fs/promises'
 import path from 'path'
@@ -235,33 +236,44 @@ app.whenReady().then(() => {
     })
   })
 
-  ipcMain.handle('上传图片到指定文件夹',
-    async (event, { path: filePath, name: fileName, folderName }) => {
-      const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
-      const destinationPath = path.join(storagePath, 'Galleries', folderName, fileName) // 目标文件路径
-      const handleErr = (title, err) => {
-        const notification = new Notification()
-        notification.title = title
-        notification.body = err?.message
-        notification.show()
-      }
-      //复制图片到目标文件夹
-      async function copyFile(filePath, folderName, fileName) {
-        const [err] = await to(fsPromises.copyFile(filePath, destinationPath))
-        return { err, destinationPath }
-      }
-
-      const { err } = await copyFile(filePath, folderName, fileName)
-      if (err) {
-        handleErr('读取全部图库失败', err)
-        return {
-          success: false,
-          message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}`
-        }
-      }
-      return { success: true, message: '成功上传图片', path: destinationPath }
+  ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
+    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
     }
-  )
+
+    // 清理文件名中的特殊字符
+    const cleanFileName = (fileName) => {
+      // 定义需要去除的特殊字符
+      const specialChars = /[%$#@!&*()+=?<>{}[\]\\\/]/g
+      // 替换特殊字符为空字符串
+      return fileName.replace(specialChars, '')
+    }
+
+    // 清理后的文件名
+    const cleanedFileName = cleanFileName(fileName)
+    const destinationPath = path.join(storagePath, 'Galleries', folderName, cleanedFileName) // 目标文件路径
+
+    // 复制图片到目标文件夹
+    async function copyFile(filePath, folderName, fileName) {
+      const [err] = await to(fsPromises.copyFile(filePath, destinationPath))
+      return { err, destinationPath }
+    }
+
+    const { err } = await copyFile(filePath, folderName, cleanedFileName)
+    if (err) {
+      handleErr('读取全部图库失败', err)
+      return {
+        success: false,
+        message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}`
+      }
+    }
+    return { success: true, message: '成功上传图片', path: destinationPath }
+  })
+
 
   ipcMain.handle('将图片信息写入json', async (event, { folderName, PhotoInfo }) => {
     const handleErr = (title, err) => {
@@ -341,6 +353,105 @@ app.whenReady().then(() => {
       return { success: false, message: '读取文件失败', error: err }
     }
   })
+
+  ipcMain.handle('修改图库路径', async (event, newPath) => {
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
+    }
+
+    try {
+      const oldPath = getStoragePath() // 获取当前图库路径
+      const newStoragePath = path.resolve(newPath) // 解析新路径为绝对路径
+
+      // 检查新路径是否有效
+      if (!fs.existsSync(newStoragePath)) {
+        try {
+          fs.mkdirSync(newStoragePath, { recursive: true }) // 创建新路径
+          console.log(`新图库路径已创建: ${newStoragePath}`)
+        } catch (err) {
+          handleErr('创建新路径失败', err)
+          return { success: false, message: '创建新路径失败', error: err }
+        }
+      }
+
+      // 更新存储路径
+      setStoragePath(newStoragePath)
+
+      // 迁移现有图库数据到新路径
+      const oldGalleriesPath = path.join(oldPath, 'Galleries') // 旧图库路径
+      const newGalleriesPath = path.join(newStoragePath, 'Galleries') // 新图库路径
+
+      if (fs.existsSync(oldGalleriesPath)) {
+        try {
+          // 复制整个 Galleries 文件夹到新路径
+          fs.cpSync(oldGalleriesPath, newGalleriesPath, { recursive: true })
+          console.log(`图库文件夹已迁移到新路径: ${newGalleriesPath}`)
+
+          // 遍历所有 JSON 文件，更新图片路径
+          const galleryFiles = fs.readdirSync(newGalleriesPath)
+          for (const file of galleryFiles) {
+            if (path.extname(file) === '.json') {
+              const jsonFilePath = path.join(newGalleriesPath, file)
+              const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf-8'))
+
+              // 更新 draws 数组中的图片路径
+              if (jsonData.draws && Array.isArray(jsonData.draws)) {
+                jsonData.draws = jsonData.draws.map((draw) => {
+                  const oldCoverPath = draw.cover
+                  const newCoverPath = oldCoverPath.replace(oldGalleriesPath, newGalleriesPath)
+                  return { ...draw, cover: newCoverPath }
+                })
+              }
+
+              // 更新 cover 路径
+              if (jsonData.cover) {
+                jsonData.cover = jsonData.cover.replace(oldGalleriesPath, newGalleriesPath)
+              }
+
+              // 写入更新后的 JSON 文件
+              fs.writeFileSync(jsonFilePath, JSON.stringify(jsonData, null, 2))
+              console.log(`JSON 文件已更新: ${jsonFilePath}`)
+            }
+          }
+
+          // 删除旧图库路径
+          try {
+            fs.rmSync(oldGalleriesPath, { recursive: true, force: true })
+            console.log(`旧图库路径已删除: ${oldGalleriesPath}`)
+          } catch (err) {
+            console.warn(`删除旧图库路径失败: ${oldGalleriesPath}`, err)
+          }
+        } catch (err) {
+          handleErr('迁移图库数据失败', err)
+          return { success: false, message: '迁移图库数据失败', error: err }
+        }
+      }
+
+      return { success: true, message: '成功修改图库路径', data: newStoragePath }
+    } catch (err) {
+      handleErr('修改图库路径失败', err)
+      return { success: false, message: '修改图库路径失败', error: err }
+    }
+  })
+
+
+  ipcMain.handle('打开资源管理器选择路径', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'], // 选择文件夹
+      title: '选择图库路径', // 对话框标题
+      buttonLabel: '选择', // 确认按钮的标签
+    })
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      return { success: true, message: '成功选择路径', data: result.filePaths[0] }
+    } else {
+      return { success: false, message: '用户取消选择' }
+    }
+  })
+
   createWindow()
 
   app.on('activate', function () {

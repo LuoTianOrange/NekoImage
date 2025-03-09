@@ -6,6 +6,9 @@ import 'element-plus/dist/index.css'
 import {install} from '@icon-park/vue-next/es/all';
 import '@icon-park/vue-next/styles/index.css';
 import router from '../src/routers/index'
+import 'viewerjs/dist/viewer.css'
+import VueViewer from 'v-viewer'
+
 // import '@renderer/assets/output.css'
 const app = createApp(App)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
@@ -15,4 +18,5 @@ install(app, 'park')
 
 app.use(ElementPlus)
 app.use(router)
+app.use(VueViewer)
 app.mount('#app')

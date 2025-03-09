@@ -41,7 +41,14 @@ const api = {
     const result = await ipcRenderer.invoke('读取文件信息', filePath);
     return result;
   },
-
+  修改图库路径: async (newPath) => {
+    const result = await ipcRenderer.invoke('修改图库路径', newPath)
+    return result
+  },
+  打开资源管理器选择路径: async () => {
+    const result = await ipcRenderer.invoke('打开资源管理器选择路径')
+    return result
+  },
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
