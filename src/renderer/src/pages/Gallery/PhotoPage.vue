@@ -40,7 +40,7 @@
             <el-icon>
               <Delete />
             </el-icon>
-            <div class="ml-1">删除图库</div>
+            <div class="ml-1" @click="deleteDialog = true">删除图库</div>
           </el-button>
           <!-- <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
             <el-icon>
@@ -166,6 +166,20 @@
         <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false,cancelUpload()">取消</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog v-model="deleteDialog" style="max-width: 500px;">
+        <div class="text-[20px] flex flex-col">删除图库</div>
+        <div class="mt-2 flex justify-between">
+          <div class="text-[16px]">确定要删掉这个图库吗？</div>
+          <el-input v-model="deleteinput" style="width: 200px;" placeholder="输入图库名字" clearable></el-input>
+        </div>
+        <div class="text-[16px] text-red-400">一旦删除无法找回！</div>
+        <div class="mt-5 flex flex-row justify-end">
+          <el-button class="!ml-2" type="danger" @click="deleteGallery(deleteinput)"
+            :disabled="validateGalleryName(deleteinput)">删除</el-button>
+          <el-button class="!ml-2" type="" @click="deleteDialog = false">取消</el-button>
+        </div>
+      </el-dialog>
   </div>
 </template>
 
@@ -174,8 +188,10 @@ import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated, t
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
-import { ElMessage, ElDatePicker } from 'element-plus'
+import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
 import _ from 'lodash'
+import NProgress from 'nprogress'
+import 'nprogress/nprogress.css'
 
 const uploadRef = ref(null)
 const route = useRoute()
@@ -412,6 +428,52 @@ const deletePhoto = async (index) => {
     image.value = image.value.filter((item) => item.pid !== pid)
   } else {
     ElMessage.error('图片删除失败: ' + result.error)
+  }
+}
+
+//当前选择的图库名字
+const selectDialog = ref('')
+//验证输入的图库名字是否和当前图库名字一致
+
+// 监控路由变化，改变 name 的值
+watchEffect(() => {
+  name.value = route.query.name
+  selectDialog.value = name.value // 将 selectDialog 赋值为当前图库名称
+})
+
+const ReadAllGallery = async () => {
+  const response = await window.api['读取全部图库']()
+  galleryList.value = response.data
+}
+
+const validateGalleryName = (input) => {
+  return input !== selectDialog.value // 当 input 不等于当前图库名称时，返回 true（禁用按钮）
+}
+
+const deleteinput = ref('')
+
+// 删除指定图库
+const deleteDialog = ref(false)
+const deleteGallery = async (name) => {
+  NProgress.start()
+  const result = await window.api['删除指定图库'](name)
+  if (result.success) {
+    deleteDialog.value = false
+    deleteinput.value = ''
+    ElMessageBox.alert('成功删除图库', '提示', {
+      confirmButtonText: '确定',
+      type: 'success',
+      callback: (action) => {
+        if (action === 'confirm') {
+          NProgress.done()
+          router.push('/gallery') // 跳转到 /gallery 页面
+        }
+      },
+    })
+    await ReadAllGallery()
+    NProgress.done()
+  } else {
+    ElMessage.error('删除图库失败: ' + result.message)
   }
 }
 
