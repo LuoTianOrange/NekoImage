@@ -111,14 +111,6 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  /**
-   * 应用路径，开发环境和生产环境使用不同的路径
-   * @appPath
-   */
-  const appPath =
-    is.dev && process.env['ELECTRON_RENDERER_URL']
-      ? app.getAppPath()
-      : path.dirname(app.getPath('exe'))
 
   ipcMain.on('添加图库', (event, arg) => {
     let newArg = JSON.parse(arg)
@@ -274,6 +266,48 @@ app.whenReady().then(() => {
     return { success: true, message: '成功上传图片', path: destinationPath }
   })
 
+  ipcMain.handle('删除图库图片', async (event, { folderName, pid }) => {
+    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
+    const jsonPath = path.join(storagePath, 'Galleries', `${folderName}.json`) // 图库元数据文件路径
+
+    const handleErr = (title, err) => {
+      const notification = new Notification()
+      notification.title = title
+      notification.body = err?.message
+      notification.show()
+    }
+
+    try {
+      // 读取 JSON 文件
+      const data = await fsPromises.readFile(jsonPath, 'utf-8')
+      const jsonData = JSON.parse(data)
+
+      // 查找要删除的图片
+      const imageIndex = jsonData.draws.findIndex((draw) => draw.pid === pid)
+      if (imageIndex === -1) {
+        throw new Error('未找到指定的图片')
+      }
+
+      // 获取图片路径
+      const imagePath = jsonData.draws[imageIndex].cover
+
+      // 从 JSON 文件中移除图片信息
+      jsonData.draws.splice(imageIndex, 1)
+
+      // 写入更新后的 JSON 文件
+      await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2))
+
+      // 删除图片文件
+      if (fs.existsSync(imagePath)) {
+        await fsPromises.unlink(imagePath)
+      }
+
+      return { success: true, message: '成功删除图片' }
+    } catch (err) {
+      handleErr('删除图片失败', err)
+      return { success: false, message: '删除图片失败', error: err }
+    }
+  })
 
   ipcMain.handle('将图片信息写入json', async (event, { folderName, PhotoInfo }) => {
     const handleErr = (title, err) => {
@@ -436,7 +470,6 @@ app.whenReady().then(() => {
       return { success: false, message: '修改图库路径失败', error: err }
     }
   })
-
 
   ipcMain.handle('打开资源管理器选择路径', async () => {
     const result = await dialog.showOpenDialog({

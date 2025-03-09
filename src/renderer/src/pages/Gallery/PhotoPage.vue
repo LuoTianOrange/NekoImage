@@ -13,7 +13,7 @@
                 </el-icon>
               </div>
             </el-breadcrumb-item>
-            <el-breadcrumb-item>{{ name }}</el-breadcrumb-item>
+            <el-breadcrumb-item class="cursor-pointer">{{ name }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
         <!--按钮组-->
@@ -22,13 +22,7 @@
             <el-icon>
               <UploadFilled />
             </el-icon>
-            <div class="ml-1">添加单张图片</div>
-          </el-button>
-          <el-button type="primary" plain class="flex flex-row" @click="">
-            <el-icon>
-              <UploadFilled />
-            </el-icon>
-            <div class="ml-1">添加多张图片</div>
+            <div class="ml-1">添加图片</div>
           </el-button>
           <el-button type="primary" plain class="flex flex-row">
             <el-icon>
@@ -165,14 +159,13 @@
         <el-tag class="m-[4px]" v-for="(tag,index) in PhotoInfo.tag" :key="index" closable @close="DeleteTag(index)"
           :style="{ backgroundColor: tag.color }" effect="dark">{{ tag.text }}</el-tag>
       </div>
-  
+
       <div class="mt-5 flex flex-row justify-end">
         <el-button class="!ml-2" type="primary" @click="AddPhotoInfo(PhotoInfo)"
           :disabled="!(PhotoInfo.name && PhotoInfo.author && PhotoInfo.type)">保存</el-button>
         <el-button class="!ml-2" type="" @click="showAddPictrueSetting = false,cancelUpload()">取消</el-button>
       </div>
     </el-dialog>
-    <RightMenu :MenuItem="MenuItem"></RightMenu>
   </div>
 </template>
 
@@ -182,7 +175,6 @@ import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker } from 'element-plus'
-import RightMenu from '../../components/RightMenu.vue'
 import _ from 'lodash'
 
 const uploadRef = ref(null)
@@ -359,7 +351,6 @@ const AddPhotoInfo = (PhotoInfo) => {
   }
   uploadRef.value.submit()
   showAddPictrueSetting.value = false
-
   console.log("rawPhotoInfo:",PhotoInfo)
 }
 //上传图片
@@ -407,10 +398,23 @@ const beforeUpload = (rawFile) => {
   }
 }
 
-//删除图片
-const deletePhoto = (index) => {
-  console.log("删除图片", index)
+// 删除图片
+const deletePhoto = async (index) => {
+  const folderName = name.value // 使用当前图库的名称
+  const pid = image.value[index].pid // 获取要删除图片的 pid
+
+  console.log('删除图片:', { folderName, pid }) // 打印日志，确保 pid 正确
+
+  const result = await window.api['删除图库图片']({ folderName, pid })
+  if (result.success) {
+    ElMessage.success('图片删除成功')
+    // 刷新图片列表
+    image.value = image.value.filter((item) => item.pid !== pid)
+  } else {
+    ElMessage.error('图片删除失败: ' + result.error)
+  }
 }
+
 </script>
 <style scoped>
 .avatar-uploader .avatar {
@@ -460,5 +464,12 @@ const deletePhoto = (index) => {
   overflow: hidden;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 10;
+}
+
+:deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner){
+  cursor: pointer;
+}
+:deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner:hover){
+  color: var(--el-color-primary);
 }
 </style>

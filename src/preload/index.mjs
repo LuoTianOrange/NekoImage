@@ -49,6 +49,10 @@ const api = {
     const result = await ipcRenderer.invoke('打开资源管理器选择路径')
     return result
   },
+  '删除图库图片': async ({ folderName, pid }) => {
+    const result = await ipcRenderer.invoke('删除图库图片', { folderName, pid })
+    return result
+  },
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
