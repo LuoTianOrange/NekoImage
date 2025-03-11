@@ -34,6 +34,8 @@
     "axios": "^1.7.2",
     "electron-store": "^10.0.1",
     "element-plus": "^2.7.7",
+    "exif-js": "^2.3.0",
+    "exifreader": "^4.26.2",
     "fs-extra": "^11.3.0",
     "lodash": "^4.17.21",
     "move-file": "^3.1.0",

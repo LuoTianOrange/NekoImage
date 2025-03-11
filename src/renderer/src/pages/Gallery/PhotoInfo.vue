@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full min-h-screen">
+  <div class="flex flex-row w-full min-h-screen">
     <div class="p-[20px] w-full">
       <div class="text-[20px]">{{ item.name }}</div>
       <div class="mt-5"></div>
@@ -54,15 +54,33 @@
         </div>
       </div>
     </div>
+    <!-- 信息展示部分 -->
+    <div class="relative right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
+      <div class="p-4">
+        <h3 class="text-lg font-bold">图片信息</h3>
+        <div v-if="exifData && Object.keys(exifData).length > 0">
+          <div
+            v-for="(value, key) in exifData"
+            :key="key"
+            class="mb-2.5 p-1.5 border-b border-e-emerald-300"
+          >
+            <strong>{{ key }}:</strong> {{ value }}
+          </div>
+        </div>
+        <div v-else>未找到 EXIF 信息</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
-import { watchEffect, ref, onActivated, onMounted } from 'vue'
+import { watchEffect, ref, onActivated, onMounted,computed } from 'vue'
 import _ from 'lodash'
 import 'viewerjs/dist/viewer.css'
+import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
+import * as ExifReader from 'exifreader';
 
 const route = useRoute()
 const router = useRouter()
@@ -70,9 +88,12 @@ const name = ref('')
 const item = ref('')
 const photoPreview = []
 const imageSrc = ref([])
+const exifData = ref({})
+const imageSize = ref(0)
 
 // 处理图片路径
 const handleImagePath = (path) => {
+  console.log('原始路径:', path);
   try {
     // 将路径转换为 URL 格式
     const url = new URL(`file://${path}`).href
@@ -100,24 +121,17 @@ watchEffect(() => {
     return
   }
   item.value = JSON.parse(route.query.item)
-  const coverPath = handleImagePath(item.value.cover)
+  const coverPath = item.value.cover
   imageSrc.value = [coverPath]
   photoPreview.value = [coverPath] // 确保 photoPreview 正确填充
   console.log('当前图片路径:', imageSrc.value)
   console.log('预览图片列表:', photoPreview.value)
 })
 
-const getFileInfo = async () => {
-  const filePath = item.value.cover
-  console.log(typeof filePath)
-  const response = await window.api['读取文件信息'](filePath.toString())
-  console.log(response)
-  return response
-}
 
-onMounted(() => {
+
+onMounted(async () => {
   // photoPreview.push(item.value.cover)
-  getFileInfo()
 })
 
 const goToPage = (path, name) => {
@@ -136,16 +150,16 @@ const deletePhoto = async (pid) => {
     alert('图片删除失败: ' + result.message)
   }
 }
+
 </script>
 <style scoped>
-:deep(.el-breadcrumb__inner){
+:deep(.el-breadcrumb__inner) {
   cursor: pointer;
 }
-:deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner:hover){
+:deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner:hover) {
   color: var(--el-color-primary);
 }
-:deep(.el-breadcrumb__inner):hover{
+:deep(.el-breadcrumb__inner):hover {
   color: var(--el-color-primary);
 }
-
 </style>

@@ -5,6 +5,8 @@ import fs from 'fs'
 import fse from 'fs-extra'
 import { to } from 'await-to-js'
 import fsPromises from 'fs/promises'
+const ExifReader = require('exifreader')
+import { readFile } from 'fs/promises'
 import path from 'path'
 import { v4 as uuid } from 'uuid'
 import Store from 'electron-store'
@@ -482,6 +484,25 @@ app.whenReady().then(() => {
       return { success: true, message: '成功选择路径', data: result.filePaths[0] }
     } else {
       return { success: false, message: '用户取消选择' }
+    }
+  })
+
+  ipcMain.handle('读取EXIF信息', async (event, imagePath) => {
+    try {
+      // 读取图片文件
+      const buffer = await readFile(imagePath)
+      const tags = ExifReader.load(buffer)
+
+      // 格式化 EXIF 数据
+      const formattedData = {}
+      for (const [key, value] of Object.entries(tags)) {
+        formattedData[key] = value.description || value.value
+      }
+
+      return { success: true, data: formattedData }
+    } catch (error) {
+      console.error('无法读取 EXIF 信息:', error)
+      return { success: false, message: '无法读取 EXIF 信息', error: error.message }
     }
   })
 
