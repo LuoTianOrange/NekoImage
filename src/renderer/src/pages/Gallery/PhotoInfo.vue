@@ -58,11 +58,11 @@
     <div class="relative right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
       <div class="p-4">
         <h3 class="text-lg font-bold">图片信息</h3>
-        <div v-if="exifData && Object.keys(exifData).length > 0">
+        <div v-if="fileInfo && Object.keys(fileInfo).length > 0">
           <div
-            v-for="(value, key) in exifData"
+            v-for="(value, key) in fileInfo"
             :key="key"
-            class="mb-2.5 p-1.5 border-b border-e-emerald-300"
+            class="mb-1 py-1"
           >
             <strong>{{ key }}:</strong> {{ value }}
           </div>
@@ -75,12 +75,12 @@
 
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { useRouter, useRoute } from 'vue-router'
-import { watchEffect, ref, onActivated, onMounted,computed } from 'vue'
+import { useRouter, useRoute, onBeforeRouteUpdate  } from 'vue-router'
+import { watchEffect, ref, onActivated, onMounted, computed } from 'vue'
 import _ from 'lodash'
 import 'viewerjs/dist/viewer.css'
 import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
-import * as ExifReader from 'exifreader';
+import { readExifData } from '../../libs/exifReader'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,21 +88,9 @@ const name = ref('')
 const item = ref('')
 const photoPreview = []
 const imageSrc = ref([])
+//图片Exif信息
 const exifData = ref({})
 const imageSize = ref(0)
-
-// 处理图片路径
-const handleImagePath = (path) => {
-  console.log('原始路径:', path);
-  try {
-    // 将路径转换为 URL 格式
-    const url = new URL(`file://${path}`).href
-    return url
-  } catch (err) {
-    console.error('路径转换失败:', err)
-    return ''
-  }
-}
 
 // watchEffect(() => {
 //   name.value = route.query.name
@@ -115,24 +103,89 @@ const handleImagePath = (path) => {
 //   console.log(route.query);
 //   console.log(photoPreview);
 // })
-watchEffect(() => {
+watchEffect(async () => {
   name.value = route.query.name
-  if (!route.query.item) {
-    return
-  }
+  if (!route.query.item) return
+
   item.value = JSON.parse(route.query.item)
   const coverPath = item.value.cover
   imageSrc.value = [coverPath]
   photoPreview.value = [coverPath] // 确保 photoPreview 正确填充
   console.log('当前图片路径:', imageSrc.value)
   console.log('预览图片列表:', photoPreview.value)
+
+  // 获取图片的 EXIF 信息
+  if (item.value?.cover) {
+    const result = await window.api['读取EXIF信息'](item.value.cover)
+    if (result.success) {
+      exifData.value = result.data
+      console.log('图片 EXIF 信息:', exifData.value)
+    } else {
+      console.error('读取 EXIF 信息失败:', result.message)
+    }
+  }
+
+  // 获取图片大小
+  if (item.value?.cover) {
+    const sizeResult = await window.api['获取图片大小'](item.value.cover)
+    if (sizeResult.success) {
+      imageSize.value = sizeResult.size
+      console.log('图片大小:', imageSize.value)
+    } else {
+      console.error('获取图片大小失败:', sizeResult.message)
+    }
+  }
 })
 
 
+// 监听路由更新
+onBeforeRouteUpdate(async (to, from) => {
+  if (to.query.item !== from.query.item) {
+    // 解析新的 item
+    item.value = JSON.parse(to.query.item)
+    const coverPath = item.value.cover
+    imageSrc.value = [coverPath]
+    photoPreview.value = [coverPath]
+    console.log('当前图片路径:', imageSrc.value)
+    console.log('预览图片列表:', photoPreview.value)
 
-onMounted(async () => {
-  // photoPreview.push(item.value.cover)
+    // 获取图片的 EXIF 信息
+    if (item.value?.cover) {
+      const result = await window.api['读取EXIF信息'](item.value.cover)
+      if (result.success) {
+        exifData.value = result.data
+        console.log('图片 EXIF 信息:', exifData.value)
+      } else {
+        console.error('读取 EXIF 信息失败:', result.message)
+      }
+    }
+
+    // 获取图片大小
+    if (item.value?.cover) {
+      const sizeResult = await window.api['获取图片大小'](item.value.cover)
+      if (sizeResult.success) {
+        imageSize.value = sizeResult.size
+        console.log('图片大小:', imageSize.value)
+      } else {
+        console.error('获取图片大小失败:', sizeResult.message)
+      }
+    }
+  }
 })
+
+// 计算属性：格式化文件信息
+const fileInfo = computed(() => ({
+  '文件类型': exifData.value['FileType'] || '未知',
+  '大小': imageSize.value ? `${imageSize.value}MB` : '未知',
+  '宽度': exifData.value['Image Width'] || '未知',
+  '高度': exifData.value['Image Height'] || '未知',
+  '拍摄时间': exifData.value['DateTimeOriginal'] || '未知',
+  '相机型号': exifData.value['Model'] || '未知',
+  '光圈值': exifData.value['FNumber'] || '未知',
+  '曝光时间': exifData.value['ExposureTime'] || '未知',
+  'ISO': exifData.value['ISOSpeedRatings'] || '未知',
+  '焦距': exifData.value['FocalLength'] || '未知'
+}))
 
 const goToPage = (path, name) => {
   router.push({ path: path, query: { name } })
@@ -150,7 +203,6 @@ const deletePhoto = async (pid) => {
     alert('图片删除失败: ' + result.message)
   }
 }
-
 </script>
 <style scoped>
 :deep(.el-breadcrumb__inner) {

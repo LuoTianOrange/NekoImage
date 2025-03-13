@@ -5,6 +5,7 @@ import fs from 'fs'
 import fse from 'fs-extra'
 import { to } from 'await-to-js'
 import fsPromises from 'fs/promises'
+import { stat } from 'fs/promises'
 const ExifReader = require('exifreader')
 import { readFile } from 'fs/promises'
 import path from 'path'
@@ -492,7 +493,7 @@ app.whenReady().then(() => {
       // 读取图片文件
       const buffer = await readFile(imagePath)
       const tags = ExifReader.load(buffer)
-
+      console.log('EXIF 数据:', tags);
       // 格式化 EXIF 数据
       const formattedData = {}
       for (const [key, value] of Object.entries(tags)) {
@@ -503,6 +504,18 @@ app.whenReady().then(() => {
     } catch (error) {
       console.error('无法读取 EXIF 信息:', error)
       return { success: false, message: '无法读取 EXIF 信息', error: error.message }
+    }
+  })
+
+  ipcMain.handle('获取图片大小', async (event, imagePath) => {
+    try {
+      // 获取文件状态
+      const stats = await stat(imagePath)
+      const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2) // 转换为 MB
+      return { success: true, size: sizeInMB }
+    } catch (error) {
+      console.error('获取图片大小失败:', error)
+      return { success: false, message: '获取图片大小失败', error: error.message }
     }
   })
 

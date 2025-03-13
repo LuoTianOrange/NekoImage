@@ -287,7 +287,6 @@ import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
 import _ from 'lodash'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-import EXIF from 'exif-js'
 
 const uploadRef = ref(null)
 const route = useRoute()

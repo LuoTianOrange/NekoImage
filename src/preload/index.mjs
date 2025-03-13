@@ -56,6 +56,10 @@ const api = {
   '读取EXIF信息': async (imagePath) => {
     const result = await ipcRenderer.invoke('读取EXIF信息', imagePath)
     return result
+  },
+  '获取图片大小': async (imagePath) => {
+    const result = await ipcRenderer.invoke('获取图片大小', imagePath)
+    return result
   }
 }
 // Use `contextBridge` APIs to expose Electron APIs to
