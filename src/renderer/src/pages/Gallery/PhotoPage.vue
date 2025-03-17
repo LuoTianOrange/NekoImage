@@ -18,12 +18,7 @@
         </div>
         <!--按钮组-->
         <div class="mt-3 flex">
-          <el-button
-            type="primary"
-            plain
-            class="flex flex-row"
-            @click="showAddPictrueSetting = true"
-          >
+          <el-button type="primary" plain class="flex flex-row" @click="handleAddPicture">
             <el-icon>
               <UploadFilled />
             </el-icon>
@@ -64,7 +59,9 @@
             @click.stop="goToPage('/photoInfo', { name: name, item: item })"
           >
             <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
-            <span>{{ item.name }}</span>
+            <el-tooltip :content="item.name" placement="top">
+              <span class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] inline-block">{{ item.name }}</span>
+            </el-tooltip>
             <div
               v-if="isEnterPicture[index]"
               class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]"
@@ -90,7 +87,11 @@
         <div class="p-4">
           <h3 class="text-lg font-bold">图片信息</h3>
           <div v-if="exifData">
-            <div v-for="(value, key) in exifData" :key="key" class="mb-2.5 p-1.5 border-b border-e-emerald-300">
+            <div
+              v-for="(value, key) in exifData"
+              :key="key"
+              class="mb-2.5 p-1.5 border-b border-e-emerald-300"
+            >
               <strong>{{ key }}:</strong> {{ value }}
             </div>
           </div>
@@ -121,7 +122,7 @@
       </div>
     </el-dialog>
     <!--添加图片弹窗-->
-    <el-dialog v-model="showAddPictrueSetting" :width="600">
+    <!-- <el-dialog v-model="showAddPictrueSetting" :width="600">
       <div class="text-[20px] flex flex-col">添加图片</div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">上传图片<span class="text-red-600">*</span></div>
@@ -250,7 +251,7 @@
           >取消</el-button
         >
       </div>
-    </el-dialog>
+    </el-dialog> -->
     <!--删除图片弹窗-->
     <el-dialog v-model="deleteDialog" style="max-width: 500px">
       <div class="text-[20px] flex flex-col">删除图库</div>
@@ -506,6 +507,49 @@ const beforeUpload = (rawFile) => {
     ElMessage.error('图片必须是jpeg格式或者png格式')
     return false
   }
+}
+
+// 添加图片功能
+const handleAddPicture = async () => {
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = 'image/*'
+  fileInput.onchange = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    const filepath = file.path
+    const filename = file.name
+    const folderName = name.value
+
+    // 上传图片到指定文件夹
+    const response1 = { path: filepath, name: filename, folderName }
+    const res = await window.api['上传图片到指定文件夹'](response1)
+    console.log('res:', res.path)
+
+    // 将图片信息写入 json
+    const PhotoInfo = {
+      name: filename,
+      cover: res.path,
+      desc: '',
+      author: '',
+      type: '',
+      startTime: '',
+      endTime: '',
+      tag: []
+    }
+    const fileInfo = { folderName, PhotoInfo }
+    const jsonResponse = await window.api['将图片信息写入json'](fileInfo)
+    console.log(jsonResponse)
+
+    if (jsonResponse.success) {
+      ElMessage.success('图片添加成功')
+      getAllImages() // 刷新图片列表
+    } else {
+      ElMessage.error('图片添加失败')
+    }
+  }
+  fileInput.click()
 }
 
 // 删除图片
