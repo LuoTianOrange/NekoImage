@@ -42,6 +42,12 @@ const routes = [
         name: 'Setting',
         title: '设置',
         component: () => import('../pages/Setting/SettingPage.vue'),
+    },
+    {
+      path: '/tools/AdjustImageSize',
+      name: 'AdjustImageSize',
+      title: '调整图片大小',
+      component: () => import('../pages/Tools/AdjustImageSize.vue'),
     }
 ]
 
