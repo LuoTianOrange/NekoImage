@@ -191,17 +191,26 @@ const goToPage = (path, name) => {
 }
 
 // 删除图片
-const deletePhoto = async (pid) => {
-  const folderName = item.name
-  const result = await window.api['删除图片']({ folderName, pid })
-  if (result.success) {
-    alert('图片删除成功')
-    // 刷新图片列表
-    image.value = image.value.filter((item) => item.pid !== pid)
-  } else {
-    alert('图片删除失败: ' + result.message)
+const deletePhoto = async () => {
+  const pid = item.value.pid; // 使用 item.value.pid
+  const folderName = name.value;
+  console.log('删除图片:', pid, folderName);
+
+  if (!pid || !folderName) {
+    ElMessage.error('无法获取图片信息');
+    return;
   }
-}
+
+  const result = await window.api['删除图库图片']({ folderName, pid });
+  if (result.success) {
+    ElMessage.success('图片删除成功');
+    // 返回图库页面
+    router.push({ path: '/photo', query: { name: folderName } });
+  } else {
+    ElMessage.error('图片删除失败: ' + result.message);
+  }
+};
+
 </script>
 <style scoped>
 :deep(.el-breadcrumb__inner) {
