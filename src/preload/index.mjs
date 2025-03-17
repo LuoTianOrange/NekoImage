@@ -69,6 +69,10 @@ const api = {
     const result = await ipcRenderer.invoke('读取图库信息', galleryName)
     return result
   },
+  '获取排序后的图片': async (galleryName) => {
+    const result = await ipcRenderer.invoke('获取排序后的图片', galleryName)
+    return result
+  },
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

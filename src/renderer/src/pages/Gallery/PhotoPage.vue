@@ -29,7 +29,24 @@
           </el-icon>
           <div class="ml-1">下载图库</div>
         </el-button> -->
-        <el-button type="primary" plain class="flex flex-row" @click="clickSetting(name)">
+        <!-- 排序按钮 -->
+        <el-dropdown class="ml-2" trigger="click" @command="handleSort">
+          <el-button type="primary" plain class="flex flex-row">
+            <el-icon>
+              <Sort />
+            </el-icon>
+            <div class="ml-1">排序</div>
+          </el-button>
+          <template #dropdown >
+            <el-dropdown-menu>
+              <el-dropdown-item command="name-asc">按名称升序</el-dropdown-item>
+              <el-dropdown-item command="name-desc">按名称降序</el-dropdown-item>
+              <el-dropdown-item command="date-asc">按日期升序</el-dropdown-item>
+              <el-dropdown-item command="date-desc">按日期降序</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button type="primary" plain class="flex flex-row ml-2" @click="clickSetting(name)">
           <el-icon>
             <Tools />
           </el-icon>
@@ -51,7 +68,7 @@
       <!--图片展示区-->
       <div class="mt-5 flex flex-wrap items-start w-full">
         <div
-          v-for="(item, index) in image"
+          v-for="(item, index) in sortedImages"
           class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
           @mouseenter="EnterPicture(index)"
           @mouseleave="LeavePicture(index)"
@@ -280,7 +297,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated, toRaw } from 'vue'
+import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated, toRaw, computed } from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
@@ -649,6 +666,49 @@ const deleteGallery = async (name) => {
     ElMessage.error('删除图库失败: ' + result.message)
   }
 }
+
+// 排序逻辑
+const sortOptions = ref({
+  field: 'name', // 默认按名称排序
+  order: 'asc', // 默认升序
+});
+
+// 计算属性：根据排序规则返回排序后的图片列表
+const sortedImages = computed(() => {
+  const { field, order } = sortOptions.value;
+  return [...image.value].sort((a, b) => {
+    if (field === 'name') {
+      return order === 'asc'
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
+    } else if (field === 'date') {
+      return order === 'asc'
+        ? new Date(a.createTime) - new Date(b.createTime)
+        : new Date(b.createTime) - new Date(a.createTime);
+    }
+    return 0;
+  });
+});
+
+// 处理排序
+const handleSort = async (command) => {
+  const [field, order] = command.split('-');
+  sortOptions.value = { field, order };
+
+  // 调用后端排序接口
+  const response = await window.api['获取排序后的图片']({
+    folderName: name.value,
+    field,
+    order,
+  });
+
+  if (response.success) {
+    image.value = response.data;
+    console.log('排序后的图片列表:', image.value);
+  } else {
+    ElMessage.error('排序失败: ' + response.message);
+  }
+};
 </script>
 <style scoped>
 .avatar-uploader .avatar {

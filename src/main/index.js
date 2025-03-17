@@ -573,6 +573,34 @@ app.whenReady().then(() => {
     }
   };
 
+  ipcMain.handle('获取排序后的图片', async (event, { folderName, field, order }) => {
+    const storagePath = getStoragePath();
+    const jsonPath = path.join(storagePath, 'Galleries', `${folderName}.json`);
+
+    try {
+      const data = await fsPromises.readFile(jsonPath, 'utf-8');
+      const jsonData = JSON.parse(data);
+
+      // 排序逻辑
+      const sortedDraws = jsonData.draws.sort((a, b) => {
+        if (field === 'name') {
+          return order === 'asc'
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name);
+        } else if (field === 'date') {
+          return order === 'asc'
+            ? new Date(a.createTime) - new Date(b.createTime)
+            : new Date(b.createTime) - new Date(a.createTime);
+        }
+        return 0;
+      });
+
+      return { success: true, data: sortedDraws };
+    } catch (error) {
+      console.error('排序失败:', error);
+      return { success: false, message: '排序失败', error: error.message };
+    }
+  });
 
   createWindow()
 
