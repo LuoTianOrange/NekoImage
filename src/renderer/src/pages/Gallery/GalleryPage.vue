@@ -97,7 +97,7 @@ const GallertInfo = reactive({
   name: '',
   cover: '',
   desc: '',
-  craeteTime: '',
+  createTime: '',
   draws: []
 })
 const deleteinput = ref('')
@@ -124,7 +124,8 @@ const defaultGalleryData = {
   "name": '',
   "cover": './images/defaultImage.png',
   "desc": '',
-  "craeteTime": new Date().toLocaleDateString(),
+  "createTime": new Date().toLocaleDateString(),
+  "updateTime": new Date().toLocaleDateString(),
   "draws": []
 }
 
@@ -161,7 +162,7 @@ const deleteGallery = async (name) => {
   console.log('删除指定图库', name)
 }
 /**
- * 
+ *
  * @param data 获取当前选择的图库名字
  */
 const clickDeleteDialogSetting = (data) => {

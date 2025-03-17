@@ -1,102 +1,102 @@
 <template>
-  <div class="w-full">
-    <div class="flex flex-col w-full min-h-screen">
-      <div class="p-[20px]">
-        <div class="text-[20px]">{{ name }}</div>
-        <!--面包屑-->
-        <div class="mt-5">
-          <el-breadcrumb :separator-icon="ArrowRight">
-            <el-breadcrumb-item :to="{ path: '/gallery' }">
-              <div class="flex">
-                <el-icon>
-                  <House />
-                </el-icon>
-              </div>
-            </el-breadcrumb-item>
-            <el-breadcrumb-item class="cursor-pointer">{{ name }}</el-breadcrumb-item>
-          </el-breadcrumb>
-        </div>
-        <!--按钮组-->
-        <div class="mt-3 flex">
-          <el-button type="primary" plain class="flex flex-row" @click="handleAddPicture">
-            <el-icon>
-              <UploadFilled />
-            </el-icon>
-            <div class="ml-1">添加图片</div>
-          </el-button>
-          <el-button type="primary" plain class="flex flex-row">
-            <el-icon>
-              <Download />
-            </el-icon>
-            <div class="ml-1">下载图库</div>
-          </el-button>
-          <el-button type="primary" plain class="flex flex-row" @click="clickSetting(name)">
-            <el-icon>
-              <Tools />
-            </el-icon>
-            <div class="ml-1">设置</div>
-          </el-button>
-          <el-button type="danger" plain class="flex flex-row">
-            <el-icon>
-              <Delete />
-            </el-icon>
-            <div class="ml-1" @click="deleteDialog = true">删除图库</div>
-          </el-button>
-          <!-- <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
+  <div class="flex flex-row w-full min-h-screen">
+    <div class="p-[20px] w-full">
+      <div class="text-[20px]">{{ name }}</div>
+      <!--面包屑-->
+      <div class="mt-5">
+        <el-breadcrumb :separator-icon="ArrowRight">
+          <el-breadcrumb-item :to="{ path: '/gallery' }">
+            <div class="flex">
+              <el-icon>
+                <House />
+              </el-icon>
+            </div>
+          </el-breadcrumb-item>
+          <el-breadcrumb-item class="cursor-pointer">{{ name }}</el-breadcrumb-item>
+        </el-breadcrumb>
+      </div>
+      <!--按钮组-->
+      <div class="mt-3 flex">
+        <el-button type="primary" plain class="flex flex-row" @click="handleAddPicture">
+          <el-icon>
+            <UploadFilled />
+          </el-icon>
+          <div class="ml-1">添加图片</div>
+        </el-button>
+        <!-- <el-button type="primary" plain class="flex flex-row">
+          <el-icon>
+            <Download />
+          </el-icon>
+          <div class="ml-1">下载图库</div>
+        </el-button> -->
+        <el-button type="primary" plain class="flex flex-row" @click="clickSetting(name)">
+          <el-icon>
+            <Tools />
+          </el-icon>
+          <div class="ml-1">设置</div>
+        </el-button>
+        <el-button type="danger" plain class="flex flex-row">
+          <el-icon>
+            <Delete />
+          </el-icon>
+          <div class="ml-1" @click="deleteDialog = true">删除图库</div>
+        </el-button>
+        <!-- <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
             <el-icon>
               <Tools />
             </el-icon>
             <div class="ml-1">刷新</div>
           </el-button> -->
-        </div>
-        <!--图片展示区-->
-        <div class="mt-5 flex flex-wrap items-start w-full">
-          <div
-            v-for="(item, index) in image"
-            class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
-            @mouseenter="EnterPicture(index)"
-            @mouseleave="LeavePicture(index)"
-            @click.stop="goToPage('/photoInfo', { name: name, item: item })"
-          >
-            <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
-            <el-tooltip :content="item.name" placement="top">
-              <span class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] inline-block">{{ item.name }}</span>
-            </el-tooltip>
-            <div
-              v-if="isEnterPicture[index]"
-              class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]"
+      </div>
+      <!--图片展示区-->
+      <div class="mt-5 flex flex-wrap items-start w-full">
+        <div
+          v-for="(item, index) in image"
+          class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
+          @mouseenter="EnterPicture(index)"
+          @mouseleave="LeavePicture(index)"
+          @click.stop="goToPage('/photoInfo', { name: name, item: item })"
+        >
+          <img :src="item.cover" class="w-auto h-[130px] object-scale-down" />
+          <el-tooltip :content="item.name" placement="top">
+            <span
+              class="whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] inline-block"
+              >{{ item.name }}</span
             >
-              <!--复制图片信息-->
-              <el-button class="" type="success" size="small" plain>
-                <el-icon>
-                  <DocumentCopy />
-                </el-icon>
-              </el-button>
-              <!--删除图片-->
-              <el-button class="" type="danger" size="small" plain @click.stop="deletePhoto(index)">
-                <el-icon>
-                  <Delete />
-                </el-icon>
-              </el-button>
-            </div>
+          </el-tooltip>
+          <div
+            v-if="isEnterPicture[index]"
+            class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]"
+          >
+            <!--复制图片信息-->
+            <el-button class="" type="success" size="small" plain>
+              <el-icon>
+                <DocumentCopy />
+              </el-icon>
+            </el-button>
+            <!--删除图片-->
+            <el-button class="" type="danger" size="small" plain @click.stop="deletePhoto(index)">
+              <el-icon>
+                <Delete />
+              </el-icon>
+            </el-button>
           </div>
         </div>
       </div>
-      <!-- 信息展示部分 -->
-      <div class="fixed right-0 top-0 h-screen w-[200px] border-l border-zinc-200 bg-white">
-        <div class="p-4">
-          <h3 class="text-lg font-bold">图片信息</h3>
-          <div v-if="exifData">
-            <div
-              v-for="(value, key) in exifData"
-              :key="key"
-              class="mb-2.5 p-1.5 border-b border-e-emerald-300"
-            >
-              <strong>{{ key }}:</strong> {{ value }}
-            </div>
+    </div>
+    <!-- 信息展示部分 -->
+    <div class="sticky right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
+      <div class="p-4 h-full overflow-y-auto">
+        <h3 class="text-lg font-bold">图库信息</h3>
+        <div v-if="GalleryInfo">
+          <div
+            v-for="(value, key) in GalleryInfo"
+            :key="key"
+            class="mb-1 py-1">
+            <strong>{{ key }}:</strong> {{ value }}
           </div>
-          <div v-else>未找到 EXIF 信息</div>
         </div>
+        <div v-else>未找到图库信息</div>
       </div>
     </div>
     <!--设置弹窗-->
@@ -298,11 +298,12 @@ const input2 = ref('')
 const name = ref('')
 
 const image = ref([])
-const MenuItem = ref({
-  name: '基本信息',
-  count: null,
-  size: 10,
-  pageID: 1
+const GalleryInfo = ref({
+  '图库名称': '',
+  '图库描述': '',
+  '图片数量': 0,
+  '创建时间': '',
+  '图库大小': ''
 })
 //获取全部图片
 const getAllImages = async () => {
@@ -313,12 +314,46 @@ const getAllImages = async () => {
   // console.log("fileName:", fileName)
   const response = await window.api['读取全部图片']({ fileName })
   image.value = response.data.draws
-  MenuItem.value.count = response.data.draws.length
   console.log('读取全部图片:', response.data.draws)
 }
+//获取图库信息
+const getGalleryInfo = async () => {
+  try {
+    const response = await window.api['读取图库信息'](name.value);
+    console.log('response:', response);
+
+    if (response.success) {
+      const galleryInfo = _.cloneDeep(response.data);
+      console.log('galleryInfo:', galleryInfo);
+
+      const info = {
+        '图库名称': galleryInfo.name,
+        '图库描述': galleryInfo.desc,
+        '图片数量': galleryInfo.draws?.length || 0,
+        '创建时间': galleryInfo.createTime,
+        '图库大小': galleryInfo.size
+      };
+      console.log('获取图库信息成功:', info);
+
+      return info;
+    } else {
+      console.error('获取图库信息失败:', response.message);
+      return null;
+    }
+  } catch (error) {
+    console.error('调用 IPC 通道失败:', error);
+    return null;
+  }
+};
+
+
 //监测路由变化更新图片
-onActivated(() => {
-  getAllImages()
+onActivated(async () => {
+  await getAllImages()
+  const data = await getGalleryInfo();
+  if (data) {
+    GalleryInfo.value = data || {}
+  }
 })
 
 //图片悬浮框相关
@@ -345,7 +380,7 @@ watchEffect(() => {
 })
 
 //路由跳转
-const item = ref('')
+
 const goToPage = (path, { name, item }) => {
   const itemInfo = toRaw(item)
   console.log(itemInfo)

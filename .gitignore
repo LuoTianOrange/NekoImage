@@ -7,3 +7,4 @@ out
 builder
 resources/json/*
 appData/*
+.VSCodeCounter

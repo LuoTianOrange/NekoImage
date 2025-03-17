@@ -55,19 +55,18 @@
       </div>
     </div>
     <!-- 信息展示部分 -->
-    <div class="relative right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
-      <div class="p-4">
+    <div class="sticky right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
+      <div class="p-4 h-full overflow-y-auto">
         <h3 class="text-lg font-bold">图片信息</h3>
         <div v-if="fileInfo && Object.keys(fileInfo).length > 0">
           <div
             v-for="(value, key) in fileInfo"
             :key="key"
-            class="mb-1 py-1"
-          >
+            class="mb-1 py-1">
             <strong>{{ key }}:</strong> {{ value }}
           </div>
         </div>
-        <div v-else>未找到 EXIF 信息</div>
+        <div v-else>未找到图片信息</div>
       </div>
     </div>
   </div>

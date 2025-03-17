@@ -64,7 +64,11 @@ const api = {
   '打开图库根目录': async () => {
     const result = await ipcRenderer.invoke('打开图库根目录')
     return result
-  }
+  },
+  '读取图库信息': async (galleryName) => {
+    const result = await ipcRenderer.invoke('读取图库信息', galleryName)
+    return result
+  },
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

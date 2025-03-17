@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Notification,dialog  } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'fs'
@@ -528,6 +528,51 @@ app.whenReady().then(() => {
       return { success: false, message: '无法打开图库根目录', error: error.message };
     }
   });
+
+  ipcMain.handle('读取图库信息', async (event, galleryName) => {
+    const storagePath = getStoragePath(); // 获取图库存储路径
+    const galleryMetaPath = path.join(storagePath, 'Galleries', `${galleryName}.json`); // 图库元数据文件路径
+
+    try {
+      // 检查元数据文件是否存在
+      if (!fs.existsSync(galleryMetaPath)) {
+        return { success: false, message: '图库元数据文件不存在' };
+      }
+
+      // 读取元数据文件
+      const data = await fsPromises.readFile(galleryMetaPath, 'utf-8');
+      const galleryInfo = JSON.parse(data);
+      console.log('galleryInfo:', galleryInfo); // 打印 galleryInfo 的内容
+
+      // 返回图库信息
+      return {
+        success: true,
+        message: '成功读取图库信息',
+        data: galleryInfo
+      };
+    } catch (error) {
+      console.error('读取图库信息失败:', error);
+      return { success: false, message: '读取图库信息失败', error: error.message };
+    }
+  });
+
+
+  // 计算图库大小
+  const calculateGallerySize = async (galleryName) => {
+    const storagePath = getStoragePath();
+    const galleryPath = path.join(storagePath, 'Galleries', galleryName);
+
+    try {
+      // 获取图库文件夹的大小
+      const stats = await fsPromises.stat(galleryPath);
+      const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2); // 转换为 MB
+      return `${sizeInMB} MB`;
+    } catch (error) {
+      console.error('计算图库大小失败:', error);
+      return '未知';
+    }
+  };
+
 
   createWindow()
 
