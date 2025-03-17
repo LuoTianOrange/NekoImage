@@ -9,7 +9,7 @@
             <div class="mt-5">
                 <div class="text-[22px] font-bold">文件夹</div>
                 <div class="flex flex-row flex-wrap">
-                    <div v-for="item in 1" class="w-[200px] h-[60px] bg-gray-200 rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer
+                    <div @click="openGalleryRoot()" v-for="item in 1" class="w-[200px] h-[60px] bg-gray-200 rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer
                             hover:bg-gray-300">
                         <div class="flex flex-row items-center">
                             <el-icon :size="22">
@@ -72,6 +72,11 @@ onActivated(async () => {
     // console.log(res.data.draws.length);
   })
 })
+
+const openGalleryRoot = () => {
+  window.api['打开图库根目录']()
+}
+
 onDeactivated(() => {
   GalleryCount.value = 0
   PhotoCount.value = 0

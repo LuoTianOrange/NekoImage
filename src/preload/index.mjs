@@ -60,6 +60,10 @@ const api = {
   '获取图片大小': async (imagePath) => {
     const result = await ipcRenderer.invoke('获取图片大小', imagePath)
     return result
+  },
+  '打开图库根目录': async () => {
+    const result = await ipcRenderer.invoke('打开图库根目录')
+    return result
   }
 }
 // Use `contextBridge` APIs to expose Electron APIs to

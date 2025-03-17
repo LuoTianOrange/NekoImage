@@ -519,6 +519,16 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('打开图库根目录', async () => {
+    try {
+      const galleryRootPath = getStoragePath(); // 获取当前图库根目录路径
+      await shell.openPath(galleryRootPath); // 打开文件夹
+      return { success: true, message: '图库根目录已成功打开', path: galleryRootPath };
+    } catch (error) {
+      return { success: false, message: '无法打开图库根目录', error: error.message };
+    }
+  });
+
   createWindow()
 
   app.on('activate', function () {
