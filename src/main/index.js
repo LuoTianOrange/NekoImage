@@ -232,42 +232,39 @@ app.whenReady().then(() => {
     })
   })
 
-  ipcMain.handle('上传图片到指定文件夹', async (event, { path: filePath, name: fileName, folderName }) => {
-    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
-    const handleErr = (title, err) => {
-      const notification = new Notification()
-      notification.title = title
-      notification.body = err?.message
-      notification.show()
-    }
+  ipcMain.handle('上传图片到指定文件夹', async (event, { files, folderName }) => {
+    const storagePath = getStoragePath();
+    const results = [];
 
-    // 清理文件名中的特殊字符
-    const cleanFileName = (fileName) => {
-      // 定义需要去除的特殊字符
-      const specialChars = /[%$#@!&*()+=?<>{}[\]\\\/]/g
-      // 替换特殊字符为空字符串
-      return fileName.replace(specialChars, '')
-    }
+    for (const file of files) {
+      try {
+        // 清理文件名中的特殊字符
+        const cleanFileName = (fileName) => {
+          const specialChars = /[%$#@!&*()+=?<>{}[\]\\\/]/g;
+          return fileName.replace(specialChars, '');
+        };
 
-    // 清理后的文件名
-    const cleanedFileName = cleanFileName(fileName)
-    const destinationPath = path.join(storagePath, 'Galleries', folderName, cleanedFileName) // 目标文件路径
+        const cleanedFileName = cleanFileName(file.name);
+        const destinationPath = path.join(storagePath, 'Galleries', folderName, cleanedFileName);
 
-    // 复制图片到目标文件夹
-    async function copyFile(filePath, folderName, fileName) {
-      const [err] = await to(fsPromises.copyFile(filePath, destinationPath))
-      return { err, destinationPath }
-    }
+        // 复制文件
+        await fsPromises.copyFile(file.path, destinationPath);
 
-    const { err } = await copyFile(filePath, folderName, cleanedFileName)
-    if (err) {
-      handleErr('读取全部图库失败', err)
-      return {
-        success: false,
-        message: '错误：' + err + `\nappPath:${destinationPath}` + `\nfilePath:${filePath}`
+        results.push({
+          success: true,
+          originalName: file.name,
+          path: destinationPath
+        });
+      } catch (error) {
+        results.push({
+          success: false,
+          originalName: file.name,
+          error: error.message
+        });
       }
     }
-    return { success: true, message: '成功上传图片', path: destinationPath }
+
+    return results;
   })
 
   ipcMain.handle('删除图库图片', async (event, { folderName, pid }) => {
@@ -313,44 +310,38 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('将图片信息写入json', async (event, { folderName, PhotoInfo }) => {
-    const handleErr = (title, err) => {
-      const notification = new Notification()
-      notification.title = title
-      notification.body = err?.message
-      notification.show()
-    }
-    const writeJsonFile = async () => {
-      const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
-      const jsonPath = path.join(storagePath, 'Galleries', `${folderName}.json`) // 图库元数据文件路径
-      const [readErr, data] = await to(fsPromises.readFile(jsonPath, 'utf-8'))
-      if (readErr) {
-        handleErr('读取json失败', readErr)
-        return { success: false, message: '读取json失败', error: readErr }
-      }
-      const jsonData = data ? JSON.parse(data) : [PhotoInfo]
+  ipcMain.handle('将图片信息写入json', async (event, { folderName, photos }) => {
+    const storagePath = getStoragePath();
+    const jsonPath = path.join(storagePath, 'Galleries', `${folderName}.json`);
 
-      // 添加图片信息
-      const pid = uuid()
-      jsonData.draws.push({ ...PhotoInfo, pid })
-      // console.log(jsonData, PhotoInfo)
+    try {
+      // 读取现有数据
+      const data = await fsPromises.readFile(jsonPath, 'utf-8');
+      const jsonData = JSON.parse(data);
 
-      // 写入 JSON 文件
-      const [writeErr] = await to(
-        fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2)),
-        'utf8'
-      )
-      if (writeErr) {
-        handleErr('写入json失败', writeErr)
-        return { success: false, message: '写入json失败', error: writeErr }
+      // 批量添加图片信息
+      for (const photo of photos) {
+        const pid = uuid();
+        jsonData.draws.push({
+          ...photo,
+          pid,
+          createTime: new Date().toISOString()
+        });
       }
-      return { success: true, message: '成功写入json文件', data: jsonData }
+
+      // 保存更新
+      await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
+
+      return {
+        success: true,
+        addedCount: photos.length
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
     }
-    const { err, data } = await writeJsonFile()
-    if (err) {
-      return { success: false, message: '更新json失败', error: err }
-    }
-    return { success: true, message: '成功更新json文件', data: data }
   })
 
   ipcMain.handle('读取全部图片', async (event, allPhoto) => {
@@ -543,7 +534,24 @@ app.whenReady().then(() => {
       // 读取元数据文件
       const data = await fsPromises.readFile(galleryMetaPath, 'utf-8');
       const galleryInfo = JSON.parse(data);
-      console.log('galleryInfo:', galleryInfo); // 打印 galleryInfo 的内容
+
+      // 计算图库总大小
+    let totalSize = 0;
+
+    //通过元数据中的图片路径计算大小
+    if (galleryInfo.draws && Array.isArray(galleryInfo.draws)) {
+      for (const image of galleryInfo.draws) {
+        try {
+          const stats = await fsPromises.stat(image.cover);
+          totalSize += stats.size;
+        } catch (error) {
+          console.warn(`无法获取图片大小: ${image.cover}`, error);
+        }
+      }
+    }
+    const sizeInfo = formatFileSize(totalSize);
+    galleryInfo.size = `${sizeInfo.value}${sizeInfo.unit}`
+      console.log('galleryInfo:', galleryInfo)
 
       // 返回图库信息
       return {
@@ -558,7 +566,19 @@ app.whenReady().then(() => {
   });
 
   const sharp = require('sharp'); // 引入 sharp 库
+  // 文件大小格式化工具函数
+function formatFileSize(bytes) {
+  if (bytes === 0) return { value: 0, unit: 'B' };
 
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return {
+    value: parseFloat((bytes / Math.pow(k, i)).toFixed(2)),
+    unit: sizes[i]
+  };
+}
   // 调整图片大小
   ipcMain.handle('调整图片大小', async (event, { imagePath, width, height, galleryName }) => {
     try {
@@ -679,22 +699,6 @@ app.whenReady().then(() => {
     }
   });
 
-
-  // 计算图库大小
-  const calculateGallerySize = async (galleryName) => {
-    const storagePath = getStoragePath();
-    const galleryPath = path.join(storagePath, 'Galleries', galleryName);
-
-    try {
-      // 获取图库文件夹的大小
-      const stats = await fsPromises.stat(galleryPath);
-      const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2); // 转换为 MB
-      return `${sizeInMB} MB`;
-    } catch (error) {
-      console.error('计算图库大小失败:', error);
-      return '未知';
-    }
-  };
 
   ipcMain.handle('获取排序后的图片', async (event, { folderName, field, order }) => {
     const storagePath = getStoragePath();

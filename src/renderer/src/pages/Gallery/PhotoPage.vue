@@ -563,46 +563,57 @@ const beforeUpload = (rawFile) => {
 
 // 添加图片功能
 const handleAddPicture = async () => {
-  const fileInput = document.createElement('input')
-  fileInput.type = 'file'
-  fileInput.accept = 'image/*'
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.multiple = true;
+
   fileInput.onchange = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
 
-    const filepath = file.path
-    const filename = file.name
-    const folderName = name.value
+    try {
+      // 1. 批量上传文件
+      const uploadResults = await window.api['上传图片到指定文件夹']({
+        files: files.map(file => ({
+          name: file.name,
+          path: file.path
+        })),
+        folderName: name.value
+      });
 
-    // 上传图片到指定文件夹
-    const response1 = { path: filepath, name: filename, folderName }
-    const res = await window.api['上传图片到指定文件夹'](response1)
-    console.log('res:', res.path)
+      // 筛选上传成功的文件
+      const successUploads = uploadResults.filter(r => r.success);
 
-    // 将图片信息写入 json
-    const PhotoInfo = {
-      name: filename,
-      cover: res.path,
-      desc: '',
-      author: '',
-      type: '',
-      startTime: '',
-      endTime: '',
-      tag: []
+      if (successUploads.length === 0) {
+        throw new Error('所有文件上传失败');
+      }
+
+      // 2. 批量写入图片信息
+      const writeResult = await window.api['将图片信息写入json']({
+        folderName: name.value,
+        photos: successUploads.map(file => ({
+          name: file.originalName,
+          cover: file.path,
+          desc: '',
+          tag: []
+        }))
+      });
+
+      if (writeResult.success) {
+        ElMessage.success(`成功添加 ${writeResult.addedCount} 张图片`);
+        await getAllImages(); // 刷新列表
+      } else {
+        throw new Error(writeResult.error);
+      }
+    } catch (error) {
+      ElMessage.error(`添加图片失败: ${error.message}`);
     }
-    const fileInfo = { folderName, PhotoInfo }
-    const jsonResponse = await window.api['将图片信息写入json'](fileInfo)
-    console.log(jsonResponse)
+  };
 
-    if (jsonResponse.success) {
-      ElMessage.success('图片添加成功')
-      getAllImages() // 刷新图片列表
-    } else {
-      ElMessage.error('图片添加失败')
-    }
-  }
-  fileInput.click()
-}
+  fileInput.click();
+};
+
 
 // 删除图片
 const deletePhoto = async (index) => {

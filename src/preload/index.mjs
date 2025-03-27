@@ -12,13 +12,13 @@ const api = {
     const result = await ipcRenderer.invoke('删除指定图库', data)
     return result
   },
-  '上传图片到指定文件夹': async ({ path, name, folderName }) => {
-    const result = await ipcRenderer.invoke('上传图片到指定文件夹', { path, name, folderName });
+  '上传图片到指定文件夹': async ({ files, folderName }) => {
+    const result = await ipcRenderer.invoke('上传图片到指定文件夹', { files, folderName });
     console.log(result);
     return result;
   },
-  '将图片信息写入json': async ({ folderName, PhotoInfo }) => {
-    const result = await ipcRenderer.invoke('将图片信息写入json', { folderName, PhotoInfo });
+  '将图片信息写入json': async ({ folderName, photos }) => {
+    const result = await ipcRenderer.invoke('将图片信息写入json', { folderName, photos });
     return result;
   },
   '读取全部图片': async (data) => {
