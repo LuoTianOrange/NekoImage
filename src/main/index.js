@@ -77,7 +77,7 @@ function createWindow() {
     // resizable: false //禁止改变主窗口尺寸
   })
   //打开调试工具
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
@@ -583,7 +583,9 @@ app.whenReady().then(() => {
 
       // 使用 sharp 调整图片大小
       await sharp(normalizedImagePath)
-        .resize(width, height)
+        .resize(width, height,{
+          fit:'fill'
+        })
         .toFile(resizedImagePath);
 
       // 更新图库元数据中的图片路径

@@ -20,13 +20,12 @@
             <!-- <span class="select-none">图库管理</span> -->
             <template #title class="select-none">图库管理</template>
         </el-menu-item>
-        <el-menu-item index="4" @click="goToPage('/export')">
+        <!-- <el-menu-item index="4" @click="goToPage('/export')">
             <el-icon>
                 <Link />
             </el-icon>
-            <!-- <span class="select-none">导出</span> -->
             <template #title class="select-none">导出</template>
-        </el-menu-item>
+        </el-menu-item> -->
         <el-menu-item index="5" @click="goToPage('/tools')">
             <el-icon>
                 <Crop />
