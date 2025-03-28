@@ -92,7 +92,7 @@
               </el-icon>
             </el-button>
             <!--删除图片-->
-            <el-button class="" type="danger" size="small" plain @click.stop="deletePhoto(index)">
+            <el-button class="" type="danger" size="small" plain @click.stop="deletePhoto(item)">
               <el-icon>
                 <Delete />
               </el-icon>
@@ -616,21 +616,44 @@ const handleAddPicture = async () => {
 
 
 // 删除图片
-const deletePhoto = async (index) => {
-  const folderName = name.value // 使用当前图库的名称
-  const pid = image.value[index].pid // 获取要删除图片的 pid
+const deletePhoto = async (item) => {
+  try {
+    const folderName = name.value;
+    const pid = item.pid; // 直接使用对象中的pid
 
-  console.log('删除图片:', { folderName, pid }) // 打印日志，确保 pid 正确
+    console.log('删除图片:', {
+      folderName,
+      pid,
+      cover: item.cover // 打印要删除的文件路径
+    });
+    await ElMessageBox.confirm(
+      `确定要删除图片 "${item.name}" 吗?`,
+      '删除图片',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
+    );
+    const result = await window.api['删除图库图片']({
+      folderName,
+      pid
+    });
 
-  const result = await window.api['删除图库图片']({ folderName, pid })
-  if (result.success) {
-    ElMessage.success('图片删除成功')
-    // 刷新图片列表
-    image.value = image.value.filter((item) => item.pid !== pid)
-  } else {
-    ElMessage.error('图片删除失败: ' + result.error)
+    if (result.success) {
+      ElMessage.success('图片删除成功');
+      // 使用filter更新数组，避免索引问题
+      image.value = image.value.filter(img => img.pid !== pid);
+
+      // 更新图库信息
+      const data = await getGalleryInfo();
+      if (data) {
+        GalleryInfo.value = data;
+      }
+    } else {
+      throw new Error(result.error || '删除失败');
+    }
+  } catch (error) {
+    console.error('删除图片出错:', error);
+    ElMessage.error(`删除失败: ${error.message}`);
   }
-}
+};
 
 //当前选择的图库名字
 const selectDialog = ref('')

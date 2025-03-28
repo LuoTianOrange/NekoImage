@@ -22,11 +22,11 @@
           </el-icon>
           <div class="ml-1">设置</div>
         </el-button>
-        <el-button type="danger" plain class="flex flex-row">
+        <el-button type="danger" plain class="flex flex-row" @click="confirmDelete">
           <el-icon>
             <Delete />
           </el-icon>
-          <div class="ml-1" @click="deletePhoto()">删除图片</div>
+          <div class="ml-1">删除图片</div>
         </el-button>
       </div>
       <!--图片展示-->
@@ -191,23 +191,75 @@ const goToPage = (path, name) => {
 }
 
 // 删除图片
-const deletePhoto = async () => {
-  const pid = item.value.pid; // 使用 item.value.pid
-  const folderName = name.value;
-  console.log('删除图片:', pid, folderName);
+const deleting = ref(false);
 
-  if (!pid || !folderName) {
-    ElMessage.error('无法获取图片信息');
-    return;
+const confirmDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除图片 "${item.value.name}" 吗？此操作不可恢复！`,
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: true,
+        customClass: 'delete-confirm-dialog'
+      }
+    );
+
+    await deletePhoto();
+  } catch (error) {
+    // 用户取消删除
+    console.log('用户取消删除', error);
   }
+};
 
-  const result = await window.api['删除图库图片']({ folderName, pid });
-  if (result.success) {
-    ElMessage.success('图片删除成功');
+const deletePhoto = async () => {
+  deleting.value = true;
+
+  try {
+    const pid = item.value.pid;
+    const folderName = name.value;
+
+    if (!pid || !folderName) {
+      throw new Error('缺少必要的图片信息');
+    }
+
+    console.log('开始删除图片:', {
+      name: item.value.name,
+      pid,
+      path: item.value.cover
+    });
+
+    const result = await window.api['删除图库图片']({
+      folderName,
+      pid
+    });
+
+    if (!result.success) {
+      throw new Error(result.message || '删除失败');
+    }
+
+    ElMessage.success({
+      message: `图片 "${item.value.name}" 已删除`,
+      duration: 3000
+    });
+
     // 返回图库页面
-    router.push({ path: '/photo', query: { name: folderName } });
-  } else {
-    ElMessage.error('图片删除失败: ' + result.message);
+    router.push({
+      path: '/photo',
+      query: { name: folderName },
+      state: { deleted: true } // 可选的状态传递
+    });
+  } catch (error) {
+    console.error('删除图片失败:', error);
+
+    ElMessage.error({
+      message: `删除失败: ${error.message}`,
+      duration: 5000
+    });
+  } finally {
+    deleting.value = false;
   }
 };
 
