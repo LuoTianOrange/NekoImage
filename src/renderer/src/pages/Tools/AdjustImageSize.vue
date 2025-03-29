@@ -104,8 +104,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, watch } from 'vue'
+import { ref, onMounted, reactive, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
+
+const router = useRouter()
 
 // 图库列表
 const galleryList = ref([])
@@ -128,6 +131,7 @@ const originalSize = reactive({
 })
 // 加载图库列表
 const loadGalleryList = async () => {
+  resetState()
   const response = await window.api['读取全部图库']()
   if (response.success) {
     galleryList.value = response.data
@@ -271,9 +275,34 @@ const resizeImageByPercentage = async (percentage) => {
   }
 }
 
+const resetState = () => {
+  selectedImage.value = null
+  selectedGallery.value = ''
+  imageList.value = []
+  resizeForm.width = null
+  resizeForm.height = null
+  originalSize.width = null
+  originalSize.height = null
+  console.log('状态已重置')
+}
+
 // 初始化加载图库列表
 onMounted(() => {
   loadGalleryList()
+})
+
+// 路由离开守卫
+onBeforeRouteLeave((to, from) => {
+  if (from.name === 'AdjustImageSize') {
+    resetState()
+  }
+})
+
+// 路由更新守卫（相同路由参数变化时）
+onBeforeRouteUpdate((to, from) => {
+  if (from.name === 'AdjustImageSize') {
+    resetState()
+  }
 })
 </script>
 
