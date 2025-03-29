@@ -43,7 +43,7 @@
         <div v-if="selectedImage" class="flex flex-col w-full">
           <!-- 当前图片预览 -->
           <div
-            class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
+            class="w-[180px] min-h-[180px] shadow-md flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
           >
             <img :src="selectedImage.cover" class="w-auto h-[130px] object-scale-down" />
             <el-tooltip :content="selectedImage.name" placement="top">
@@ -52,8 +52,18 @@
                 >{{ selectedImage.name }}</span
               >
             </el-tooltip>
-            <div>
-              <div></div>
+            <div class="text-[12px] mt-2 flex flex-row items-center">
+              <el-tooltip :content="'图片的原始尺寸'" placement="bottom">
+                <div class="bg-zinc-400 text-white p-1 rounded-[4px]">
+                  {{ originalSize.width }}x{{ originalSize.height }}
+                </div>
+              </el-tooltip>
+              <div class="">→</div>
+              <el-tooltip :content="'图片调整后的尺寸'" placement="bottom">
+              <div class="bg-blue-400 text-white p-1 rounded-[4px]">
+                {{ resizeForm.width }}x{{ resizeForm.height }}
+              </div>
+            </el-tooltip>
             </div>
           </div>
 
@@ -61,14 +71,10 @@
           <div class="mt-5 flex flex-col">
             <div class="text-lg mb-3">调整尺寸</div>
             <el-radio-group v-model="toggleMode">
-              <el-radio-button label="按像素" value="pixel" />
+              <el-radio-button label="按像素" value="pixel" @click="resetOriginalSize()" />
               <el-radio-button label="按百分比" value="percentage" />
             </el-radio-group>
-            <el-form
-              class="mt-5 flex flex-col"
-              v-if="toggleMode === 'pixel'"
-              :model="resizeForm"
-            >
+            <el-form class="mt-5 flex flex-col" v-if="toggleMode === 'pixel'" :model="resizeForm">
               <el-form-item label="宽度(px):">
                 <el-input v-model.number="resizeForm.width" placeholder="请输入宽度" />
               </el-form-item>
@@ -80,12 +86,12 @@
             <!-- 预设比例 -->
             <div v-else-if="toggleMode === 'percentage'" class="mt-5 flex flex-col">
               <div class="text-lg mb-3">预设比例</div>
-              <el-radio-group v-model="selectedPercentage">
+              <el-radio-group v-model="selectedPercentage" @change="updateResizeFormByPercentage">
                 <el-radio-button :label="0.75">缩小75%</el-radio-button>
                 <el-radio-button :label="0.5">缩小50%</el-radio-button>
                 <el-radio-button :label="0.25">缩小25%</el-radio-button>
               </el-radio-group>
-              <el-button class="mt-3" type="primary" @click="handlePercentageChange"
+              <el-button class="mt-3" type="primary" @click="resizeImageByPercentage(selectedPercentage)"
                 >调整尺寸</el-button
               >
             </div>
@@ -98,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
 // 图库列表
@@ -140,12 +146,6 @@ const loadGalleryImages = async () => {
   } else {
     ElMessage.error('加载图片列表失败: ' + response.message)
   }
-}
-
-// 选择图片
-const selectImage = (image) => {
-  selectedImage.value = image
-  loadingExif(image)
 }
 
 const loadingExif = async (image) => {
@@ -209,9 +209,42 @@ const resizeImage = async () => {
   }
 }
 const selectedPercentage = ref(0.75)
-const handlePercentageChange = (percentage) => {
-  resizeImageByPercentage(percentage)
+// 根据百分比更新resizeForm
+const updateResizeFormByPercentage = () => {
+  if (originalSize.width && originalSize.height) {
+    resizeForm.width = Math.round(originalSize.width * selectedPercentage.value)
+    resizeForm.height = Math.round(originalSize.height * selectedPercentage.value)
+  }
 }
+
+// 监听原始尺寸变化，自动更新百分比尺寸
+watch(originalSize, () => {
+  if (toggleMode.value === 'percentage') {
+    updateResizeFormByPercentage()
+  }
+})
+
+// 监听模式切换
+watch(toggleMode, (newMode) => {
+  if (newMode === 'percentage' && originalSize.width && originalSize.height) {
+    updateResizeFormByPercentage()
+  }
+})
+
+// 修改选择图片方法
+const selectImage = (image) => {
+  selectedImage.value = image
+  loadingExif(image).then(() => {
+    if (toggleMode.value === 'percentage') {
+      updateResizeFormByPercentage()
+    }
+  })
+}
+const resetOriginalSize = () => {
+  resizeForm.width = originalSize.width
+  resizeForm.height = originalSize.height
+}
+
 // 按比例调整图片尺寸
 const resizeImageByPercentage = async (percentage) => {
   if (!selectedImage.value) {
