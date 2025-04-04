@@ -572,6 +572,145 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('修改图库信息', async (event, { galleryName, updates }) => {
+    const storagePath = getStoragePath();
+    const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
+
+    try {
+      // 参数验证
+      if (!galleryName || typeof galleryName !== 'string') {
+        throw new Error('图库名称参数无效');
+      }
+
+      // 读取现有数据
+      const data = await fsPromises.readFile(jsonPath, 'utf-8');
+      const galleryData = JSON.parse(data);
+      const originalData = JSON.parse(JSON.stringify(galleryData)); // 深拷贝用于回滚
+
+      // 准备变更记录
+      const changes = {
+        updatedFields: [],
+        oldValues: {},
+        newValues: {}
+      };
+
+      // 处理名称修改
+      if (updates.name && updates.name !== galleryData.name) {
+        // 验证新名称
+        const nameValidation = validateGalleryName(updates.name);
+        if (!nameValidation.valid) {
+          throw new Error(nameValidation.reason);
+        }
+
+        // 检查名称冲突
+        const newJsonPath = path.join(storagePath, 'Galleries', `${updates.name}.json`);
+        if (fs.existsSync(newJsonPath)) {
+          throw new Error('目标图库名称已存在');
+        }
+
+        changes.updatedFields.push('name');
+        changes.oldValues.name = galleryData.name;
+        changes.newValues.name = updates.name;
+        galleryData.name = updates.name;
+      }
+
+      // 处理描述修改
+      if (updates.desc !== undefined && updates.desc !== galleryData.desc) {
+        if (typeof updates.desc !== 'string') {
+          throw new Error('描述必须是字符串');
+        }
+
+        changes.updatedFields.push('desc');
+        changes.oldValues.desc = galleryData.desc;
+        changes.newValues.desc = updates.desc;
+        galleryData.desc = updates.desc;
+      }
+
+      // 如果没有实际修改
+      if (changes.updatedFields.length === 0) {
+        return {
+          success: true,
+          message: '未检测到有效修改',
+          data: { changed: false }
+        };
+      }
+
+      // 更新修改时间
+      galleryData.updateTime = new Date().toISOString();
+
+      // 执行文件操作（如果是名称修改需要重命名文件）
+      if (changes.updatedFields.includes('name')) {
+        const newJsonPath = path.join(storagePath, 'Galleries', `${updates.name}.json`);
+        const oldDirPath = path.join(storagePath, 'Galleries', galleryName);
+        const newDirPath = path.join(storagePath, 'Galleries', updates.name);
+
+        // 重命名操作
+        await fsPromises.rename(jsonPath, newJsonPath);
+        if (fs.existsSync(oldDirPath)) {
+          await fsPromises.rename(oldDirPath, newDirPath);
+        }
+
+        // 更新内部路径引用
+        if (galleryData.draws) {
+          galleryData.draws = galleryData.draws.map(draw => ({
+            ...draw,
+            cover: draw.cover.replace(
+              new RegExp(`Galleries/${galleryName}(/|$)`),
+              `Galleries/${updates.name}$1`
+            )
+          }));
+        }
+      }
+
+      // 保存数据（如果是名称修改则保存到新路径）
+      const savePath = changes.updatedFields.includes('name')
+        ? path.join(storagePath, 'Galleries', `${updates.name}.json`)
+        : jsonPath;
+
+      await fsPromises.writeFile(savePath, JSON.stringify(galleryData, null, 2));
+
+      return {
+        success: true,
+        message: '图库信息更新成功',
+        data: {
+          changed: true,
+          changes,
+          newGalleryName: updates.name || galleryName,
+          updateTime: galleryData.updateTime
+        }
+      };
+
+    } catch (error) {
+      // 错误恢复逻辑
+      if (originalData && jsonPath) {
+        await fsPromises.writeFile(jsonPath, JSON.stringify(originalData, null, 2))
+          .catch(e => console.error('恢复数据失败:', e));
+      }
+
+      console.error('修改图库信息失败:', error);
+      return {
+        success: false,
+        message: error.message || '修改图库信息失败',
+        error: error.stack
+      };
+    }
+  });
+
+  // 名称验证函数
+  function validateGalleryName(name) {
+    if (!name || typeof name !== 'string') {
+      return { valid: false, reason: '名称不能为空' };
+    }
+    if (name.length > 50) {
+      return { valid: false, reason: '名称不能超过50个字符' };
+    }
+    if (!/^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/.test(name)) {
+      return { valid: false, reason: '只能包含中英文、数字、下划线和横线' };
+    }
+    return { valid: true };
+  }
+
+
   const sharp = require('sharp'); // 引入 sharp 库
   // 文件大小格式化工具函数
 function formatFileSize(bytes) {

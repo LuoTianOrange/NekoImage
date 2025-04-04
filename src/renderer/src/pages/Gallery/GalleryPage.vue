@@ -48,12 +48,12 @@
         <div class="text-[20px] flex flex-col">编辑图库</div>
         <div class="mt-2 flex justify-between">
           <div class="text-[16px]">图库名称</div>
-          <el-input v-model="GallertInfo.name" style="width: 200px;" placeholder="请输入名称" :value="GallertInfo.name"
+          <el-input v-model="editForm.name" style="width: 200px;" placeholder="请输入名称"
             clearable></el-input>
         </div>
         <div class="mt-2 flex justify-between">
           <div class="text-[16px]">图库描述</div>
-          <el-input v-model="GallertInfo.desc" style="width: 200px;" placeholder="图库描述" clearable></el-input>
+          <el-input v-model="editForm.desc" style="width: 200px;" placeholder="图库描述" clearable></el-input>
         </div>
         <div class="mt-5 flex flex-row justify-end">
           <el-button class="!ml-2" type="primary" @click="saveSetting">保存</el-button>
@@ -93,11 +93,10 @@ const route = useRoute()
 
 const NewGalleryName = ref('')
 //图库基本信息
-const GallertInfo = reactive({
+const editForm = reactive({
+  originalName: '',
   name: '',
-  cover: '',
   desc: '',
-  createTime: '',
   draws: []
 })
 const deleteinput = ref('')
@@ -109,15 +108,78 @@ const goToPage = (path, name) => {
 }
 //设置相关
 const showForm = ref(false)
-const clickSetting = (name) => {
+const clickSetting = async (name) => {
   showForm.value = true;
-  GallertInfo.name = name;
+  editForm.originalName = name;
+
+  // 读取图库当前信息
+  try {
+    const response = await window.api['读取图库信息'](name);
+    if (response.success) {
+      editForm.name = response.data.name;
+      editForm.desc = response.data.desc || '';
+    } else {
+      ElMessageBox.alert('获取图库信息失败', '错误', {
+        confirmButtonText: '确定',
+        type: 'error'
+      });
+    }
+  } catch (error) {
+    console.error('获取图库信息出错:', error);
+    ElMessageBox.alert('获取图库信息出错', '错误', {
+      confirmButtonText: '确定',
+      type: 'error'
+    });
+  }
 }
 
 //保存图库设置
-const saveSetting = () => {
-  showForm.value = false;
+const saveSetting = async () => {
+  if (!editForm.name) {
+    ElMessageBox.alert('图库名称不能为空', '提示', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    });
+    return;
+  }
+
+  try {
+    NProgress.start();
+
+    const response = await window.api['修改图库信息']({
+      galleryName: editForm.originalName,
+      updates: {
+        name: editForm.name,
+        desc: editForm.desc
+      }
+    });
+
+    if (response.success) {
+      ElMessageBox.alert('图库信息更新成功', '提示', {
+        confirmButtonText: '确定',
+        type: 'success',
+        callback: () => {
+          showForm.value = false;
+          ReadAllGallery(); // 刷新图库列表
+        }
+      });
+    } else {
+      ElMessageBox.alert(response.message || '更新图库信息失败', '错误', {
+        confirmButtonText: '确定',
+        type: 'error'
+      });
+    }
+  } catch (error) {
+    console.error('更新图库信息出错:', error);
+    ElMessageBox.alert('更新图库信息出错', '错误', {
+      confirmButtonText: '确定',
+      type: 'error'
+    });
+  } finally {
+    NProgress.done();
+  }
 }
+
 //添加默认图库的数据
 const defaultGalleryData = {
   "id": uuid(),

@@ -81,6 +81,10 @@ const api = {
     const result = await ipcRenderer.invoke('按比例调整图片大小', { imagePath, percentage, galleryName })
     return result
   },
+  '修改图库信息': async ({ galleryName, updates }) => {
+    const result = await ipcRenderer.invoke('修改图库信息', { galleryName, updates })
+    return result
+  }
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
