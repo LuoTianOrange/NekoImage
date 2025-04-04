@@ -603,6 +603,10 @@ const handleAddPicture = async () => {
       if (writeResult.success) {
         ElMessage.success(`成功添加 ${writeResult.addedCount} 张图片`);
         await getAllImages(); // 刷新列表
+        const updatedInfo = await getGalleryInfo();
+        if (updatedInfo) {
+          GalleryInfo.value = updatedInfo;
+        }
       } else {
         throw new Error(writeResult.error);
       }
