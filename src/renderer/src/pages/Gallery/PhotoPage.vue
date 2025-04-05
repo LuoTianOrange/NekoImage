@@ -81,7 +81,7 @@
       <div class="mt-5 flex flex-wrap items-start w-full">
         <div
           v-for="(item, index) in filteredImages"
-          class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
+          class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-theme border-theme p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
           @mouseenter="EnterPicture(index)"
           @mouseleave="LeavePicture(index)"
           @click.stop="goToPage('/photoInfo', { name: name, item: item })"
@@ -95,7 +95,7 @@
           </el-tooltip>
           <div
             v-if="isEnterPicture[index]"
-            class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]"
+            class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white dark:bg-zinc-700 bg-opacity-75 w-full h-[40px]"
           >
             <!--收藏图片-->
             <el-button
@@ -120,7 +120,7 @@
       </div>
     </div>
     <!-- 信息展示部分 -->
-    <div class="sticky right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
+    <div class="sticky right-0 top-0 h-screen w-[300px] border-l border-theme bg-white dark:bg-zinc-900">
       <div class="p-4 h-full overflow-y-auto">
         <h3 class="text-lg font-bold">图库信息</h3>
         <div v-if="GalleryInfo">
@@ -962,5 +962,12 @@ const handleSort = async (command) => {
 }
 :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner:hover) {
   color: var(--el-color-primary);
+}
+
+.bg-theme{
+  @apply bg-white dark:bg-zinc-800
+}
+.border-theme{
+  @apply border-zinc-200 dark:border-zinc-700
 }
 </style>

@@ -31,7 +31,7 @@
       </div>
       <!--图片展示-->
       <div class="flex flex-row justify-center items-center mt-5">
-        <div class="min-w-[500px] p-[10px] bg-white">
+        <div class="min-w-[500px] p-[10px]">
           <!-- <img :src="imageSrc" class="w-full h-auto"></img> -->
           <!-- <el-image
               :src="imageSrc"
@@ -55,14 +55,13 @@
       </div>
     </div>
     <!-- 信息展示部分 -->
-    <div class="sticky right-0 top-0 h-screen w-[300px] border-l border-zinc-200 bg-white">
+    <div
+      class="sticky right-0 top-0 h-screen w-[300px] border-l border-theme bg-white dark:bg-zinc-900"
+    >
       <div class="p-4 h-full overflow-y-auto">
         <h3 class="text-lg font-bold">图片信息</h3>
         <div v-if="fileInfo && Object.keys(fileInfo).length > 0">
-          <div
-            v-for="(value, key) in fileInfo"
-            :key="key"
-            class="mb-1 py-1">
+          <div v-for="(value, key) in fileInfo" :key="key" class="mb-1 py-1">
             <strong>{{ key }}:</strong> {{ value }}
           </div>
         </div>
@@ -74,7 +73,7 @@
 
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { useRouter, useRoute, onBeforeRouteUpdate  } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { watchEffect, ref, onActivated, onMounted, computed } from 'vue'
 import _ from 'lodash'
 import 'viewerjs/dist/viewer.css'
@@ -137,7 +136,6 @@ watchEffect(async () => {
   }
 })
 
-
 // 监听路由更新
 onBeforeRouteUpdate(async (to, from) => {
   if (to.query.item !== from.query.item) {
@@ -175,16 +173,16 @@ onBeforeRouteUpdate(async (to, from) => {
 
 // 计算属性：格式化文件信息
 const fileInfo = computed(() => ({
-  '文件类型': exifData.value['FileType'] || '未知',
-  '大小': imageSize.value ? `${imageSize.value}MB` : '未知',
-  '宽度': exifData.value['Image Width'] || '未知',
-  '高度': exifData.value['Image Height'] || '未知',
-  '拍摄时间': exifData.value['DateTimeOriginal'] || '未知',
-  '相机型号': exifData.value['Model'] || '未知',
-  '光圈值': exifData.value['FNumber'] || '未知',
-  '曝光时间': exifData.value['ExposureTime'] || '未知',
-  'ISO': exifData.value['ISOSpeedRatings'] || '未知',
-  '焦距': exifData.value['FocalLength'] || '未知'
+  文件类型: exifData.value['FileType'] || '未知',
+  大小: imageSize.value ? `${imageSize.value}MB` : '未知',
+  宽度: exifData.value['Image Width'] || '未知',
+  高度: exifData.value['Image Height'] || '未知',
+  拍摄时间: exifData.value['DateTimeOriginal'] || '未知',
+  相机型号: exifData.value['Model'] || '未知',
+  光圈值: exifData.value['FNumber'] || '未知',
+  曝光时间: exifData.value['ExposureTime'] || '未知',
+  ISO: exifData.value['ISOSpeedRatings'] || '未知',
+  焦距: exifData.value['FocalLength'] || '未知'
 }))
 
 const goToPage = (path, name) => {
@@ -192,7 +190,7 @@ const goToPage = (path, name) => {
 }
 
 // 删除图片
-const deleting = ref(false);
+const deleting = ref(false)
 
 const confirmDelete = async () => {
   try {
@@ -206,64 +204,63 @@ const confirmDelete = async () => {
         dangerouslyUseHTMLString: true,
         customClass: 'delete-confirm-dialog'
       }
-    );
+    )
 
-    await deletePhoto();
+    await deletePhoto()
   } catch (error) {
     // 用户取消删除
-    console.log('用户取消删除', error);
+    console.log('用户取消删除', error)
   }
-};
+}
 
 const deletePhoto = async () => {
-  deleting.value = true;
+  deleting.value = true
 
   try {
-    const pid = item.value.pid;
-    const folderName = name.value;
+    const pid = item.value.pid
+    const folderName = name.value
 
     if (!pid || !folderName) {
-      throw new Error('缺少必要的图片信息');
+      throw new Error('缺少必要的图片信息')
     }
 
     console.log('开始删除图片:', {
       name: item.value.name,
       pid,
       path: item.value.cover
-    });
+    })
 
     const result = await window.api['删除图库图片']({
       folderName,
       pid
-    });
+    })
 
     if (!result.success) {
-      throw new Error(result.message || '删除失败');
+      throw new Error(result.message || '删除失败')
     }
 
     ElMessage.success({
       message: `图片 "${item.value.name}" 已删除`,
       duration: 3000
-    });
+    })
 
     // 返回图库页面
     router.push({
       path: '/photo',
       query: { name: folderName },
       state: { deleted: true } // 可选的状态传递
-    });
+    })
   } catch (error) {
-    console.error('删除图片失败:', error);
+    console.error('删除图片失败:', error)
 
     ElMessage.error({
       message: `删除失败: ${error.message}`,
       duration: 5000
-    });
+    })
   } finally {
-    deleting.value = false;
+    deleting.value = false
   }
-};
-
+}
 </script>
 <style scoped>
 :deep(.el-breadcrumb__inner) {
@@ -274,5 +271,12 @@ const deletePhoto = async () => {
 }
 :deep(.el-breadcrumb__inner):hover {
   color: var(--el-color-primary);
+}
+
+.bg-theme {
+  @apply bg-white dark:bg-zinc-800;
+}
+.border-theme {
+  @apply border-zinc-200 dark:border-zinc-700;
 }
 </style>

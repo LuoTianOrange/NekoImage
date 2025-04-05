@@ -12,7 +12,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 import { v4 as uuid } from 'uuid'
 import Store from 'electron-store'
-import { devtools } from '@vue/devtools'
+// import { devtools } from '@vue/devtools'
 // 初始化配置存储
 const store = new Store()
 
@@ -85,8 +85,8 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
-  if (process.env.NODE_ENV === 'development')
-    devtools.connect("http://localhost:8098")
+  // if (process.env.NODE_ENV === 'development')
+  //   devtools.connect("http://localhost:8098")
 }
 
 // This method will be called when Electron has finished

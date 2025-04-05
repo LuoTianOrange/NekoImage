@@ -31,7 +31,7 @@
           class="transform animate-in w-[200px] min-h-[200px] m-2 rounded-md overflow-hidden shadow"
         >
           <div
-            class="w-full h-[140px] overflow-hidden border-b"
+            class="w-full h-[140px] overflow-hidden border-b border-theme"
             @click="goToPage('/photo', item.name)"
           >
             <img
@@ -45,7 +45,7 @@
               :src="item.draws[0].cover"
             />
           </div>
-          <div class="px-2 bg-white">
+          <div class="px-2 bg-theme">
             <div class="pt-1">{{ item.name }}</div>
             <div class="py-2 flex justify-between items-center">
               <div class="flex items-center">
@@ -410,5 +410,12 @@ const AddNewGallery = async () => {
     0 0 10px #ffa73b,
     0 0 5px #ffa73b !important;
   z-index: 9999;
+}
+
+.bg-theme{
+  @apply bg-white dark:bg-zinc-800
+}
+.border-theme{
+  @apply border-zinc-200 dark:border-zinc-700
 }
 </style>

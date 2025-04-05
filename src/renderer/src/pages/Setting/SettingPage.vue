@@ -169,10 +169,6 @@ async function selectAndChangeGalleryPath() {
   background-color: #fff;
 }
 
-.dark {
-  @apply bg-gray-900 text-gray-100;
-}
-
 /* 调整 Element Plus 组件在深色模式下的样式 */
 .dark .el-card {
   @apply bg-gray-800 border-gray-700;

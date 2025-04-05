@@ -24,7 +24,7 @@
           <div
             v-for="(image, index) in imageList"
             :key="index"
-            class="flex items-center p-2 cursor-pointer hover:bg-gray-100"
+            class="flex items-center p-2 cursor-pointer bg-theme"
             :class="{ 'bg-blue-100': selectedImage === image }"
             @click="selectImage(image)"
           >
@@ -43,7 +43,7 @@
         <div v-if="selectedImage" class="flex flex-col w-full h-full">
           <!-- 当前图片预览 -->
           <div
-            class="w-[180px] min-h-[180px] shadow-md flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
+            class="w-[180px] min-h-[180px] shadow-md flex flex-col justify-between items-center bg-white dark:bg-zinc-800 p-3 border border-theme relative mt-3 ml-3 transform animate-in zoom-in"
           >
             <img :src="selectedImage.cover" class="w-auto h-[130px] object-scale-down" />
             <el-tooltip :content="selectedImage.name" placement="top">
@@ -54,7 +54,7 @@
             </el-tooltip>
             <div class="text-[12px] mt-2 flex flex-row items-center">
               <el-tooltip :content="'图片的原始尺寸'" placement="bottom">
-                <div class="bg-zinc-400 text-white p-1 rounded-[4px]">
+                <div class="bg-zinc-700 text-white p-1 rounded-[4px]">
                   {{ originalSize.width }}x{{ originalSize.height }}
                 </div>
               </el-tooltip>
@@ -306,4 +306,12 @@ onBeforeRouteUpdate((to, from) => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.bg-theme{
+  @apply bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-800
+}
+
+.border-theme{
+  @apply border-zinc-200 dark:border-zinc-700
+}
+</style>
