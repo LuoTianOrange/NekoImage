@@ -235,37 +235,77 @@ app.whenReady().then(() => {
   ipcMain.handle('上传图片到指定文件夹', async (event, { files, folderName }) => {
     const storagePath = getStoragePath();
     const results = [];
+    const existingFiles = new Set(); // 用于记录已存在的文件名
 
-    for (const file of files) {
-      try {
-        // 清理文件名中的特殊字符
-        const cleanFileName = (fileName) => {
-          const specialChars = /[%$#@!&*()+=?<>{}[\]\\\/]/g;
-          return fileName.replace(specialChars, '');
-        };
-
-        const cleanedFileName = cleanFileName(file.name);
-        const destinationPath = path.join(storagePath, 'Galleries', folderName, cleanedFileName);
-
-        // 复制文件
-        await fsPromises.copyFile(file.path, destinationPath);
-
-        results.push({
-          success: true,
-          originalName: file.name,
-          path: destinationPath
-        });
-      } catch (error) {
-        results.push({
-          success: false,
-          originalName: file.name,
-          error: error.message
-        });
+    try {
+      // 先获取目标文件夹中已有的文件名
+      const galleryPath = path.join(storagePath, 'Galleries', folderName);
+      if (fs.existsSync(galleryPath)) {
+        const existingFilesList = await fsPromises.readdir(galleryPath);
+        existingFilesList.forEach(file => existingFiles.add(file.toLowerCase()));
       }
-    }
 
-    return results;
-  })
+      for (const file of files) {
+        try {
+          // 清理文件名中的特殊字符
+          const cleanFileName = (fileName) => {
+            const specialChars = /[%$#@!&*()+=?<>{}[\]\\\/]/g;
+            return fileName.replace(specialChars, '');
+          };
+
+          let fileName = cleanFileName(file.name);
+          const ext = path.extname(fileName);
+          const baseName = path.basename(fileName, ext);
+
+          // 检查文件名是否已存在
+          let counter = 1;
+          while (existingFiles.has(fileName.toLowerCase())) {
+            // 生成随机后缀 (4位字母数字)
+            const randomSuffix = Math.random().toString(36).substring(2, 6);
+            fileName = `${baseName}_${randomSuffix}${ext}`;
+            counter++;
+
+            // 防止无限循环
+            if (counter > 100) {
+              throw new Error('无法生成唯一文件名');
+            }
+          }
+
+          const destinationPath = path.join(storagePath, 'Galleries', folderName, fileName);
+
+          // 确保目标目录存在
+          await fsPromises.mkdir(path.dirname(destinationPath), { recursive: true });
+
+          // 复制文件
+          await fsPromises.copyFile(file.path, destinationPath);
+
+          // 记录已使用的文件名
+          existingFiles.add(fileName.toLowerCase());
+
+          results.push({
+            success: true,
+            originalName: file.name,
+            savedName: fileName, // 保存实际使用的文件名
+            path: destinationPath
+          });
+        } catch (error) {
+          results.push({
+            success: false,
+            originalName: file.name,
+            error: error.message
+          });
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('上传过程中发生全局错误:', error);
+      return [{
+        success: false,
+        error: '上传过程中发生全局错误: ' + error.message
+      }];
+    }
+  });
 
   ipcMain.handle('删除图库图片', async (event, { folderName, pid }) => {
     const storagePath = getStoragePath();
@@ -322,18 +362,34 @@ app.whenReady().then(() => {
     const jsonPath = path.join(storagePath, 'Galleries', `${folderName}.json`);
 
     try {
-      // 读取现有数据
-      const data = await fsPromises.readFile(jsonPath, 'utf-8');
-      const jsonData = JSON.parse(data);
+      // 读取现有数据或创建新数据
+      let jsonData = { draws: [] };
+      if (fs.existsSync(jsonPath)) {
+        jsonData = JSON.parse(await fsPromises.readFile(jsonPath, 'utf-8'));
+      }
 
       // 批量添加图片信息
+      const addedImages = [];
       for (const photo of photos) {
+        // 检查是否已存在相同路径的图片
+        const exists = jsonData.draws.some(draw => draw.cover === photo.path);
+        if (exists) {
+          console.warn(`图片已存在，跳过添加: ${photo.path}`);
+          continue;
+        }
+
         const pid = uuid();
-        jsonData.draws.push({
+        const newImage = {
           ...photo,
           pid,
-          createTime: new Date().toISOString()
-        });
+          name: photo.savedName || path.basename(photo.path), // 使用处理后的文件名
+          createTime: new Date().toISOString(),
+          isFavorite: false,
+          favoriteTime: null
+        };
+
+        jsonData.draws.push(newImage);
+        addedImages.push(newImage);
       }
 
       // 保存更新
@@ -341,7 +397,8 @@ app.whenReady().then(() => {
 
       return {
         success: true,
-        addedCount: photos.length
+        addedCount: addedImages.length,
+        addedImages
       };
     } catch (error) {
       return {
@@ -349,7 +406,7 @@ app.whenReady().then(() => {
         error: error.message
       };
     }
-  })
+  });
 
   ipcMain.handle('读取全部图片', async (event, allPhoto) => {
     const { fileName } = allPhoto

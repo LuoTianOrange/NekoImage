@@ -753,10 +753,10 @@ const handleAddPicture = async () => {
       const writeResult = await window.api['将图片信息写入json']({
         folderName: name.value,
         photos: successUploads.map((file) => ({
-          name: file.originalName,
+          name: file.savedName, // 使用处理后的文件名
+          savedName: file.savedName, // 传递给后端
           cover: file.path,
-          desc: '',
-          tag: []
+          desc: ''
         }))
       })
 

@@ -12,7 +12,7 @@
         <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!NewGalleryName"
           >添加图库</el-button
         >
-        <el-upload
+        <!-- <el-upload
           action=""
           multiple
           :show-file-list="false"
@@ -22,7 +22,7 @@
         >
           <el-button class="ml-3" type="primary" @click="readGallery">读取图库</el-button>
         </el-upload>
-        <el-button class="ml-3" type="success" @click="ReadAllGallery">更新图库</el-button>
+        <el-button class="ml-3" type="success" @click="ReadAllGallery">更新图库</el-button> -->
       </div>
       <div class="flex flex-wrap items-start w-full">
         <div
