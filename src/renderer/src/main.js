@@ -3,6 +3,7 @@ import App from './App.vue'
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 import {install} from '@icon-park/vue-next/es/all';
 import '@icon-park/vue-next/styles/index.css';
 import router from '../src/routers/index'
