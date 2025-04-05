@@ -80,6 +80,7 @@ import _ from 'lodash'
 import 'viewerjs/dist/viewer.css'
 import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
 import { readExifData } from '../../libs/exifReader'
+import moment from 'moment'
 
 const route = useRoute()
 const router = useRouter()

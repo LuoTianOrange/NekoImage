@@ -3,7 +3,10 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  '添加图库': (data) => ipcRenderer.send('添加图库', data),
+  '添加图库': async (arg) => {
+    const result = await ipcRenderer.invoke('添加图库', arg)
+    return result
+  },
   '读取全部图库': async (data) => {
     const result = await ipcRenderer.invoke('读取全部图库', data)
     return result

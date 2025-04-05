@@ -331,6 +331,7 @@ import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
+import moment from 'moment'
 import _ from 'lodash'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
@@ -437,7 +438,8 @@ const getGalleryInfo = async () => {
         图库名称: galleryInfo.name,
         图库描述: galleryInfo.desc,
         图片数量: galleryInfo.draws?.length || 0,
-        创建时间: galleryInfo.createTime,
+        创建时间: moment(galleryInfo.createTime).format('YYYY-MM-DD HH:mm:ss'),
+        更新时间: moment(galleryInfo.updateTime).format('YYYY-MM-DD HH:mm:ss'),
         图库大小: galleryInfo.size
       }
       console.log('获取图库信息成功:', info)

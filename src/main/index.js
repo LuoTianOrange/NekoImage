@@ -116,40 +116,74 @@ app.whenReady().then(() => {
 
   // IPC test
 
-  ipcMain.on('添加图库', (event, arg) => {
-    let newArg = JSON.parse(arg)
-    const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径
-    const filePath = path.join(storagePath, 'Galleries', `${newArg.name}.json`) // 图库元数据文件路径
-    const dirPath = path.join(storagePath, 'Galleries', newArg.name) // 图库图片目录路径
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-      if (err && err.code === 'ENOENT') {
-        // 文件不存在，创建新文件
-        fs.writeFile(filePath, JSON.stringify(newArg, null, 2), (err) => {
-          if (err) {
-            event.reply('添加图库响应', { success: false, message: '无法写入文件', error: err })
-          } else {
-            fs.mkdir(dirPath, (err) => {
-              if (err) {
-                event.reply('添加图库响应', {
-                  success: false,
-                  message: '无法创建文件夹',
-                  error: err
-                })
-              } else {
-                event.reply('添加图库响应', { success: true, message: '成功添加图库' })
-              }
-            })
-          }
-        })
-      } else if (err) {
-        // 其他错误
-        event.reply('添加图库响应', { success: false, message: '无法读取文件', error: err })
-      } else {
-        // 文件存在，不允许添加图库
-        event.reply('添加图库响应', { success: false, message: '图库已经存在' })
+  ipcMain.handle('添加图库', async (event, arg) => {
+    try {
+      const newArg = typeof arg === 'string' ? JSON.parse(arg) : arg;
+      const storagePath = getStoragePath();
+
+      // 检查输入参数有效性
+      if (!newArg || !newArg.name) {
+        throw new Error('图库名称不能为空');
       }
-    })
-  })
+
+      // 清理和验证图库名称
+      const cleanGalleryName = newArg.name.trim();
+      if (!cleanGalleryName) {
+        throw new Error('图库名称无效');
+      }
+
+      // 定义路径
+      const filePath = path.join(storagePath, 'Galleries', `${cleanGalleryName}.json`);
+      const dirPath = path.join(storagePath, 'Galleries', cleanGalleryName);
+
+      // 检查图库是否已存在
+      const [existsErr, exists] = await to(fsPromises.access(filePath).then(() => true).catch(() => false));
+      if (existsErr) throw existsErr;
+
+      if (exists) {
+        return {
+          success: false,
+          message: '图库已经存在',
+          details: {
+            existingPath: filePath,
+            // suggestedName: `${cleanGalleryName}_${Math.random().toString(36).substring(2, 6)}`
+          }
+        };
+      }
+
+      // 创建图库目录
+      await fsPromises.mkdir(dirPath, { recursive: true });
+
+      // 初始化图库数据
+      const galleryData = {
+        ...newArg,
+        name: cleanGalleryName,
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString(),
+        draws: [],
+        favorites: []
+      };
+
+      // 写入元数据文件
+      await fsPromises.writeFile(filePath, JSON.stringify(galleryData, null, 2));
+
+      return {
+        success: true,
+        message: '成功添加图库',
+        data: {
+          path: filePath,
+          name: cleanGalleryName
+        }
+      };
+    } catch (error) {
+      console.error('添加图库失败:', error);
+      return {
+        success: false,
+        message: '添加图库失败: ' + error.message,
+        error: error.stack
+      };
+    }
+  });
 
   ipcMain.handle('读取全部图库', async (event, arg) => {
     const storagePath = getStoragePath() // 使用 getStoragePath 获取图库路径

@@ -232,15 +232,15 @@ const saveSetting = async () => {
 }
 
 //添加默认图库的数据
-const defaultGalleryData = {
-  id: uuid(),
-  name: '',
-  cover: './images/defaultImage.png',
-  desc: '',
-  createTime: new Date().toLocaleDateString(),
-  updateTime: new Date().toLocaleDateString(),
-  draws: []
-}
+// const defaultGalleryData = {
+//   id: uuid(),
+//   name: '',
+//   cover: './images/defaultImage.png',
+//   desc: '',
+//   createTime: new Date().toLocaleDateString(),
+//   updateTime: new Date().toLocaleDateString(),
+//   draws: []
+// }
 
 //当前选择的图库名字
 const selectDialog = ref('')
@@ -318,19 +318,72 @@ const handleError = (res) => {
 }
 //添加图库
 const AddNewGallery = async () => {
-  defaultGalleryData.name = NewGalleryName.value
-  const defaultGalleryJSON = JSON.stringify(defaultGalleryData, null, 2)
-  NProgress.start()
-  await window.api['添加图库'](defaultGalleryJSON)
-  NewGalleryName.value = ''
-  ElMessageBox.alert('成功添加图库', '提示', {
-    confirmButtonText: '确定',
-    type: 'success'
-  })
-  NProgress.done()
-  await ReadAllGallery()
-  router.go(0)
-}
+  if (!NewGalleryName.value.trim()) {
+    ElMessageBox.alert('图库名称不能为空', '提示', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    });
+    return;
+  }
+
+  try {
+    NProgress.start();
+
+    // 构造正确的图库数据对象
+    const galleryData = {
+      name: NewGalleryName.value.trim(),
+      desc: '', // 可选描述
+      draws: [], // 初始图片数组
+      favorites: [] // 初始收藏数组
+    };
+
+    // 调用后端API - 直接传递对象，不要JSON.stringify
+    const result = await window.api['添加图库'](galleryData);
+
+    // 检查返回结果结构
+    if (!result || typeof result.success === 'undefined') {
+      throw new Error('无效的API响应格式');
+    }
+
+    if (result.success) {
+      ElMessageBox.alert(`图库"${result.data?.name || NewGalleryName.value}"创建成功`, '成功', {
+        confirmButtonText: '确定',
+        type: 'success',
+        callback: () => {
+          NewGalleryName.value = '';
+          ReadAllGallery(); // 刷新图库列表
+        }
+      });
+    } else {
+      let errorMessage = result.message || '添加图库失败';
+
+      if (result.details?.existingPath) {
+        errorMessage = `图库"${NewGalleryName.value}"已存在，请更换其他名称`;
+        // if (result.details.suggestedName) {
+        //   errorMessage += `，建议使用名称: ${result.details.suggestedName}`;
+        // }
+      }
+
+      ElMessageBox.alert(errorMessage, '错误', {
+        confirmButtonText: '确定',
+        type: 'error',
+        // callback: () => {
+        //   if (result.details?.suggestedName) {
+        //     NewGalleryName.value = result.details.suggestedName;
+        //   }
+        // }
+      });
+    }
+  } catch (error) {
+    console.error('添加图库出错:', error);
+    ElMessageBox.alert(error.message || '添加图库时发生未知错误', '错误', {
+      confirmButtonText: '确定',
+      type: 'error'
+    });
+  } finally {
+    NProgress.done();
+  }
+};
 /* —————————————————————————— */
 </script>
 <style>
