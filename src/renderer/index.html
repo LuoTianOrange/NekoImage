@@ -4,11 +4,16 @@
     <meta charset="UTF-8" />
     <title>NekoImage</title>
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:;"
-    />
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' http://localhost:8098;
+    connect-src 'self' http://localhost:8098;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: file:;
+  ">
     <link href="./src/assets/input.css" rel="stylesheet">
+    <script src="http://localhost:8098"></script>
+
   </head>
 
   <body>

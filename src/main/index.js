@@ -12,7 +12,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 import { v4 as uuid } from 'uuid'
 import Store from 'electron-store'
-
+import { devtools } from '@vue/devtools'
 // 初始化配置存储
 const store = new Store()
 
@@ -45,16 +45,6 @@ const getStoragePath = () => {
 // 设置存储路径
 const setStoragePath = (newPath) => {
   store.set('storagePath', newPath)
-}
-
-// 路径验证函数
-const validatePath = (targetPath) => {
-  if (!fs.existsSync(path.dirname(targetPath))) {
-    throw new Error('父目录不存在')
-  }
-  if (targetPath.includes('..')) {
-    throw new Error('非法路径')
-  }
 }
 
 function createWindow() {
@@ -95,6 +85,8 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  if (process.env.NODE_ENV === 'development')
+    devtools.connect("http://localhost:8098")
 }
 
 // This method will be called when Electron has finished
