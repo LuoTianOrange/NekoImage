@@ -57,7 +57,9 @@
                 <span :class="{ 'text-yellow-500': currentFilter === 'all' }">显示全部图片</span>
               </el-dropdown-item>
               <el-dropdown-item command="favorites">
-                <span :class="{ 'text-yellow-500': currentFilter === 'favorites' }">仅显示收藏</span>
+                <span :class="{ 'text-yellow-500': currentFilter === 'favorites' }"
+                  >仅显示收藏</span
+                >
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -96,7 +98,12 @@
             class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]"
           >
             <!--收藏图片-->
-            <el-button type="warning" size="small" :plain="!item.isFavorite" @click.stop="toggleFavorite(item)">
+            <el-button
+              type="warning"
+              size="small"
+              :plain="!item.isFavorite"
+              @click.stop="toggleFavorite(item)"
+            >
               <el-icon size="16">
                 <StarFilled v-if="item.isFavorite" />
                 <Star v-else />
@@ -130,16 +137,20 @@
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">图库名称</div>
         <el-input
-          v-model="input1"
+          v-model="editForm.name"
           style="width: 200px"
           placeholder="请输入名称"
-          :value="input1"
           clearable
         ></el-input>
       </div>
       <div class="mt-2 flex justify-between">
         <div class="text-[16px]">图库描述</div>
-        <el-input v-model="input2" style="width: 200px" placeholder="图库描述" clearable></el-input>
+        <el-input
+          v-model="editForm.desc"
+          style="width: 200px"
+          placeholder="图库描述"
+          clearable
+        ></el-input>
       </div>
       <div class="mt-5 flex flex-row justify-end">
         <el-button class="!ml-2" type="primary" @click="saveSetting">保存</el-button>
@@ -317,7 +328,7 @@ import {
   computed
 } from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { ArrowRight,Star, StarFilled } from '@element-plus/icons-vue'
+import { ArrowRight, Star, StarFilled } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
 import _ from 'lodash'
@@ -328,8 +339,13 @@ const uploadRef = ref(null)
 const route = useRoute()
 const router = useRouter()
 
-const input1 = ref('')
-const input2 = ref('')
+const editForm = reactive({
+  originalName: '',
+  name: '',
+  desc: '',
+  draws: [],
+  favorites: []
+})
 const name = ref('')
 
 const image = ref([])
@@ -342,25 +358,21 @@ const GalleryInfo = ref({
 })
 
 const currentFilter = ref('all') // 'all' 或 'favorites'
-const filterText = computed(() =>
-  currentFilter.value === 'all' ? '显示全部' : '仅收藏'
-)
+const filterText = computed(() => (currentFilter.value === 'all' ? '显示全部' : '仅收藏'))
 
 const filteredImages = computed(() => {
   let result = [...image.value] // 使用原始图片数据
 
   // 应用收藏筛选
   if (currentFilter.value === 'favorites') {
-    result = result.filter(img => img.isFavorite)
+    result = result.filter((img) => img.isFavorite)
   }
 
   // 应用排序
   const { field, order } = sortOptions.value
   return result.sort((a, b) => {
     if (field === 'name') {
-      return order === 'asc'
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name)
+      return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
     } else if (field === 'date') {
       return order === 'asc'
         ? new Date(a.createTime) - new Date(b.createTime)
@@ -484,9 +496,29 @@ const goToPage = (path, { name, item }) => {
 
 //设置相关
 const showForm = ref(false)
-const clickSetting = (name) => {
+const clickSetting = async (name) => {
   showForm.value = true
-  input1.value = name
+  editForm.originalName = name
+
+  // 读取图库当前信息
+  try {
+    const response = await window.api['读取图库信息'](name)
+    if (response.success) {
+      editForm.name = response.data.name
+      editForm.desc = response.data.desc || ''
+    } else {
+      ElMessageBox.alert('获取图库信息失败', '错误', {
+        confirmButtonText: '确定',
+        type: 'error'
+      })
+    }
+  } catch (error) {
+    console.error('获取图库信息出错:', error)
+    ElMessageBox.alert('获取图库信息出错', '错误', {
+      confirmButtonText: '确定',
+      type: 'error'
+    })
+  }
 }
 //添加图片设置
 const showAddPictrueSetting = ref(false)
@@ -546,8 +578,60 @@ const randomColor = () => {
   return TagColor[index]
 }
 //保存图库设置
-const saveSetting = () => {
-  showForm.value = false
+const saveSetting = async () => {
+  if (!editForm.name) {
+    ElMessageBox.alert('图库名称不能为空', '提示', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    })
+    return
+  }
+
+  try {
+    NProgress.start()
+
+    const response = await window.api['修改图库信息']({
+      galleryName: editForm.originalName,
+      updates: {
+        name: editForm.name,
+        desc: editForm.desc
+      }
+    })
+
+    if (response.success) {
+      ElMessageBox.alert('图库信息更新成功', '提示', {
+        confirmButtonText: '确定',
+        type: 'success',
+        callback: async () => {
+          showForm.value = false
+          // 更新当前页面显示的名称
+          name.value = editForm.name
+
+          // 刷新右侧图库信息 - 确保正确更新 GalleryInfo
+          const updatedInfo = await getGalleryInfo()
+          if (updatedInfo) {
+            GalleryInfo.value = updatedInfo
+          }
+
+          // 刷新图片列表
+          await getAllImages()
+        }
+      })
+    } else {
+      ElMessageBox.alert(response.message || '更新图库信息失败', '错误', {
+        confirmButtonText: '确定',
+        type: 'error'
+      })
+    }
+  } catch (error) {
+    console.error('更新图库信息出错:', error)
+    ElMessageBox.alert('更新图库信息出错', '错误', {
+      confirmButtonText: '确定',
+      type: 'error'
+    })
+  } finally {
+    NProgress.done()
+  }
 }
 
 const beforeRemove = (file, uploadFiles) => {
