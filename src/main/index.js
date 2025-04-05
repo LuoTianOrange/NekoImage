@@ -366,6 +366,15 @@ app.whenReady().then(() => {
       const jsonPath = path.join(storagePath, 'Galleries', `${fileName}.json`)
       // console.log(fileName)
       const data = await fsPromises.readFile(jsonPath, 'utf-8')
+      const galleryData = JSON.parse(data);
+      if (!galleryData.favorites) {
+        galleryData.favorites = [];
+        galleryData.draws.forEach(draw => {
+          draw.isFavorite = draw.isFavorite || false;
+          draw.favoriteTime = draw.favoriteTime || null;
+        });
+        await fsPromises.writeFile(jsonPath, JSON.stringify(galleryData, null, 2));
+      }
       return data
     }
     const [err, data] = await to(readAllJsonFile())
@@ -543,21 +552,21 @@ app.whenReady().then(() => {
       const galleryInfo = JSON.parse(data);
 
       // 计算图库总大小
-    let totalSize = 0;
+      let totalSize = 0;
 
-    //通过元数据中的图片路径计算大小
-    if (galleryInfo.draws && Array.isArray(galleryInfo.draws)) {
-      for (const image of galleryInfo.draws) {
-        try {
-          const stats = await fsPromises.stat(image.cover);
-          totalSize += stats.size;
-        } catch (error) {
-          console.warn(`无法获取图片大小: ${image.cover}`, error);
+      //通过元数据中的图片路径计算大小
+      if (galleryInfo.draws && Array.isArray(galleryInfo.draws)) {
+        for (const image of galleryInfo.draws) {
+          try {
+            const stats = await fsPromises.stat(image.cover);
+            totalSize += stats.size;
+          } catch (error) {
+            console.warn(`无法获取图片大小: ${image.cover}`, error);
+          }
         }
       }
-    }
-    const sizeInfo = formatFileSize(totalSize);
-    galleryInfo.size = `${sizeInfo.value}${sizeInfo.unit}`
+      const sizeInfo = formatFileSize(totalSize);
+      galleryInfo.size = `${sizeInfo.value}${sizeInfo.unit}`
       console.log('galleryInfo:', galleryInfo)
 
       // 返回图库信息
@@ -696,7 +705,78 @@ app.whenReady().then(() => {
     }
   });
 
-  // 名称验证函数
+  ipcMain.handle('添加收藏', async (event, { galleryName, pid }) => {
+    const storagePath = getStoragePath();
+    const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
+
+    try {
+      const data = await fsPromises.readFile(jsonPath, 'utf-8');
+      const galleryData = JSON.parse(data);
+
+      // 更新图片收藏状态
+      const imageIndex = galleryData.draws.findIndex(draw => draw.pid === pid);
+      if (imageIndex === -1) throw new Error('未找到指定图片');
+
+      galleryData.draws[imageIndex].isFavorite = true;
+      galleryData.draws[imageIndex].favoriteTime = new Date().toISOString();
+
+      // 添加到收藏索引
+      if (!galleryData.favorites.includes(pid)) {
+        galleryData.favorites.push(pid);
+      }
+
+      await fsPromises.writeFile(jsonPath, JSON.stringify(galleryData, null, 2));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('移除收藏', async (event, { galleryName, pid }) => {
+    const storagePath = getStoragePath();
+    const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
+
+    try {
+      const data = await fsPromises.readFile(jsonPath, 'utf-8');
+      const galleryData = JSON.parse(data);
+
+      // 更新图片收藏状态
+      const imageIndex = galleryData.draws.findIndex(draw => draw.pid === pid);
+      if (imageIndex !== -1) {
+        galleryData.draws[imageIndex].isFavorite = false;
+        galleryData.draws[imageIndex].favoriteTime = null;
+      }
+
+      // 从收藏索引移除
+      galleryData.favorites = galleryData.favorites.filter(id => id !== pid);
+
+      await fsPromises.writeFile(jsonPath, JSON.stringify(galleryData, null, 2));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('获取收藏列表', async (event, galleryName) => {
+    const storagePath = getStoragePath();
+    const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
+
+    try {
+      const data = await fsPromises.readFile(jsonPath, 'utf-8');
+      const galleryData = JSON.parse(data);
+
+      const favorites = galleryData.draws.filter(draw =>
+        galleryData.favorites.includes(draw.pid)
+      ).sort((a, b) =>
+        new Date(b.favoriteTime) - new Date(a.favoriteTime)
+      );
+
+      return { success: true, data: favorites };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
   function validateGalleryName(name) {
     if (!name || typeof name !== 'string') {
       return { valid: false, reason: '名称不能为空' };
@@ -713,18 +793,18 @@ app.whenReady().then(() => {
 
   const sharp = require('sharp'); // 引入 sharp 库
   // 文件大小格式化工具函数
-function formatFileSize(bytes) {
-  if (bytes === 0) return { value: 0, unit: 'B' };
+  function formatFileSize(bytes) {
+    if (bytes === 0) return { value: 0, unit: 'B' };
 
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return {
-    value: parseFloat((bytes / Math.pow(k, i)).toFixed(2)),
-    unit: sizes[i]
-  };
-}
+    return {
+      value: parseFloat((bytes / Math.pow(k, i)).toFixed(2)),
+      unit: sizes[i]
+    };
+  }
   // 调整图片大小
   ipcMain.handle('调整图片大小', async (event, { imagePath, width, height, galleryName }) => {
     try {
@@ -749,8 +829,8 @@ function formatFileSize(bytes) {
 
       // 使用 sharp 调整图片大小
       await sharp(normalizedImagePath)
-        .resize(width, height,{
-          fit:'fill'
+        .resize(width, height, {
+          fit: 'fill'
         })
         .toFile(resizedImagePath);
 

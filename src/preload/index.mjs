@@ -84,7 +84,20 @@ const api = {
   '修改图库信息': async ({ galleryName, updates }) => {
     const result = await ipcRenderer.invoke('修改图库信息', { galleryName, updates })
     return result
-  }
+  },
+  '添加收藏': async ({ galleryName, pid }) => {
+    const result = await ipcRenderer.invoke('添加收藏', { galleryName, pid })
+    return result
+  },
+  '移除收藏': async ({ galleryName, pid }) => {
+    const result = await ipcRenderer.invoke('移除收藏', { galleryName, pid })
+    return result
+  },
+  '获取收藏列表': async (galleryName) => {
+    const result = await ipcRenderer.invoke('获取收藏列表', galleryName)
+    return result
+  },
+
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

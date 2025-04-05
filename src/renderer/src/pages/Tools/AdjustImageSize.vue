@@ -1,9 +1,9 @@
 <template>
   <div class="p-[20px]">
     <div class="text-[20px]">调整图片尺寸</div>
-    <div class="flex flex-row mt-5">
+    <div class="flex h-[calc(100vh-160px)] flex-row mt-5">
       <!-- 左侧：图库和图片选择 -->
-      <div class="w-[300px] border-r pr-5">
+      <div class="w-[300px] h-full border-r pr-5">
         <!-- 图库选择 -->
         <el-select
           v-model="selectedGallery"
@@ -20,7 +20,7 @@
         </el-select>
 
         <!-- 图片列表 -->
-        <div class="mt-5">
+        <div class="mt-5 h-full overflow-y-auto" >
           <div
             v-for="(image, index) in imageList"
             :key="index"
@@ -39,8 +39,8 @@
       </div>
 
       <!-- 右侧：调整尺寸 -->
-      <div class="flex-1 pl-5 w-full">
-        <div v-if="selectedImage" class="flex flex-col w-full">
+      <div class="flex-1 pl-5 w-full overflow-y-auto">
+        <div v-if="selectedImage" class="flex flex-col w-full h-full">
           <!-- 当前图片预览 -->
           <div
             class="w-[180px] min-h-[180px] shadow-md flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
@@ -97,7 +97,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="text-gray-500">请选择一张图片</div>
+        <div v-else class="text-gray-500 h-full">请选择一张图片</div>
       </div>
     </div>
   </div>

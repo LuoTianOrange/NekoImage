@@ -37,12 +37,28 @@
             </el-icon>
             <div class="ml-1">排序</div>
           </el-button>
-          <template #dropdown >
+          <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item command="name-asc">按名称升序</el-dropdown-item>
               <el-dropdown-item command="name-desc">按名称降序</el-dropdown-item>
               <el-dropdown-item command="date-asc">按日期升序</el-dropdown-item>
               <el-dropdown-item command="date-desc">按日期降序</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-dropdown class="ml-2" trigger="click" @command="handleFilterChange">
+          <el-button type="warning" plain class="flex flex-row">
+            <el-icon><Star /></el-icon>
+            <div class="ml-1">{{ filterText }}</div>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="all">
+                <span :class="{ 'text-yellow-500': currentFilter === 'all' }">显示全部图片</span>
+              </el-dropdown-item>
+              <el-dropdown-item command="favorites">
+                <span :class="{ 'text-yellow-500': currentFilter === 'favorites' }">仅显示收藏</span>
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -58,17 +74,11 @@
           </el-icon>
           <div class="ml-1" @click="deleteDialog = true">删除图库</div>
         </el-button>
-        <!-- <el-button class="flex flex-row" type="warning" plain @click="getAllImages()">
-            <el-icon>
-              <Tools />
-            </el-icon>
-            <div class="ml-1">刷新</div>
-          </el-button> -->
       </div>
       <!--图片展示区-->
       <div class="mt-5 flex flex-wrap items-start w-full">
         <div
-          v-for="(item, index) in sortedImages"
+          v-for="(item, index) in filteredImages"
           class="w-[180px] h-[180px] flex flex-col justify-between items-center bg-white p-3 border relative mt-3 ml-3 transform animate-in zoom-in"
           @mouseenter="EnterPicture(index)"
           @mouseleave="LeavePicture(index)"
@@ -85,15 +95,16 @@
             v-if="isEnterPicture[index]"
             class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white bg-opacity-75 w-full h-[40px]"
           >
-            <!--复制图片信息-->
-            <el-button class="" type="success" size="small" plain>
-              <el-icon>
-                <DocumentCopy />
+            <!--收藏图片-->
+            <el-button type="warning" size="small" :plain="!item.isFavorite" @click.stop="toggleFavorite(item)">
+              <el-icon size="16">
+                <StarFilled v-if="item.isFavorite" />
+                <Star v-else />
               </el-icon>
             </el-button>
             <!--删除图片-->
             <el-button class="" type="danger" size="small" plain @click.stop="deletePhoto(item)">
-              <el-icon>
+              <el-icon size="16">
                 <Delete />
               </el-icon>
             </el-button>
@@ -106,10 +117,7 @@
       <div class="p-4 h-full overflow-y-auto">
         <h3 class="text-lg font-bold">图库信息</h3>
         <div v-if="GalleryInfo">
-          <div
-            v-for="(value, key) in GalleryInfo"
-            :key="key"
-            class="mb-1 py-1">
+          <div v-for="(value, key) in GalleryInfo" :key="key" class="mb-1 py-1">
             <strong>{{ key }}:</strong> {{ value }}
           </div>
         </div>
@@ -297,9 +305,19 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, reactive, onMounted, onUpdated, watch, onActivated, toRaw, computed } from 'vue'
+import {
+  ref,
+  watchEffect,
+  reactive,
+  onMounted,
+  onUpdated,
+  watch,
+  onActivated,
+  toRaw,
+  computed
+} from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { ArrowRight } from '@element-plus/icons-vue'
+import { ArrowRight,Star, StarFilled } from '@element-plus/icons-vue'
 import { DownPicture } from '@icon-park/vue-next'
 import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
 import _ from 'lodash'
@@ -316,12 +334,72 @@ const name = ref('')
 
 const image = ref([])
 const GalleryInfo = ref({
-  '图库名称': '',
-  '图库描述': '',
-  '图片数量': 0,
-  '创建时间': '',
-  '图库大小': ''
+  图库名称: '',
+  图库描述: '',
+  图片数量: 0,
+  创建时间: '',
+  图库大小: ''
 })
+
+const currentFilter = ref('all') // 'all' 或 'favorites'
+const filterText = computed(() =>
+  currentFilter.value === 'all' ? '显示全部' : '仅收藏'
+)
+
+const filteredImages = computed(() => {
+  let result = [...image.value] // 使用原始图片数据
+
+  // 应用收藏筛选
+  if (currentFilter.value === 'favorites') {
+    result = result.filter(img => img.isFavorite)
+  }
+
+  // 应用排序
+  const { field, order } = sortOptions.value
+  return result.sort((a, b) => {
+    if (field === 'name') {
+      return order === 'asc'
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name)
+    } else if (field === 'date') {
+      return order === 'asc'
+        ? new Date(a.createTime) - new Date(b.createTime)
+        : new Date(b.createTime) - new Date(a.createTime)
+    }
+    return 0
+  })
+})
+
+// 处理筛选变化
+const handleFilterChange = async (command) => {
+  currentFilter.value = command
+  await getAllImages()
+}
+
+// 切换收藏状态
+const toggleFavorite = async (item) => {
+  try {
+    const isFavorite = !item.isFavorite
+    const api = isFavorite ? '添加收藏' : '移除收藏'
+
+    const response = await window.api[api]({
+      galleryName: name.value,
+      pid: item.pid
+    })
+
+    if (response.success) {
+      // 更新本地状态
+      item.isFavorite = isFavorite
+      item.favoriteTime = isFavorite ? new Date().toISOString() : null
+      ElMessage.success(isFavorite ? '已添加到收藏' : '已从收藏移除')
+    } else {
+      throw new Error(response.message)
+    }
+  } catch (error) {
+    ElMessage.error(`操作失败: ${error.message}`)
+  }
+}
+
 //获取全部图片
 const getAllImages = async () => {
   /**
@@ -336,38 +414,37 @@ const getAllImages = async () => {
 //获取图库信息
 const getGalleryInfo = async () => {
   try {
-    const response = await window.api['读取图库信息'](name.value);
-    console.log('response:', response);
+    const response = await window.api['读取图库信息'](name.value)
+    console.log('response:', response)
 
     if (response.success) {
-      const galleryInfo = _.cloneDeep(response.data);
-      console.log('galleryInfo:', galleryInfo);
+      const galleryInfo = _.cloneDeep(response.data)
+      console.log('galleryInfo:', galleryInfo)
 
       const info = {
-        '图库名称': galleryInfo.name,
-        '图库描述': galleryInfo.desc,
-        '图片数量': galleryInfo.draws?.length || 0,
-        '创建时间': galleryInfo.createTime,
-        '图库大小': galleryInfo.size
-      };
-      console.log('获取图库信息成功:', info);
+        图库名称: galleryInfo.name,
+        图库描述: galleryInfo.desc,
+        图片数量: galleryInfo.draws?.length || 0,
+        创建时间: galleryInfo.createTime,
+        图库大小: galleryInfo.size
+      }
+      console.log('获取图库信息成功:', info)
 
-      return info;
+      return info
     } else {
-      console.error('获取图库信息失败:', response.message);
-      return null;
+      console.error('获取图库信息失败:', response.message)
+      return null
     }
   } catch (error) {
-    console.error('调用 IPC 通道失败:', error);
-    return null;
+    console.error('调用 IPC 通道失败:', error)
+    return null
   }
-};
-
+}
 
 //监测路由变化更新图片
 onActivated(async () => {
   await getAllImages()
-  const data = await getGalleryInfo();
+  const data = await getGalleryInfo()
   if (data) {
     GalleryInfo.value = data || {}
   }
@@ -418,11 +495,10 @@ const PhotoInfo = ref({
   name: '',
   cover: '',
   desc: '',
-  author: '',
   type: '',
-  startTime: '',
-  endTime: '',
-  tag: []
+  tag: [],
+  isFavorite: false,
+  favoriteTime: null
 })
 const imageUrl = ref('')
 const PictureType = [
@@ -563,101 +639,100 @@ const beforeUpload = (rawFile) => {
 
 // 添加图片功能
 const handleAddPicture = async () => {
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-  fileInput.multiple = true;
+  const fileInput = document.createElement('input')
+  fileInput.type = 'file'
+  fileInput.accept = 'image/*'
+  fileInput.multiple = true
 
   fileInput.onchange = async (event) => {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
+    const files = Array.from(event.target.files)
+    if (files.length === 0) return
 
     try {
       // 1. 批量上传文件
       const uploadResults = await window.api['上传图片到指定文件夹']({
-        files: files.map(file => ({
+        files: files.map((file) => ({
           name: file.name,
           path: file.path
         })),
         folderName: name.value
-      });
+      })
 
       // 筛选上传成功的文件
-      const successUploads = uploadResults.filter(r => r.success);
+      const successUploads = uploadResults.filter((r) => r.success)
 
       if (successUploads.length === 0) {
-        throw new Error('所有文件上传失败');
+        throw new Error('所有文件上传失败')
       }
 
       // 2. 批量写入图片信息
       const writeResult = await window.api['将图片信息写入json']({
         folderName: name.value,
-        photos: successUploads.map(file => ({
+        photos: successUploads.map((file) => ({
           name: file.originalName,
           cover: file.path,
           desc: '',
           tag: []
         }))
-      });
+      })
 
       if (writeResult.success) {
-        ElMessage.success(`成功添加 ${writeResult.addedCount} 张图片`);
-        await getAllImages(); // 刷新列表
-        const updatedInfo = await getGalleryInfo();
+        ElMessage.success(`成功添加 ${writeResult.addedCount} 张图片`)
+        await getAllImages() // 刷新列表
+        const updatedInfo = await getGalleryInfo()
         if (updatedInfo) {
-          GalleryInfo.value = updatedInfo;
+          GalleryInfo.value = updatedInfo
         }
       } else {
-        throw new Error(writeResult.error);
+        throw new Error(writeResult.error)
       }
     } catch (error) {
-      ElMessage.error(`添加图片失败: ${error.message}`);
+      ElMessage.error(`添加图片失败: ${error.message}`)
     }
-  };
+  }
 
-  fileInput.click();
-};
-
+  fileInput.click()
+}
 
 // 删除图片
 const deletePhoto = async (item) => {
   try {
-    const folderName = name.value;
-    const pid = item.pid; // 直接使用对象中的pid
+    const folderName = name.value
+    const pid = item.pid // 直接使用对象中的pid
 
     console.log('删除图片:', {
       folderName,
       pid,
       cover: item.cover // 打印要删除的文件路径
-    });
-    await ElMessageBox.confirm(
-      `确定要删除图片 "${item.name}" 吗?`,
-      '删除图片',
-      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
-    );
+    })
+    await ElMessageBox.confirm(`确定要删除图片 "${item.name}" 吗?`, '删除图片', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     const result = await window.api['删除图库图片']({
       folderName,
       pid
-    });
+    })
 
     if (result.success) {
-      ElMessage.success('图片删除成功');
+      ElMessage.success('图片删除成功')
       // 使用filter更新数组，避免索引问题
-      image.value = image.value.filter(img => img.pid !== pid);
+      image.value = image.value.filter((img) => img.pid !== pid)
 
       // 更新图库信息
-      const data = await getGalleryInfo();
+      const data = await getGalleryInfo()
       if (data) {
-        GalleryInfo.value = data;
+        GalleryInfo.value = data
       }
     } else {
-      throw new Error(result.error || '删除失败');
+      throw new Error(result.error || '删除失败')
     }
   } catch (error) {
-    console.error('删除图片出错:', error);
-    ElMessage.error(`删除失败: ${error.message}`);
+    console.error('删除图片出错:', error)
+    ElMessage.error(`删除失败: ${error.message}`)
   }
-};
+}
 
 //当前选择的图库名字
 const selectDialog = ref('')
@@ -708,45 +783,43 @@ const deleteGallery = async (name) => {
 // 排序逻辑
 const sortOptions = ref({
   field: 'name', // 默认按名称排序
-  order: 'asc', // 默认升序
-});
+  order: 'asc' // 默认升序
+})
 
 // 计算属性：根据排序规则返回排序后的图片列表
-const sortedImages = computed(() => {
-  const { field, order } = sortOptions.value;
-  return [...image.value].sort((a, b) => {
-    if (field === 'name') {
-      return order === 'asc'
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
-    } else if (field === 'date') {
-      return order === 'asc'
-        ? new Date(a.createTime) - new Date(b.createTime)
-        : new Date(b.createTime) - new Date(a.createTime);
-    }
-    return 0;
-  });
-});
+// const sortedImages = computed(() => {
+//   const { field, order } = sortOptions.value
+//   return [...image.value].sort((a, b) => {
+//     if (field === 'name') {
+//       return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+//     } else if (field === 'date') {
+//       return order === 'asc'
+//         ? new Date(a.createTime) - new Date(b.createTime)
+//         : new Date(b.createTime) - new Date(a.createTime)
+//     }
+//     return 0
+//   })
+// })
 
 // 处理排序
 const handleSort = async (command) => {
-  const [field, order] = command.split('-');
-  sortOptions.value = { field, order };
+  const [field, order] = command.split('-')
+  sortOptions.value = { field, order }
 
   // 调用后端排序接口
   const response = await window.api['获取排序后的图片']({
     folderName: name.value,
     field,
-    order,
-  });
+    order
+  })
 
   if (response.success) {
-    image.value = response.data;
-    console.log('排序后的图片列表:', image.value);
+    image.value = response.data
+    console.log('排序后的图片列表:', image.value)
   } else {
-    ElMessage.error('排序失败: ' + response.message);
+    ElMessage.error('排序失败: ' + response.message)
   }
-};
+}
 </script>
 <style scoped>
 .avatar-uploader .avatar {
