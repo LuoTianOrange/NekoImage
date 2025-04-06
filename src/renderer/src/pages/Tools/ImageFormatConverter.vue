@@ -1,7 +1,7 @@
 <template>
-  <div class="p-[20px]">
+  <div class="p-[20px] w-screen max-w-[1000px]">
     <div class="text-[20px]">图片格式转换</div>
-    <div class="flex h-[calc(100vh-160px)] flex-row mt-5">
+    <div class="flex h-[calc(100vh-130px)] flex-row mt-5">
       <!-- 左侧：图库和图片选择（与调整尺寸页面相同） -->
       <div class="w-[300px] h-full border-r pr-5">
         <el-select
@@ -83,7 +83,7 @@
               <el-checkbox v-model="webpLossless" class="mt-2">无损压缩</el-checkbox>
             </div>
 
-            <el-button type="primary" @click="convertImage" :loading="isConverting">
+            <el-button class="w-full max-w-[200px]" type="primary" @click="convertImage" :loading="isConverting">
               开始转换
             </el-button>
           </div>

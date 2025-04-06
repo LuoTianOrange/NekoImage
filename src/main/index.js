@@ -601,6 +601,9 @@ app.whenReady().then(() => {
 
   ipcMain.handle('获取图片大小', async (event, imagePath) => {
     try {
+      if (typeof imagePath !== 'string') {
+        throw new Error('路径必须是字符串');
+      }
       // 获取文件状态
       const stats = await stat(imagePath)
       const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2) // 转换为 MB
@@ -911,7 +914,7 @@ app.whenReady().then(() => {
       // 创建新图库条目
       const newImage = {
         ...originalImage,
-        pid: crypto.randomUUID(), // 新唯一ID
+        pid: uuid(), // 新唯一ID
         cover: convertedPath,
         name: `${originalImage.name}-${ext.toUpperCase()}`,
         createTime: new Date().toISOString()
@@ -935,6 +938,152 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('压缩图片', async (event, { imagePath, galleryName, options }) => {
+    try {
+      const storagePath = getStoragePath();
+      const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
+      const ext = path.extname(imagePath).toLowerCase();
+      const isPNG = ext === '.png';
+
+      // 1. 读取原图信息
+      const originalStats = await fsPromises.stat(imagePath);
+      const originalSize = originalStats.size;
+      const normalizedPath = path.normalize(imagePath);
+
+      // 2. 读取图库数据
+      const jsonData = JSON.parse(await fsPromises.readFile(jsonPath, 'utf-8'));
+      const originalImage = jsonData.draws.find(d => path.normalize(d.cover) === normalizedPath);
+      if (!originalImage) {
+        return { success: false, message: '未找到原始图片记录' };
+      }
+
+      // 3. 准备输出路径
+      const baseName = path.basename(normalizedPath, ext);
+      const compressedPath = path.join(
+        path.dirname(normalizedPath),
+        `${baseName}_compressed_${Date.now()}${ext}`
+      );
+
+      // 4. 创建sharp实例
+      const sharpInstance = sharp(normalizedPath);
+      const effectiveQuality = Math.min(options.quality, 90);
+
+      // 5. 格式特定处理
+      if (isPNG) {
+        // PNG专用压缩策略
+        const metadata = await sharpInstance.metadata();
+
+        // 根据PNG特性选择压缩方式
+        if (metadata.channels <= 4 && !metadata.hasAlpha) {
+          // 简单PNG使用调色板优化
+          sharpInstance.png({
+            compressionLevel: 9,
+            palette: true,
+            quality: Math.floor(effectiveQuality / 10) + 1 // 1-10
+          });
+        } else {
+          // 复杂PNG使用自适应过滤
+          sharpInstance.png({
+            compressionLevel: 9,
+            adaptiveFiltering: true,
+            effort: 7 // 更高的压缩努力值
+          });
+        }
+      } else {
+        // 其他格式处理
+        switch(ext) {
+          case '.jpg':
+          case '.jpeg':
+            sharpInstance.jpeg({
+              quality: effectiveQuality,
+              progressive: options.progressive,
+              mozjpeg: true
+            });
+            break;
+          case '.webp':
+            sharpInstance.webp({
+              quality: effectiveQuality,
+              alphaQuality: 80
+            });
+            break;
+        }
+      }
+
+      // 6. 元数据处理
+      if (options.preserveMetadata) {
+        sharpInstance.withMetadata();
+      } else {
+        sharpInstance.withMetadata(false);
+      }
+
+      // 7. 执行压缩
+      await sharpInstance.toFile(compressedPath);
+      const compressedStats = await fsPromises.stat(compressedPath);
+
+      // 8. 验证压缩结果
+      if (compressedStats.size >= originalSize * 0.98) {
+        // 尝试更激进的压缩方案
+        if (isPNG) {
+          await sharp(normalizedPath)
+            .png({ compressionLevel: 9, effort: 9 })
+            .toFile(compressedPath);
+        } else {
+          await sharp(normalizedPath)
+            .jpeg({ quality: Math.max(30, effectiveQuality - 30), mozjpeg: true })
+            .toFile(compressedPath);
+        }
+
+        const finalStats = await fsPromises.stat(compressedPath);
+        if (finalStats.size >= originalSize) {
+          fs.unlinkSync(compressedPath);
+          return {
+            success: false,
+            message: '图片已达到最小尺寸',
+            originalSize,
+            compressedSize: originalSize
+          };
+        }
+      }
+
+      // 9. 更新图库数据
+      const newImage = {
+        ...originalImage,
+        pid: uuid(),
+        cover: compressedPath,
+        name: `${originalImage.name}-compressed`,
+        createTime: new Date().toISOString(),
+        metadata: {
+          ...(originalImage.metadata || {}),
+          compressionInfo: {
+            originalSize,
+            compressedSize: compressedStats.size,
+            qualityUsed: effectiveQuality,
+            savedPercent: ((originalSize - compressedStats.size) / originalSize * 100).toFixed(1),
+            isPNG
+          }
+        }
+      };
+
+      jsonData.draws.push(newImage);
+      await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
+
+      return {
+        success: true,
+        newImage,
+        originalSize,
+        compressedSize: compressedStats.size,
+        savedSize: originalSize - compressedStats.size
+      };
+
+    } catch (error) {
+      console.error('压缩过程中出错:', error);
+      return {
+        success: false,
+        message: `压缩失败: ${error.message}`,
+        errorDetails: error.stack
+      };
+    }
+  });
 
   function validateGalleryName(name) {
     if (!name || typeof name !== 'string') {

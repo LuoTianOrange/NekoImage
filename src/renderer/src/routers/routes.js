@@ -54,6 +54,12 @@ const routes = [
       name: 'ImageFormatConverter',
       title: '图片格式转换',
       component: () => import('../pages/Tools/ImageFormatConverter.vue'),
+    },
+    {
+      path: '/tools/CompressImage',
+      name: 'CompressImage',
+      title: '图片压缩',
+      component: () => import('../pages/Tools/CompressImage.vue'),
     }
 ]
 

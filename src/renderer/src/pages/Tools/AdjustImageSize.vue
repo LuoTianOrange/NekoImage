@@ -1,5 +1,5 @@
 <template>
-  <div class="p-[20px]">
+  <div class="p-[20px] w-screen max-w-[1000px]">
     <div class="text-[20px]">调整图片尺寸</div>
     <div class="flex h-[calc(100vh-160px)] flex-row mt-5">
       <!-- 左侧：图库和图片选择 -->
@@ -75,13 +75,13 @@
               <el-radio-button label="按百分比" value="percentage" />
             </el-radio-group>
             <el-form class="mt-5 flex flex-col" v-if="toggleMode === 'pixel'" :model="resizeForm">
-              <el-form-item label="宽度(px):">
+              <el-form-item label="宽度(px):" class="max-w-[300px]">
                 <el-input v-model.number="resizeForm.width" placeholder="请输入宽度" />
               </el-form-item>
-              <el-form-item label="高度(px):">
+              <el-form-item label="高度(px):" class="max-w-[300px]">
                 <el-input v-model.number="resizeForm.height" placeholder="请输入高度" />
               </el-form-item>
-              <el-button class="mt-3" type="primary" @click="resizeImage">调整尺寸</el-button>
+              <el-button class="w-full max-w-[200px]" type="primary" @click="resizeImage">调整尺寸</el-button>
             </el-form>
             <!-- 预设比例 -->
             <div v-else-if="toggleMode === 'percentage'" class="mt-5 flex flex-col">
@@ -91,7 +91,7 @@
                 <el-radio-button :label="0.5">缩小50%</el-radio-button>
                 <el-radio-button :label="0.25">缩小75%</el-radio-button>
               </el-radio-group>
-              <el-button class="mt-3" type="primary" @click="resizeImageByPercentage(selectedPercentage)"
+              <el-button  class="mt-3 w-full max-w-[200px]" type="primary" @click="resizeImageByPercentage(selectedPercentage)"
                 >调整尺寸</el-button
               >
             </div>
