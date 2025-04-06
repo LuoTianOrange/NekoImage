@@ -87,9 +87,9 @@
             <div v-else-if="toggleMode === 'percentage'" class="mt-5 flex flex-col">
               <div class="text-lg mb-3">预设比例</div>
               <el-radio-group v-model="selectedPercentage" @change="updateResizeFormByPercentage">
-                <el-radio-button :label="0.75">缩小75%</el-radio-button>
+                <el-radio-button :label="0.75">缩小25%</el-radio-button>
                 <el-radio-button :label="0.5">缩小50%</el-radio-button>
-                <el-radio-button :label="0.25">缩小25%</el-radio-button>
+                <el-radio-button :label="0.25">缩小75%</el-radio-button>
               </el-radio-group>
               <el-button class="mt-3" type="primary" @click="resizeImageByPercentage(selectedPercentage)"
                 >调整尺寸</el-button

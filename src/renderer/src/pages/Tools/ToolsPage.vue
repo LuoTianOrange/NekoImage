@@ -10,9 +10,7 @@
               class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer hover:bg-gray-300"
             >
               <div class="flex flex-row items-center">
-                <el-icon :size="22">
-                  <Crop/>
-                </el-icon>
+                <ImageUpscale :size="22" />
                 <div class="flex flex-col ml-4 content-center text-[18px]">
                   <div>调整图片尺寸</div>
                 </div>
@@ -26,9 +24,7 @@
               class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer hover:bg-gray-300"
             >
               <div class="flex flex-row items-center">
-                <el-icon :size="22">
-                  <Switch/>
-                </el-icon>
+                <ArrowLeftRight :size="22" />
                 <div class="flex flex-col ml-4 content-center text-[18px]">
                   <div>图片格式转换</div>
                 </div>
@@ -46,7 +42,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-
+import { ArrowLeftRight, ImageUpscale } from 'lucide-vue-next'
 const router = useRouter();
 
 </script>
