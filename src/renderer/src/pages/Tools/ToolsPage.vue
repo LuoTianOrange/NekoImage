@@ -1,53 +1,43 @@
 <template>
   <div class="p-[20px]">
     <div class="text-[20px]">工具</div>
-    <div class="flex flex-row">
-      <div>
-        <div class="mt-5">
-          <div class="flex flex-row flex-wrap">
-            <div
-              @click="router.push('/tools/AdjustImageSize')"
-              class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer hover:bg-gray-300"
-            >
-              <div class="flex flex-row items-center">
-                <ImageUpscale :size="22" />
-                <div class="flex flex-col ml-4 content-center text-[18px]">
-                  <div>调整图片尺寸</div>
-                </div>
-              </div>
-              <el-icon :size="16">
-                <ArrowRight />
-              </el-icon>
-            </div>
-            <div
-              @click="router.push('/tools/ImageFormatConverter')"
-              class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer hover:bg-gray-300"
-            >
-              <div class="flex flex-row items-center">
-                <ArrowLeftRight :size="22" />
-                <div class="flex flex-col ml-4 content-center text-[18px]">
-                  <div>图片格式转换</div>
-                </div>
-              </div>
-              <el-icon :size="16">
-                <ArrowRight />
-              </el-icon>
-            </div>
-          </div>
-        </div>
+    <div class="mt-5">
+      <div class="flex flex-row flex-wrap">
+        <ToolCard
+          v-for="tool in tools"
+          :key="tool.path"
+          :icon="tool.icon"
+          :title="tool.title"
+          :path="tool.path"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router'
 import { ArrowLeftRight, ImageUpscale } from 'lucide-vue-next'
-const router = useRouter();
+import ToolCard from './components/ToolCard.vue'
 
+const router = useRouter()
+
+const tools = [
+  {
+    title: '调整图片尺寸',
+    path: '/tools/AdjustImageSize',
+    icon: ImageUpscale
+  },
+  {
+    title: '图片格式转换',
+    path: '/tools/ImageFormatConverter',
+    icon: ArrowLeftRight
+  }
+]
 </script>
+
 <style scoped>
-.bg-theme{
+.bg-theme {
   @apply bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-800
 }
 </style>
