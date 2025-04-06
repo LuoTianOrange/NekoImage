@@ -308,7 +308,7 @@ onBeforeRouteUpdate((to, from) => {
 
 <style scoped>
 .bg-theme{
-  @apply bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-800
+  @apply bg-white dark:bg-transparent hover:bg-zinc-300 dark:hover:bg-zinc-800
 }
 
 .border-theme{

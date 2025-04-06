@@ -12,6 +12,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 import { v4 as uuid } from 'uuid'
 import Store from 'electron-store'
+import _ from 'lodash'
 // import { devtools } from '@vue/devtools'
 // 初始化配置存储
 const store = new Store()
@@ -894,57 +895,63 @@ app.whenReady().then(() => {
       const storagePath = getStoragePath();
       const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
 
-      // 读取图库元数据
-      const data = await fsPromises.readFile(jsonPath, 'utf-8');
-      const jsonData = JSON.parse(data);
+      // 1. 读取图库数据
+      const jsonData = JSON.parse(await fsPromises.readFile(jsonPath, 'utf-8'));
 
-      // 标准化路径
+      // 2. 标准化路径
       const normalizedImagePath = path.normalize(imagePath);
-      console.log('原始图片路径:', imagePath);
-      console.log('标准化后的图片路径:', normalizedImagePath);
-
-      // 生成调整后的图片路径
-      const resizedImagePath = path.join(
-        path.dirname(normalizedImagePath),
-        `${path.basename(normalizedImagePath, path.extname(normalizedImagePath))}_resized${path.extname(normalizedImagePath)}`
-      );
-      console.log('调整后的图片路径:', resizedImagePath);
-
-      // 使用 sharp 调整图片大小
-      await sharp(normalizedImagePath)
-        .resize(width, height, {
-          fit: 'fill'
-        })
-        .toFile(resizedImagePath);
-
-      // 更新图库元数据中的图片路径
-      const imageIndex = jsonData.draws.findIndex((draw) => {
-        const normalizedDrawCover = path.normalize(draw.cover);
-        return normalizedDrawCover === normalizedImagePath;
-      });
-      console.log('匹配的图片索引:', imageIndex);
-
-      if (imageIndex !== -1) {
-        jsonData.draws[imageIndex].cover = resizedImagePath;
-      } else {
-        console.error('未找到匹配的图片路径:', normalizedImagePath);
-        return { success: false, message: '未找到匹配的图片路径' };
+      if (!fs.existsSync(normalizedImagePath)) {
+        throw new Error('原始图片不存在');
       }
 
-      // 写入更新后的元数据文件
+      // 3. 查找原图
+      const originalImage = jsonData.draws.find(draw =>
+        path.normalize(draw.cover) === normalizedImagePath
+      );
+      if (!originalImage) {
+        throw new Error('未在图库中找到原图记录');
+      }
+
+      // 4. 生成新文件名和路径
+      const ext = path.extname(normalizedImagePath);
+      const baseName = path.basename(normalizedImagePath, ext);
+      const resizedImagePath = path.join(
+        path.dirname(normalizedImagePath),
+        `${baseName}_${width}x${height}_${Date.now()}${ext}`
+      );
+
+      // 5. 调整图片尺寸
+      await sharp(normalizedImagePath)
+        .resize(width, height, { fit: 'fill' })
+        .toFile(resizedImagePath);
+
+      // 6. 创建新条目（生成新PID）
+      const newImageEntry = {
+        ..._.cloneDeep(originalImage),
+        pid: uuid(),
+        cover: resizedImagePath,
+        name: `${originalImage.name}_${width}×${height}`,
+        createTime: new Date().toISOString()
+      };
+
+      // 7. 更新图库
+      jsonData.draws.push(newImageEntry);
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
-      console.log('元数据文件已更新:', jsonPath);
 
-      // 读取文件验证
-      const updatedData = await fsPromises.readFile(jsonPath, 'utf-8');
-      console.log('更新后的文件内容:', updatedData);
+      return {
+        success: true,
+        newImage: newImageEntry,
+        originalPid: originalImage.pid // 仅返回原图PID用于关联
+      };
 
-      return { success: true, message: '图片调整大小成功', path: resizedImagePath };
     } catch (error) {
-      console.error('调整图片大小失败:', error);
-      return { success: false, message: '调整图片大小失败', error: error.message };
+      return {
+        success: false,
+        message: error.message
+      };
     }
   });
+
 
 
   // 按比例调整图片大小
@@ -953,58 +960,75 @@ app.whenReady().then(() => {
       const storagePath = getStoragePath();
       const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`);
 
-      // 读取图库元数据
+      // 1. 读取图库元数据
       const data = await fsPromises.readFile(jsonPath, 'utf-8');
       const jsonData = JSON.parse(data);
 
-      // 标准化路径
+      // 2. 标准化路径
       const normalizedImagePath = path.normalize(imagePath);
-      console.log('原始图片路径:', imagePath);
-      console.log('标准化后的图片路径:', normalizedImagePath);
 
-      // 获取图片原始尺寸
-      const metadata = await sharp(normalizedImagePath).metadata();
-      const width = Math.round(metadata.width * percentage);
-      const height = Math.round(metadata.height * percentage);
-
-      // 生成调整后的图片路径
-      const resizedImagePath = path.join(
-        path.dirname(normalizedImagePath),
-        `${path.basename(normalizedImagePath, path.extname(normalizedImagePath))}_resized${path.extname(normalizedImagePath)}`
+      // 3. 查找原图信息
+      const originalImage = jsonData.draws.find(draw =>
+        path.normalize(draw.cover) === normalizedImagePath
       );
-      console.log('调整后的图片路径:', resizedImagePath);
-
-      // 使用 sharp 调整图片大小
-      await sharp(normalizedImagePath)
-        .resize(width, height)
-        .toFile(resizedImagePath);
-
-      // 更新图库元数据中的图片路径
-      const imageIndex = jsonData.draws.findIndex((draw) => {
-        const normalizedDrawCover = path.normalize(draw.cover);
-        return normalizedDrawCover === normalizedImagePath;
-      });
-      console.log('匹配的图片索引:', imageIndex);
-
-      if (imageIndex !== -1) {
-        jsonData.draws[imageIndex].cover = resizedImagePath;
-      } else {
-        console.error('未找到匹配的图片路径:', normalizedImagePath);
+      if (!originalImage) {
         return { success: false, message: '未找到匹配的图片路径' };
       }
 
-      // 写入更新后的元数据文件
+      // 4. 获取原图尺寸
+      const metadata = await sharp(normalizedImagePath).metadata();
+      const newWidth = Math.round(metadata.width * percentage);
+      const newHeight = Math.round(metadata.height * percentage);
+
+      // 5. 生成新文件名（带比例和时间戳）
+      const ext = path.extname(normalizedImagePath);
+      const baseName = path.basename(normalizedImagePath, ext);
+      const resizedImagePath = path.join(
+        path.dirname(normalizedImagePath),
+        `${baseName}_${percentage*100}pct_${Date.now()}${ext}`
+      );
+
+      // 6. 调整图片尺寸
+      await sharp(normalizedImagePath)
+        .resize({
+          width: newWidth,
+          height: newHeight,
+          fit: 'inside',
+          withoutEnlargement: percentage > 1 ? false : true
+        })
+        .toFile(resizedImagePath);
+
+      // 7. 创建新图库条目（生成新PID）
+      const newImageEntry = {
+        ..._.cloneDeep(originalImage),
+        pid: uuid(), // 新唯一ID
+        cover: resizedImagePath,
+        name: `${originalImage.name} (${percentage*100}%)`,
+        createTime: new Date().toISOString()
+      };
+
+      // 8. 更新图库数据
+      jsonData.draws.push(newImageEntry);
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
-      console.log('元数据文件已更新:', jsonPath);
 
-      // 读取文件验证
-      const updatedData = await fsPromises.readFile(jsonPath, 'utf-8');
-      console.log('更新后的文件内容:', updatedData);
+      return {
+        success: true,
+        message: `成功创建调整后的图片-${percentage*100}%`,
+        path: resizedImagePath,
+        newEntry: newImageEntry,
+        originalEntry: {
+          pid: originalImage.pid,
+          path: normalizedImagePath
+        }
+      };
 
-      return { success: true, message: '图片调整大小成功', path: resizedImagePath };
     } catch (error) {
-      console.error('调整图片大小失败:', error);
-      return { success: false, message: '调整图片大小失败', error: error.message };
+      console.error('图片调整失败:', error);
+      return {
+        success: false,
+        message: `调整失败: ${error.message}`,
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      };
     }
   });
 

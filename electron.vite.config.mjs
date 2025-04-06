@@ -14,9 +14,7 @@ export default defineConfig({
   base: './',
   css: {
     postcss: {
-      plugins: [tailwind()({
-        important: '#app'
-      }), autoprefixer()],
+      plugins: [tailwind(), autoprefixer()],
     },
   },
   main: {
