@@ -48,6 +48,12 @@ const routes = [
       name: 'AdjustImageSize',
       title: '调整图片大小',
       component: () => import('../pages/Tools/AdjustImageSize.vue'),
+    },
+    {
+      path: '/tools/ImageFormatConverter',
+      name: 'ImageFormatConverter',
+      title: '图片格式转换',
+      component: () => import('../pages/Tools/ImageFormatConverter.vue'),
     }
 ]
 

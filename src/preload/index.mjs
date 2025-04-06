@@ -100,7 +100,10 @@ const api = {
     const result = await ipcRenderer.invoke('获取收藏列表', galleryName)
     return result
   },
-
+  '转换图片格式': async ({ imagePath, galleryName, options }) => {
+    const result = await ipcRenderer.invoke('转换图片格式', { imagePath, galleryName, options })
+    return result
+  },
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

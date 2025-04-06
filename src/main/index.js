@@ -312,7 +312,7 @@ app.whenReady().then(() => {
           results.push({
             success: true,
             originalName: file.name,
-            savedName: fileName, // 保存实际使用的文件名
+            savedName: baseName, // 保存实际使用的文件名
             path: destinationPath
           });
         } catch (error) {
@@ -861,6 +861,81 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('转换图片格式', async (event, { imagePath, galleryName, options }) => {
+    try {
+      const storagePath = getStoragePath()
+      const jsonPath = path.join(storagePath, 'Galleries', `${galleryName}.json`)
+
+      // 读取图库数据
+      const jsonData = JSON.parse(await fsPromises.readFile(jsonPath, 'utf-8'))
+      const normalizedPath = path.normalize(imagePath)
+
+      // 查找原图
+      const originalImage = jsonData.draws.find(d => path.normalize(d.cover) === normalizedPath)
+      if (!originalImage) {
+        return { success: false, message: '未找到原始图片记录' }
+      }
+
+      // 生成新文件名
+      const ext = options.format
+      const baseName = path.basename(normalizedPath, path.extname(normalizedPath))
+      const convertedPath = path.join(
+        path.dirname(normalizedPath),
+        `${baseName}_converted_${Date.now()}.${ext}`
+      )
+
+      // 使用sharp进行格式转换
+      const sharpInstance = sharp(normalizedPath)
+
+      // 根据格式设置不同选项
+      switch (options.format) {
+        case 'jpg':
+          sharpInstance.jpeg({ quality: options.quality })
+          break
+        case 'png':
+          sharpInstance.png({ compression: options.compression })
+          break
+        case 'webp':
+          sharpInstance.webp({
+            quality: options.quality,
+            lossless: options.lossless
+          })
+          break
+        case 'avif':
+          sharpInstance.avif({ quality: options.quality })
+          break
+      }
+
+      await sharpInstance.toFile(convertedPath)
+
+      // 创建新图库条目
+      const newImage = {
+        ...originalImage,
+        pid: crypto.randomUUID(), // 新唯一ID
+        cover: convertedPath,
+        name: `${originalImage.name}-${ext.toUpperCase()}`,
+        createTime: new Date().toISOString()
+      }
+
+      // 更新图库
+      jsonData.draws.push(newImage)
+      await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2))
+
+      return {
+        success: true,
+        newImage,
+        originalPid: originalImage.pid
+      }
+
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  })
+
+
   function validateGalleryName(name) {
     if (!name || typeof name !== 'string') {
       return { valid: false, reason: '名称不能为空' };
@@ -873,7 +948,6 @@ app.whenReady().then(() => {
     }
     return { valid: true };
   }
-
 
   const sharp = require('sharp'); // 引入 sharp 库
   // 文件大小格式化工具函数
@@ -952,8 +1026,6 @@ app.whenReady().then(() => {
     }
   });
 
-
-
   // 按比例调整图片大小
   ipcMain.handle('按比例调整图片大小', async (event, { imagePath, percentage, galleryName }) => {
     try {
@@ -985,7 +1057,7 @@ app.whenReady().then(() => {
       const baseName = path.basename(normalizedImagePath, ext);
       const resizedImagePath = path.join(
         path.dirname(normalizedImagePath),
-        `${baseName}_${percentage*100}pct_${Date.now()}${ext}`
+        `${baseName}_${percentage * 100}pct_${Date.now()}${ext}`
       );
 
       // 6. 调整图片尺寸
@@ -1003,7 +1075,7 @@ app.whenReady().then(() => {
         ..._.cloneDeep(originalImage),
         pid: uuid(), // 新唯一ID
         cover: resizedImagePath,
-        name: `${originalImage.name} (${percentage*100}%)`,
+        name: `${originalImage.name} (${percentage * 100}%)`,
         createTime: new Date().toISOString()
       };
 
@@ -1013,7 +1085,7 @@ app.whenReady().then(() => {
 
       return {
         success: true,
-        message: `成功创建调整后的图片-${percentage*100}%`,
+        message: `成功创建调整后的图片-${percentage * 100}%`,
         path: resizedImagePath,
         newEntry: newImageEntry,
         originalEntry: {
@@ -1031,7 +1103,6 @@ app.whenReady().then(() => {
       };
     }
   });
-
 
   ipcMain.handle('获取排序后的图片', async (event, { folderName, field, order }) => {
     const storagePath = getStoragePath();
