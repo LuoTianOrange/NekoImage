@@ -8,6 +8,8 @@
           style="width: 200px"
           placeholder="请输入名称"
           clearable
+          show-word-limit
+          maxlength="10"
         ></el-input>
         <el-button class="ml-3" type="primary" @click="AddNewGallery" :disabled="!NewGalleryName"
           >添加图库</el-button
@@ -318,16 +320,47 @@ const handleError = (res) => {
 }
 //添加图库
 const AddNewGallery = async () => {
+  // 检查图库名称是否为空
   if (!NewGalleryName.value.trim()) {
     ElMessageBox.alert('图库名称不能为空', '提示', {
       confirmButtonText: '确定',
       type: 'warning'
-    });
-    return;
+    })
+    return
+  }
+
+  // 定义非法字符集合（Windows/Linux通用）
+  const illegalChars = /[\\/:*?"<>|]/
+
+  // 检查名称是否包含非法字符
+  if (illegalChars.test(NewGalleryName.value)) {
+    ElMessageBox.alert('图库名称包含非法字符: \\ / : * ? " < > | \n请使用其他名称', '非法名称', {
+      confirmButtonText: '确定',
+      type: 'error'
+    })
+    return
+  }
+
+  // 检查名称是否以点(.)开头
+  if (NewGalleryName.value.startsWith('.')) {
+    ElMessageBox.alert('图库名称不能以点(.)开头', '非法名称', {
+      confirmButtonText: '确定',
+      type: 'error'
+    })
+    return
+  }
+
+  // 检查名称长度是否合理
+  if (NewGalleryName.value.length > 10) {
+    ElMessageBox.alert('图库名称过长，请控制在10个字符以内', '名称过长', {
+      confirmButtonText: '确定',
+      type: 'error'
+    })
+    return
   }
 
   try {
-    NProgress.start();
+    NProgress.start()
 
     // 构造正确的图库数据对象
     const galleryData = {
@@ -335,14 +368,14 @@ const AddNewGallery = async () => {
       desc: '', // 可选描述
       draws: [], // 初始图片数组
       favorites: [] // 初始收藏数组
-    };
+    }
 
-    // 调用后端API - 直接传递对象，不要JSON.stringify
-    const result = await window.api['添加图库'](galleryData);
+    // 调用后端API
+    const result = await window.api['添加图库'](galleryData)
 
     // 检查返回结果结构
     if (!result || typeof result.success === 'undefined') {
-      throw new Error('无效的API响应格式');
+      throw new Error('无效的API响应格式')
     }
 
     if (result.success) {
@@ -350,40 +383,33 @@ const AddNewGallery = async () => {
         confirmButtonText: '确定',
         type: 'success',
         callback: () => {
-          NewGalleryName.value = '';
-          ReadAllGallery(); // 刷新图库列表
+          NewGalleryName.value = ''
+          ReadAllGallery() // 刷新图库列表
         }
-      });
+      })
     } else {
-      let errorMessage = result.message || '添加图库失败';
+      let errorMessage = result.message || '添加图库失败'
 
       if (result.details?.existingPath) {
-        errorMessage = `图库"${NewGalleryName.value}"已存在，请更换其他名称`;
-        // if (result.details.suggestedName) {
-        //   errorMessage += `，建议使用名称: ${result.details.suggestedName}`;
-        // }
+        errorMessage = `图库"${NewGalleryName.value}"已存在，请更换其他名称`
       }
 
       ElMessageBox.alert(errorMessage, '错误', {
         confirmButtonText: '确定',
-        type: 'error',
-        // callback: () => {
-        //   if (result.details?.suggestedName) {
-        //     NewGalleryName.value = result.details.suggestedName;
-        //   }
-        // }
-      });
+        type: 'error'
+      })
     }
   } catch (error) {
-    console.error('添加图库出错:', error);
+    console.error('添加图库出错:', error)
     ElMessageBox.alert(error.message || '添加图库时发生未知错误', '错误', {
       confirmButtonText: '确定',
       type: 'error'
-    });
+    })
   } finally {
-    NProgress.done();
+    NProgress.done()
   }
-};
+}
+
 /* —————————————————————————— */
 </script>
 <style>
@@ -412,10 +438,10 @@ const AddNewGallery = async () => {
   z-index: 9999;
 }
 
-.bg-theme{
-  @apply bg-white dark:bg-zinc-800
+.bg-theme {
+  @apply bg-white dark:bg-zinc-800;
 }
-.border-theme{
-  @apply border-zinc-200 dark:border-zinc-700
+.border-theme {
+  @apply border-zinc-200 dark:border-zinc-700;
 }
 </style>

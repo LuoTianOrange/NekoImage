@@ -56,10 +56,9 @@
 import { forEach } from 'lodash'
 import { onActivated, onDeactivated, onMounted, ref } from 'vue'
 import { useDark } from '@vueuse/core'
+import bg from '../../assets/bg.jpg'
 
 const isDark = useDark()
-// const searchbox = ref("")
-const bg = ref('../../src/assets/bg.jpg')
 const GalleryCount = ref(0)
 const PhotoCount = ref(0)
 const PhotoType = ref([])
