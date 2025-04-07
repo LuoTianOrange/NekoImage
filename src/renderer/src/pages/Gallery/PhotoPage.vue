@@ -95,7 +95,7 @@
           </el-tooltip>
           <div
             v-if="isEnterPicture[index]"
-            class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white dark:bg-zinc-700 bg-opacity-75 w-full h-[40px]"
+            class="flex justify-center items-center transform animate-out zoom-in absolute top-0 bg-white/75 dark:bg-zinc-700/75 w-full h-[40px]"
           >
             <!--收藏图片-->
             <el-button
