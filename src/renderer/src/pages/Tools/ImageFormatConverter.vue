@@ -3,7 +3,7 @@
     <div class="text-[20px]">图片格式转换</div>
     <div class="flex h-[calc(100vh-130px)] flex-row mt-5">
       <!-- 左侧：图库和图片选择（与调整尺寸页面相同） -->
-      <div class="w-[300px] h-full border-r pr-5">
+      <div class="w-[300px] h-full pr-5">
         <el-select
           v-model="selectedGallery"
           placeholder="选择图库"
@@ -83,7 +83,12 @@
               <el-checkbox v-model="webpLossless" class="mt-2">无损压缩</el-checkbox>
             </div>
 
-            <el-button class="w-full max-w-[200px]" type="primary" @click="convertImage" :loading="isConverting">
+            <el-button
+              class="w-full max-w-[200px]"
+              type="primary"
+              @click="convertImage"
+              :loading="isConverting"
+            >
               开始转换
             </el-button>
           </div>
@@ -185,13 +190,12 @@ const resetState = () => {
   imageList.value = []
   selectedImage.value = null
   isConverting.value = false
-  targetFormat.value = 'jpg'  // 重置格式选择
-  jpgQuality.value = 80       // 重置质量参数
+  targetFormat.value = 'jpg' // 重置格式选择
+  jpgQuality.value = 80 // 重置质量参数
   pngCompression.value = true // 重置压缩选项
-  webpQuality.value = 80      // 重置WebP质量
-  webpLossless.value = false  // 重置WebP无损选项
+  webpQuality.value = 80 // 重置WebP质量
+  webpLossless.value = false // 重置WebP无损选项
 }
-
 
 // 初始化加载图库列表
 onMounted(() => {

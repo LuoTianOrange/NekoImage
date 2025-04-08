@@ -3,7 +3,7 @@
     <div class="text-[20px]">调整图片尺寸</div>
     <div class="flex h-[calc(100vh-160px)] flex-row mt-5">
       <!-- 左侧：图库和图片选择 -->
-      <div class="w-[300px] h-full border-r pr-5">
+      <div class="w-[300px] h-full pr-5">
         <!-- 图库选择 -->
         <el-select
           v-model="selectedGallery"
@@ -20,7 +20,7 @@
         </el-select>
 
         <!-- 图片列表 -->
-        <div class="mt-5 h-full overflow-y-auto" >
+        <div class="mt-5 h-full overflow-y-auto">
           <div
             v-for="(image, index) in imageList"
             :key="index"
@@ -60,10 +60,10 @@
               </el-tooltip>
               <div class="">→</div>
               <el-tooltip :content="'图片调整后的尺寸'" placement="bottom">
-              <div class="bg-blue-400 text-white p-1 rounded-[4px]">
-                {{ resizeForm.width }}x{{ resizeForm.height }}
-              </div>
-            </el-tooltip>
+                <div class="bg-blue-400 text-white p-1 rounded-[4px]">
+                  {{ resizeForm.width }}x{{ resizeForm.height }}
+                </div>
+              </el-tooltip>
             </div>
           </div>
 
@@ -81,7 +81,9 @@
               <el-form-item label="高度(px):" class="max-w-[300px]">
                 <el-input v-model.number="resizeForm.height" placeholder="请输入高度" />
               </el-form-item>
-              <el-button class="w-full max-w-[200px]" type="primary" @click="resizeImage">调整尺寸</el-button>
+              <el-button class="w-full max-w-[200px]" type="primary" @click="resizeImage"
+                >调整尺寸</el-button
+              >
             </el-form>
             <!-- 预设比例 -->
             <div v-else-if="toggleMode === 'percentage'" class="mt-5 flex flex-col">
@@ -91,7 +93,10 @@
                 <el-radio-button :label="0.5">缩小50%</el-radio-button>
                 <el-radio-button :label="0.25">缩小75%</el-radio-button>
               </el-radio-group>
-              <el-button  class="mt-3 w-full max-w-[200px]" type="primary" @click="resizeImageByPercentage(selectedPercentage)"
+              <el-button
+                class="mt-3 w-full max-w-[200px]"
+                type="primary"
+                @click="resizeImageByPercentage(selectedPercentage)"
                 >调整尺寸</el-button
               >
             </div>
@@ -307,11 +312,11 @@ onBeforeRouteUpdate((to, from) => {
 </script>
 
 <style scoped>
-.bg-theme{
-  @apply bg-white dark:bg-transparent hover:bg-zinc-300 dark:hover:bg-zinc-800
+.bg-theme {
+  @apply bg-white dark:bg-transparent hover:bg-zinc-300 dark:hover:bg-zinc-800;
 }
 
-.border-theme{
-  @apply border-zinc-200 dark:border-zinc-700
+.border-theme {
+  @apply border-zinc-200 dark:border-zinc-700;
 }
 </style>

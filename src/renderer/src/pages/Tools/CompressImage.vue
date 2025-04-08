@@ -1,9 +1,9 @@
 <template>
   <div class="p-[20px] w-screen max-w-[1000px]">
     <div class="text-[20px] mb-4">图片压缩</div>
-    <div class="flex h-[calc(100vh-160px)] flex-row gap-4">
+    <div class="flex h-[calc(100vh-100px)] flex-row gap-4">
       <!-- 左侧图库选择 -->
-      <div class="w-[280px] h-full border-r pr-4 flex flex-col">
+      <div class="w-[280px] h-full pr-4 flex flex-col">
         <el-select
           v-model="selectedGallery"
           placeholder="选择图库"
@@ -19,7 +19,7 @@
           />
         </el-select>
 
-        <div class="mt-4 flex-1 relative">
+        <div class="mt-4 flex-1 relative h-full overflow-y-scroll">
           <div v-if="loading" class="absolute inset-0 flex items-center justify-center">
             <el-icon class="animate-spin text-blue-500"><Loading /></el-icon>
           </div>
@@ -32,7 +32,7 @@
             <el-button @click="loadGalleryList" size="small">重试加载</el-button>
           </div>
 
-          <div v-else class="h-full overflow-y-auto">
+          <div v-else class="h-full">
             <div
               v-for="(image, index) in imageList"
               :key="index"
@@ -44,7 +44,12 @@
               <div class="ml-2 flex-1 min-w-0">
                 <div class="truncate text-sm">{{ image.name }}</div>
                 <div class="text-xs text-gray-500">
-                  {{ image.metadata?.fileSize || image.metadata?.compressionInfo?.originalSize || '未知大小' }} MB
+                  {{
+                    image.metadata?.fileSize ||
+                    image.metadata?.compressionInfo?.originalSize ||
+                    '未知大小'
+                  }}
+                  MB
                 </div>
               </div>
             </div>
@@ -70,7 +75,12 @@
                   <div class="text-sm truncate px-2">{{ selectedImage.name }}</div>
                 </el-tooltip>
                 <div class="text-xs text-gray-500 mt-1">
-                  {{ selectedImage.metadata?.compressionInfo?.originalSize || selectedImage.metadata?.fileSize || fileSize }} MB
+                  {{
+                    selectedImage.metadata?.compressionInfo?.originalSize ||
+                    selectedImage.metadata?.fileSize ||
+                    fileSize
+                  }}
+                  MB
                 </div>
               </div>
             </div>
@@ -81,13 +91,7 @@
             <div class="space-y-6">
               <div>
                 <div class="text-sm font-medium mb-2">压缩质量: {{ compressionQuality }}</div>
-                <el-slider
-                  v-model="compressionQuality"
-                  :min="10"
-                  :max="95"
-                  :step="5"
-                  show-input
-                />
+                <el-slider v-model="compressionQuality" :min="10" :max="95" :step="5" show-input />
                 <div class="flex justify-between text-md text-gray-500 mt-1">
                   <span>高压缩</span>
                   <span>高质量</span>
@@ -185,19 +189,19 @@ const loadGalleryList = async () => {
 
 // 加载图库图片
 const loadGalleryImages = async () => {
-  if (!selectedGallery.value) return;
+  if (!selectedGallery.value) return
 
-  loading.value = true;
+  loading.value = true
   try {
     const response = await window.api['读取全部图片']({
       fileName: selectedGallery.value
-    });
+    })
 
     if (response.success) {
       imageList.value = await Promise.all(
         response.data.draws.map(async (img) => {
           try {
-            const sizeRes = await window.api['获取图片大小'](img.cover);
+            const sizeRes = await window.api['获取图片大小'](img.cover)
             return {
               ...img,
               metadata: {
@@ -205,11 +209,12 @@ const loadGalleryImages = async () => {
                 fileSize: sizeRes.success ? sizeRes.size : img.metadata?.fileSize || '未知大小',
                 compressionInfo: {
                   ...(img.metadata?.compressionInfo || {}),
-                  originalSize: sizeRes.success ? sizeRes.size :
-                    (img.metadata?.compressionInfo?.originalSize || '未知大小')
+                  originalSize: sizeRes.success
+                    ? sizeRes.size
+                    : img.metadata?.compressionInfo?.originalSize || '未知大小'
                 }
               }
-            };
+            }
           } catch {
             return {
               ...img,
@@ -221,27 +226,27 @@ const loadGalleryImages = async () => {
                   originalSize: img.metadata?.compressionInfo?.originalSize || '未知大小'
                 }
               }
-            };
+            }
           }
         })
-      );
+      )
     }
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // 选择图片
 const selectImage = async (image) => {
-  selectedImage.value = image;
+  selectedImage.value = image
   try {
-    fileSize.value = '计算中...';
-    const sizeRes = await window.api['获取图片大小'](image.cover);
+    fileSize.value = '计算中...'
+    const sizeRes = await window.api['获取图片大小'](image.cover)
 
     if (sizeRes.success) {
-      fileSize.value = sizeRes.size;
+      fileSize.value = sizeRes.size
       // 更新列表中的对应图片数据
-      const index = imageList.value.findIndex(img => img.pid === image.pid);
+      const index = imageList.value.findIndex((img) => img.pid === image.pid)
       if (index !== -1) {
         imageList.value[index].metadata = {
           ...imageList.value[index].metadata,
@@ -250,20 +255,17 @@ const selectImage = async (image) => {
             ...(imageList.value[index].metadata?.compressionInfo || {}),
             originalSize: sizeRes.size
           }
-        };
+        }
       }
     } else {
-      fileSize.value = image.metadata?.compressionInfo?.originalSize ||
-                      image.metadata?.fileSize ||
-                      '未知大小';
+      fileSize.value =
+        image.metadata?.compressionInfo?.originalSize || image.metadata?.fileSize || '未知大小'
     }
   } catch {
-    fileSize.value = image.metadata?.compressionInfo?.originalSize ||
-                    image.metadata?.fileSize ||
-                    '未知大小';
+    fileSize.value =
+      image.metadata?.compressionInfo?.originalSize || image.metadata?.fileSize || '未知大小'
   }
-};
-
+}
 
 // 执行压缩
 const compressImage = async () => {
