@@ -17,12 +17,25 @@ import _ from 'lodash'
 // 初始化配置存储
 const store = new Store()
 
-// 路径构建工具函数
-const pathUtil = {
-  gallery: (name) => path.join(getStorageRoot(), 'Galleries', name),
-  meta: (name) => path.join(getStorageRoot(), 'Galleries', name, 'data.json'),
-  images: (name) => path.join(getStorageRoot(), 'Galleries', name, 'images')
+/**
+ * 生成随机文件名防止同名
+ * @param {*} length
+ * @returns
+ */
+//生成随机字符串的函数
+function generateRandomString(length = 4) {
+  return Math.random().toString(36).substring(2, 2 + length).padEnd(length, '0');
 }
+
+// 修改文件名生成逻辑
+const generateUniqueFilename = (originalPath, operationPrefix) => {
+  const ext = path.extname(originalPath);
+  const baseName = path.basename(originalPath, ext);
+  const randomStr = generateRandomString(6); // 6位随机字符串
+  const timestamp = Date.now();
+
+  return `${baseName}_${operationPrefix}_${timestamp}_${randomStr}${ext}`;
+};
 
 // 获取存储路径
 const getStoragePath = () => {
@@ -899,13 +912,11 @@ app.whenReady().then(() => {
         return { success: false, message: '未找到原始图片记录' }
       }
 
-      // 生成新文件名
-      const ext = options.format
-      const baseName = path.basename(normalizedPath, path.extname(normalizedPath))
+      const newExt = options.format;
       const convertedPath = path.join(
         path.dirname(normalizedPath),
-        `${baseName}_converted_${Date.now()}.${ext}`
-      )
+        generateUniqueFilename(normalizedPath, 'converted')
+      ).replace(/\.[^/.]+$/, `.${newExt}`);
 
       // 使用sharp进行格式转换
       const sharpInstance = sharp(normalizedPath)
@@ -981,10 +992,9 @@ app.whenReady().then(() => {
       }
 
       // 3. 准备输出路径
-      const baseName = path.basename(normalizedPath, ext);
       const compressedPath = path.join(
         path.dirname(normalizedPath),
-        `${baseName}_compressed_${Date.now()}${ext}`
+        generateUniqueFilename(normalizedPath, 'compressed')
       );
 
       // 4. 创建sharp实例
@@ -1210,10 +1220,10 @@ app.whenReady().then(() => {
 
       // 4. 生成新文件名和路径
       const ext = path.extname(normalizedImagePath);
-      const baseName = path.basename(normalizedImagePath, ext);
+      // 生成唯一调整大小文件名
       const resizedImagePath = path.join(
         path.dirname(normalizedImagePath),
-        `${baseName}_${width}x${height}_${Date.now()}${ext}`
+        generateUniqueFilename(normalizedImagePath, `${width}x${height}`)
       );
 
       // 5. 调整图片尺寸
@@ -1277,12 +1287,10 @@ app.whenReady().then(() => {
       const newWidth = Math.round(metadata.width * percentage);
       const newHeight = Math.round(metadata.height * percentage);
 
-      // 5. 生成新文件名（带比例和时间戳）
-      const ext = path.extname(normalizedImagePath);
-      const baseName = path.basename(normalizedImagePath, ext);
+      // 生成唯一调整大小文件名
       const resizedImagePath = path.join(
         path.dirname(normalizedImagePath),
-        `${baseName}_${percentage * 100}pct_${Date.now()}${ext}`
+        generateUniqueFilename(normalizedImagePath, `${percentage * 100}pct`)
       );
 
       // 6. 调整图片尺寸
