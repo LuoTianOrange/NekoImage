@@ -22,6 +22,12 @@
           </el-icon>
           <div class="ml-1">设置</div>
         </el-button>
+        <el-button type="primary" plain class="flex flex-row" @click="openImageFolder">
+          <el-icon>
+            <FolderOpen />
+          </el-icon>
+          <div class="ml-1">在文件管理器打开</div>
+        </el-button>
         <el-button type="danger" plain class="flex flex-row" @click="confirmDelete">
           <el-icon>
             <Delete />
@@ -77,7 +83,8 @@ import { useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { watchEffect, ref, onActivated, onMounted, computed } from 'vue'
 import _ from 'lodash'
 import 'viewerjs/dist/viewer.css'
-import { ElMessage, ElDatePicker, ElMessageBox } from 'element-plus'
+import { ElMessage, ElDatePicker, ElMessageBox, ElLoading } from 'element-plus'
+import { FolderOpen } from '@icon-park/vue-next'
 import { readExifData } from '../../libs/exifReader'
 import moment from 'moment'
 
@@ -259,6 +266,57 @@ const deletePhoto = async () => {
     })
   } finally {
     deleting.value = false
+  }
+}
+
+// 打开图片所在目录
+const openImageFolder = async () => {
+  try {
+    if (!item.value?.cover) {
+      ElMessage.warning('当前图片路径无效')
+      return
+    }
+
+    const loading = ElLoading.service({
+      lock: true,
+      text: '正在打开文件夹...',
+      background: 'rgba(0, 0, 0, 0.7)'
+    })
+
+    const result = await window.api['打开图片所在文件夹'](item.value.cover)
+
+    loading.close()
+
+    if (!result.success) {
+      throw new Error(result.message)
+    }
+
+    // 成功反馈
+    ElMessage.success({
+      message: '已打开图片所在文件夹',
+      duration: 2000
+    })
+  } catch (error) {
+    ElMessage.error({
+      message: `打开文件夹失败: ${error.message}`,
+      duration: 5000
+    })
+    console.error('打开文件夹失败:', error)
+
+    // 提供手动打开选项
+    try {
+      await ElMessageBox.confirm('自动打开失败，是否手动复制路径？', '操作失败', {
+        confirmButtonText: '复制路径',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+
+      // 复制路径到剪贴板
+      await navigator.clipboard.writeText(item.value.cover)
+      ElMessage.success('路径已复制到剪贴板')
+    } catch (cancel) {
+      // 用户取消
+    }
   }
 }
 </script>

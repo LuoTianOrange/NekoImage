@@ -991,7 +991,7 @@ app.whenReady().then(() => {
         }
       } else {
         // 其他格式处理
-        switch(ext) {
+        switch (ext) {
           case '.jpg':
           case '.jpeg':
             sharpInstance.jpeg({
@@ -1084,6 +1084,54 @@ app.whenReady().then(() => {
       };
     }
   });
+
+  ipcMain.handle('打开图片所在文件夹', async (event, imagePath) => {
+    const { shell, app } = require('electron');
+    const path = require('path');
+    const fs = require('fs');
+
+    try {
+      // 验证路径
+      if (!fs.existsSync(imagePath)) {
+        return { success: false, message: '图片文件不存在' };
+      }
+
+      const folderPath = path.dirname(imagePath);
+
+      // 平台特定处理
+      switch (process.platform) {
+        case 'win32':
+          // Windows: 先打开文件夹再选中文件
+          await shell.openPath(folderPath);
+          await shell.openPath(imagePath);
+          break;
+
+        case 'darwin':
+          // macOS: 使用AppleScript
+          const { exec } = require('child_process');
+          exec(`osascript -e 'tell application "Finder" to reveal POSIX file "${imagePath}"' -e 'tell application "Finder" to activate'`);
+          break;
+
+        case 'linux':
+          // Linux: 使用xdg-open
+          await shell.openPath(folderPath);
+          break;
+
+        default:
+          await shell.openPath(folderPath);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('打开文件夹失败:', error);
+      return {
+        success: false,
+        message: error.message,
+        platform: process.platform
+      };
+    }
+  });
+
 
   function validateGalleryName(name) {
     if (!name || typeof name !== 'string') {

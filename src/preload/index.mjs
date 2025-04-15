@@ -107,6 +107,10 @@ const api = {
   '压缩图片': async ({ imagePath, galleryName, options }) => {
     const result = await ipcRenderer.invoke('压缩图片', { imagePath, galleryName, options })
     return result
+  },
+  '打开图片所在文件夹': async (imagePath) => {
+    const result = await ipcRenderer.invoke('打开图片所在文件夹', imagePath)
+    return result
   }
 }
 // Use `contextBridge` APIs to expose Electron APIs to
