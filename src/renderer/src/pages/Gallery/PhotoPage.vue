@@ -1,5 +1,31 @@
 <template>
-  <div class="flex flex-row w-full min-h-screen">
+  <div
+    class="flex flex-row w-full min-h-screen"
+    v-bind="getRootProps()"
+    @dragenter="handleDragEnter"
+    @dragover.prevent
+    @dragleave="handleDragLeave"
+  >
+    <!-- 拖拽上传区域 -->
+    <div
+      v-if="isDragging"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      @click.stop="isDragging = false"
+    >
+      <div
+        class="w-[500px] h-[300px] bg-white dark:bg-zinc-800 rounded-lg p-6 flex flex-col items-center justify-center border-2 border-dashed border-blue-500"
+      >
+        <input v-bind="getInputProps()" />
+        <el-icon class="text-blue-500 mb-4" :size="60">
+          <UploadFilled />
+        </el-icon>
+        <div class="text-xl font-medium mb-2">
+          {{ isDragActive ? '松开鼠标上传文件' : '拖放文件到此处上传' }}
+        </div>
+        <div class="text-gray-500 mb-6">支持图片文件 (JPG, PNG, GIF等)</div>
+        <el-button type="primary" @click.stop="open">选择文件</el-button>
+      </div>
+    </div>
     <div class="p-[20px] w-full">
       <div class="text-[20px]">{{ name }}</div>
       <!--面包屑-->
@@ -120,7 +146,9 @@
       </div>
     </div>
     <!-- 信息展示部分 -->
-    <div class="sticky right-0 top-0 h-screen w-[240px] min-w-[240px] border-l border-theme bg-white dark:bg-zinc-900">
+    <div
+      class="sticky right-0 top-0 h-screen w-[240px] min-w-[240px] border-l border-theme bg-white dark:bg-zinc-900"
+    >
       <div class="p-4 h-full overflow-y-auto">
         <h3 class="text-lg font-bold">图库信息</h3>
         <div v-if="GalleryInfo">
@@ -335,6 +363,7 @@ import moment from 'moment'
 import _ from 'lodash'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
+import { useDropzone } from 'vue3-dropzone'
 
 const uploadRef = ref(null)
 const route = useRoute()
@@ -357,6 +386,100 @@ const GalleryInfo = ref({
   创建时间: '',
   图库大小: ''
 })
+
+// 拖拽上传相关
+const isDragging = ref(false)
+
+// 使用 vue3-dropzone
+function onDrop(acceptFiles, rejectReasons) {
+  if (rejectReasons.length > 0) {
+    ElMessage.error(`有 ${rejectReasons.length} 个文件不符合要求`)
+    return
+  }
+
+  // 将拖拽的文件转换为与 handleAddPicture 兼容的格式
+  const files = acceptFiles.map((file) => ({
+    name: file.name,
+    path: file.path
+  }))
+
+  // 调用现有的 handleAddPicture 处理逻辑
+  handleAddPictureFiles(files)
+}
+
+const { getRootProps, getInputProps, open, isDragActive, rootRef } = useDropzone({
+  onDrop,
+  accept: 'image/*',
+  maxSize: 50 * 1024 * 1024, // 50MB
+  multiple: true,
+  noClick: true,
+  noKeyboard: true,
+  onDragEnter: () => {
+    isDragging.value = true
+  },
+  onDragLeave: () => {
+    isDragging.value = false
+  }
+})
+
+// 从 handleAddPicture 提取出的核心上传逻辑
+const handleAddPictureFiles = async (files) => {
+  if (!files.length) return
+
+  try {
+    // 1. 批量上传文件
+    const uploadResults = await window.api['上传图片到指定文件夹']({
+      files: files,
+      folderName: name.value
+    })
+
+    // 筛选上传成功的文件
+    const successUploads = uploadResults.filter((r) => r.success)
+
+    if (successUploads.length === 0) {
+      throw new Error('所有文件上传失败')
+    }
+
+    // 2. 批量写入图片信息
+    const writeResult = await window.api['将图片信息写入json']({
+      folderName: name.value,
+      photos: successUploads.map((file) => ({
+        name: file.savedName, // 使用处理后的文件名
+        savedName: file.savedName, // 传递给后端
+        cover: file.path,
+        desc: ''
+      }))
+    })
+
+    if (writeResult.success) {
+      ElMessage.success(`成功添加 ${writeResult.addedCount} 张图片`)
+      await getAllImages() // 刷新列表
+      const updatedInfo = await getGalleryInfo()
+      if (updatedInfo) {
+        GalleryInfo.value = updatedInfo
+      }
+    } else {
+      throw new Error(writeResult.error)
+    }
+  } catch (error) {
+    ElMessage.error(`添加图片失败: ${error.message}`)
+  } finally {
+    isDragging.value = false
+  }
+}
+
+// 手动处理拖拽事件，确保在最外层div也能触发
+const handleDragEnter = (e) => {
+  if (e.dataTransfer.types.includes('Files')) {
+    isDragging.value = true
+  }
+}
+
+const handleDragLeave = (e) => {
+  if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
+    isDragging.value = false
+  }
+}
 
 const currentFilter = ref('all') // 'all' 或 'favorites'
 const filterText = computed(() => (currentFilter.value === 'all' ? '显示全部' : '仅收藏'))
@@ -473,15 +596,6 @@ const LeavePicture = (index) => {
   isEnterPicture.value[index] = false
 }
 
-const disabledHover = ref(true)
-const handleRemove = () => {
-  if (uploadRef.value) {
-    uploadRef.value.clearFiles() // 取消上传
-  }
-  imageUrl.value = ''
-  ElMessage.error('图片已从上传队列移除')
-}
-
 //监控路由变化，改变name的值
 watchEffect(() => {
   name.value = route.query.name
@@ -522,8 +636,6 @@ const clickSetting = async (name) => {
     })
   }
 }
-//添加图片设置
-const showAddPictrueSetting = ref(false)
 
 const PhotoInfo = ref({
   name: '',
@@ -535,24 +647,6 @@ const PhotoInfo = ref({
   favoriteTime: null
 })
 const imageUrl = ref('')
-const PictureType = [
-  {
-    label: '插画',
-    value: '插画'
-  },
-  {
-    label: '立绘',
-    value: '立绘'
-  },
-  {
-    label: '头像',
-    value: '头像'
-  },
-  {
-    label: 'Q版',
-    value: 'Q版'
-  }
-]
 //添加标签
 const tagStore = ref('')
 const AddTag = () => {
@@ -636,93 +730,6 @@ const saveSetting = async () => {
   }
 }
 
-const beforeRemove = (file, uploadFiles) => {
-  console.log('beforeRemove:', file, uploadFiles)
-}
-//上传图片时把图片作为封面
-const handleChange = (file, fileList) => {
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imageUrl.value = e.target.result
-  }
-  reader.readAsDataURL(file.raw)
-}
-//清空输入框
-const ClearInputBox = () => {
-  imageUrl.value = ''
-  PhotoInfo.value.cover = ''
-  PhotoInfo.value.name = ''
-  PhotoInfo.value.desc = ''
-  PhotoInfo.value.author = ''
-  PhotoInfo.value.type = ''
-  PhotoInfo.value.startTime = ''
-  PhotoInfo.value.endTime = ''
-  tagStore.value = ''
-  PhotoInfo.value.tag = []
-}
-//取消上传
-const cancelUpload = () => {
-  ClearInputBox()
-  if (uploadRef.value) {
-    uploadRef.value.clearFiles() // 取消上传
-  }
-}
-//添加图片信息，手动上传图片
-const AddPhotoInfo = (PhotoInfo) => {
-  const info = toRaw(PhotoInfo)
-  if (_.isEmpty(info)) {
-    ElMessage.error('请填写完整信息')
-    return
-  }
-  uploadRef.value.submit()
-  showAddPictrueSetting.value = false
-  console.log('rawPhotoInfo:', PhotoInfo)
-}
-//上传图片
-/**
- * 第一步：通过前端获取文件路径，再通过nodejs获取要上传到的文件夹的路径，使用move-file库移动文件 [√]
- * 第二步：nodejs添加图片信息到对应json里 [x]
- * @param file 上传的图片文件
- */
-const uploadFile = async (file) => {
-  const filepath = file.file.path
-  const filename = file.file.name
-  const folderName = name.value
-  // console.log(file)
-  //上传图片到指定文件夹
-  const response1 = { path: filepath, name: filename, folderName }
-  const res = await window.api['上传图片到指定文件夹'](response1)
-  console.log('res:', res.path)
-  // console.log("res:", res)
-
-  //将图片信息写入json
-  const safePhotoInfo = toRaw(PhotoInfo.value)
-  safePhotoInfo.cover = res.path
-  const fileInfo = { folderName, PhotoInfo: safePhotoInfo }
-  console.log('fileInfo', fileInfo)
-  const jsonResponse = await window.api['将图片信息写入json'](fileInfo)
-  console.log(jsonResponse)
-}
-const handleSuccess = () => {
-  ElMessage.success('文件上传成功')
-  ClearInputBox()
-  getAllImages()
-  imageUrl.value = ''
-  router.go(0)
-  // cancelUpload()
-}
-
-const handleError = () => {
-  ElMessage.error('文件上传失败')
-}
-
-const beforeUpload = (rawFile) => {
-  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
-    ElMessage.error('图片必须是jpeg格式或者png格式')
-    return false
-  }
-}
-
 // 添加图片功能
 const handleAddPicture = async () => {
   const fileInput = document.createElement('input')
@@ -731,50 +738,12 @@ const handleAddPicture = async () => {
   fileInput.multiple = true
 
   fileInput.onchange = async (event) => {
-    const files = Array.from(event.target.files)
-    if (files.length === 0) return
+    const files = Array.from(event.target.files).map((file) => ({
+      name: file.name,
+      path: file.path
+    }))
 
-    try {
-      // 1. 批量上传文件
-      const uploadResults = await window.api['上传图片到指定文件夹']({
-        files: files.map((file) => ({
-          name: file.name,
-          path: file.path
-        })),
-        folderName: name.value
-      })
-
-      // 筛选上传成功的文件
-      const successUploads = uploadResults.filter((r) => r.success)
-
-      if (successUploads.length === 0) {
-        throw new Error('所有文件上传失败')
-      }
-
-      // 2. 批量写入图片信息
-      const writeResult = await window.api['将图片信息写入json']({
-        folderName: name.value,
-        photos: successUploads.map((file) => ({
-          name: file.savedName, // 使用处理后的文件名
-          savedName: file.savedName, // 传递给后端
-          cover: file.path,
-          desc: ''
-        }))
-      })
-
-      if (writeResult.success) {
-        ElMessage.success(`成功添加 ${writeResult.addedCount} 张图片`)
-        await getAllImages() // 刷新列表
-        const updatedInfo = await getGalleryInfo()
-        if (updatedInfo) {
-          GalleryInfo.value = updatedInfo
-        }
-      } else {
-        throw new Error(writeResult.error)
-      }
-    } catch (error) {
-      ElMessage.error(`添加图片失败: ${error.message}`)
-    }
+    await handleAddPictureFiles(files)
   }
 
   fileInput.click()
@@ -872,21 +841,6 @@ const sortOptions = ref({
   order: 'asc' // 默认升序
 })
 
-// 计算属性：根据排序规则返回排序后的图片列表
-// const sortedImages = computed(() => {
-//   const { field, order } = sortOptions.value
-//   return [...image.value].sort((a, b) => {
-//     if (field === 'name') {
-//       return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-//     } else if (field === 'date') {
-//       return order === 'asc'
-//         ? new Date(a.createTime) - new Date(b.createTime)
-//         : new Date(b.createTime) - new Date(a.createTime)
-//     }
-//     return 0
-//   })
-// })
-
 // 处理排序
 const handleSort = async (command) => {
   const [field, order] = command.split('-')
@@ -964,10 +918,10 @@ const handleSort = async (command) => {
   color: var(--el-color-primary);
 }
 
-.bg-theme{
-  @apply bg-white dark:bg-zinc-800
+.bg-theme {
+  @apply bg-white dark:bg-zinc-800;
 }
-.border-theme{
-  @apply border-zinc-200 dark:border-zinc-700
+.border-theme {
+  @apply border-zinc-200 dark:border-zinc-700;
 }
 </style>

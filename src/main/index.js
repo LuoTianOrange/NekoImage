@@ -282,19 +282,29 @@ app.whenReady().then(() => {
 
           let fileName = cleanFileName(file.name);
           const ext = path.extname(fileName);
-          const baseName = path.basename(fileName, ext);
+          let baseName = path.basename(fileName, ext);
+          let savedName = baseName; // 初始化保存的名称（不带后缀和扩展名）
 
           // 检查文件名是否已存在
-          let counter = 1;
-          while (existingFiles.has(fileName.toLowerCase())) {
+          if (existingFiles.has(fileName.toLowerCase())) {
             // 生成随机后缀 (4位字母数字)
             const randomSuffix = Math.random().toString(36).substring(2, 6);
-            fileName = `${baseName}_${randomSuffix}${ext}`;
-            counter++;
+            baseName = `${baseName}_${randomSuffix}`;
+            fileName = `${baseName}${ext}`;
+            savedName = baseName; // 更新保存的名称（带随机后缀但不带扩展名）
 
-            // 防止无限循环
-            if (counter > 100) {
-              throw new Error('无法生成唯一文件名');
+            // 确保新文件名也不存在
+            let counter = 1;
+            while (existingFiles.has(fileName.toLowerCase())) {
+              const newRandomSuffix = Math.random().toString(36).substring(2, 6);
+              baseName = `${path.basename(fileName, ext)}_${newRandomSuffix}`;
+              fileName = `${baseName}${ext}`;
+              savedName = baseName;
+              counter++;
+
+              if (counter > 100) {
+                throw new Error('无法生成唯一文件名');
+              }
             }
           }
 
@@ -312,7 +322,7 @@ app.whenReady().then(() => {
           results.push({
             success: true,
             originalName: file.name,
-            savedName: baseName, // 保存实际使用的文件名
+            savedName: savedName, // 只返回基础名称（可能带随机后缀但不带扩展名）
             path: destinationPath
           });
         } catch (error) {
@@ -332,7 +342,7 @@ app.whenReady().then(() => {
         error: '上传过程中发生全局错误: ' + error.message
       }];
     }
-  });
+  })
 
   ipcMain.handle('删除图库图片', async (event, { folderName, pid }) => {
     const storagePath = getStoragePath();
@@ -371,9 +381,17 @@ app.whenReady().then(() => {
 
       // 更新JSON数据
       jsonData.draws.splice(imageIndex, 1);
+      // 从收藏列表中移除（如果存在）
+      jsonData.favorites = jsonData.favorites.filter(id => id !== pid);
+      // 更新图库修改时间
+      jsonData.updateTime = new Date().toISOString();
+      // 保存更新
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
 
-      return { success: true };
+      return {
+        success: true,
+        updateTime: jsonData.updateTime
+      };
     } catch (error) {
       console.error('删除过程中出错:', error);
       return {
@@ -382,7 +400,7 @@ app.whenReady().then(() => {
         stack: error.stack // 返回错误堆栈便于调试
       };
     }
-  });
+  })
 
   ipcMain.handle('将图片信息写入json', async (event, { folderName, photos }) => {
     const storagePath = getStoragePath();
@@ -418,14 +436,16 @@ app.whenReady().then(() => {
         jsonData.draws.push(newImage);
         addedImages.push(newImage);
       }
-
+      // 更新图库修改时间
+      jsonData.updateTime = new Date().toISOString();
       // 保存更新
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
 
       return {
         success: true,
         addedCount: addedImages.length,
-        addedImages
+        addedImages,
+        updateTime: jsonData.updateTime
       };
     } catch (error) {
       return {
@@ -433,7 +453,7 @@ app.whenReady().then(() => {
         error: error.message
       };
     }
-  });
+  })
 
   ipcMain.handle('读取全部图片', async (event, allPhoto) => {
     const { fileName } = allPhoto
@@ -922,12 +942,15 @@ app.whenReady().then(() => {
 
       // 更新图库
       jsonData.draws.push(newImage)
+      // 更新图库修改时间
+      jsonData.updateTime = new Date().toISOString();
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2))
 
       return {
         success: true,
         newImage,
-        originalPid: originalImage.pid
+        originalPid: originalImage.pid,
+        updateTime: jsonData.updateTime
       }
 
     } catch (error) {
@@ -1065,6 +1088,7 @@ app.whenReady().then(() => {
       };
 
       jsonData.draws.push(newImage);
+      jsonData.updateTime = new Date().toISOString();
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
 
       return {
@@ -1072,7 +1096,8 @@ app.whenReady().then(() => {
         newImage,
         originalSize,
         compressedSize: compressedStats.size,
-        savedSize: originalSize - compressedStats.size
+        savedSize: originalSize - compressedStats.size,
+        updateTime: jsonData.updateTime
       };
 
     } catch (error) {
@@ -1207,12 +1232,15 @@ app.whenReady().then(() => {
 
       // 7. 更新图库
       jsonData.draws.push(newImageEntry);
+      // 更新图库修改时间
+      jsonData.updateTime = new Date().toISOString();
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
 
       return {
         success: true,
         newImage: newImageEntry,
-        originalPid: originalImage.pid // 仅返回原图PID用于关联
+        originalPid: originalImage.pid, // 仅返回原图PID用于关联
+        updateTime: jsonData.updateTime
       };
 
     } catch (error) {
@@ -1278,6 +1306,8 @@ app.whenReady().then(() => {
 
       // 8. 更新图库数据
       jsonData.draws.push(newImageEntry);
+      // 更新图库修改时间
+      jsonData.updateTime = new Date().toISOString();
       await fsPromises.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
 
       return {
@@ -1288,7 +1318,8 @@ app.whenReady().then(() => {
         originalEntry: {
           pid: originalImage.pid,
           path: normalizedImagePath
-        }
+        },
+        updateTime: jsonData.updateTime
       };
 
     } catch (error) {
