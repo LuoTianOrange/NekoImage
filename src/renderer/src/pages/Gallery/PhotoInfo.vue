@@ -56,7 +56,7 @@
     </div>
     <!-- 信息展示部分 -->
     <div
-      class="sticky right-0 top-0 h-screen w-[300px] border-l border-theme bg-white dark:bg-zinc-900"
+      class="sticky right-0 top-0 h-screen w-[240px] min-w-[240px] border-l border-theme bg-white dark:bg-zinc-900"
     >
       <div class="p-4 h-full overflow-y-auto">
         <h3 class="text-lg font-bold">图片信息</h3>

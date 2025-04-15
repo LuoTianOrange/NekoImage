@@ -14,7 +14,7 @@
           <div
             @click="openGalleryRoot()"
             v-for="item in 1"
-            class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer "
+            class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer"
           >
             <div class="flex flex-row items-center">
               <el-icon :size="22">
@@ -31,7 +31,7 @@
           </div>
         </div>
       </div>
-      <div class="mt-2">
+      <div class="mt-4">
         <div class="text-[22px] font-bold">数据统计</div>
         <div class="flex flex-row flex-wrap">
           <div class="w-[200px] h-[70px] bg-theme rounded-lg p-3 m-1">
@@ -45,6 +45,19 @@
               <div>图片数量</div>
               <div>{{ PhotoCount }}</div>
             </div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div class="text-[22px] font-bold">存储空间</div>
+          <el-progress
+            :percentage="storageUsage"
+            :color="storageUsage > 90 ? '#f56c6c' : '#67c23a'"
+            :show-text="false"
+            class="my-2"
+          />
+          <div class="flex justify-between text-sm">
+            <span>已用 {{ usedSpace }}GB</span>
+            <span>剩余 {{ freeSpace }}GB</span>
           </div>
         </div>
       </div>
@@ -90,7 +103,7 @@ onDeactivated(() => {
 })
 </script>
 <style scoped>
-.bg-theme{
-  @apply bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-800
+.bg-theme {
+  @apply bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-800;
 }
 </style>
