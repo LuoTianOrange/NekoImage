@@ -111,7 +111,12 @@ const api = {
   '打开图片所在文件夹': async (imagePath) => {
     const result = await ipcRenderer.invoke('打开图片所在文件夹', imagePath)
     return result
-  }
+  },
+  '获取图片尺寸': async (imagePath) => {
+    const result = await ipcRenderer.invoke('获取图片尺寸', imagePath)
+    return result
+  },
+
 }
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

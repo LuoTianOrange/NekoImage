@@ -1,7 +1,7 @@
 <template>
   <div class="p-[20px] w-screen max-w-[1000px]">
     <div class="text-[20px]">调整图片尺寸</div>
-    <div class="flex h-[calc(100vh-160px)] flex-row mt-5">
+    <div class="flex h-[calc(100vh-130px)] flex-row mt-5">
       <!-- 左侧：图库和图片选择 -->
       <div class="w-[300px] h-full pr-5">
         <!-- 图库选择 -->
@@ -20,27 +20,45 @@
         </el-select>
 
         <!-- 图片列表 -->
-        <div class="mt-5 h-full overflow-y-auto">
+        <div class="mt-4 flex-1 relative h-full overflow-y-scroll">
+          <div v-if="loading" class="absolute inset-0 flex items-center justify-center">
+            <el-icon class="animate-spin text-blue-500"><Loading /></el-icon>
+          </div>
+
           <div
-            v-for="(image, index) in imageList"
-            :key="index"
-            class="flex items-center p-2 cursor-pointer bg-theme"
-            :class="{ 'bg-blue-100': selectedImage === image }"
-            @click="selectImage(image)"
+            v-else-if="loadError"
+            class="absolute inset-0 flex flex-col items-center justify-center text-red-500 p-4"
           >
-            <img :src="image.cover" class="w-[50px] h-[50px] object-cover" />
+            <span class="mb-2">{{ loadError }}</span>
+            <el-button @click="loadGalleryList" size="small">重试加载</el-button>
+          </div>
+
+          <div v-else class="h-full">
             <div
-              class="ml-2 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] inline-block"
+              v-for="(image, index) in imageList"
+              :key="index"
+              class="flex items-center p-2 cursor-pointer bg-theme rounded mb-1"
+              :class="{ '!bg-blue-100 dark:!bg-zinc-800': selectedImage?.pid === image.pid }"
+              @click="selectImage(image)"
             >
-              {{ image.name }}
+              <img :src="image.cover" class="w-[48px] h-[48px] object-cover rounded" />
+              <div class="ml-2 flex-1 min-w-0">
+                <div class="truncate text-sm">{{ image.name }}</div>
+                <div class="text-xs text-gray-500">
+                  {{ image.metadata?.dimensions?.width || '未知' }}×{{ image.metadata?.dimensions?.height || '未知' }}
+                </div>
+              </div>
+            </div>
+            <div v-if="!loading && imageList.length === 0" class="text-center text-gray-400 py-8">
+              当前图库没有图片
             </div>
           </div>
         </div>
       </div>
 
       <!-- 右侧：调整尺寸 -->
-      <div class="flex-1 pl-5 w-full overflow-y-auto">
-        <div v-if="selectedImage" class="flex flex-col w-full h-full">
+      <div class="flex-1 flex flex-col">
+        <div v-if="selectedImage" class="flex-1 flex flex-col">
           <!-- 当前图片预览 -->
           <div
             class="w-[180px] min-h-[180px] shadow-md flex flex-col justify-between items-center bg-white dark:bg-zinc-800 p-3 border border-theme relative mt-3 ml-3 transform animate-in zoom-in"
@@ -102,7 +120,12 @@
             </div>
           </div>
         </div>
-        <div v-else class="text-gray-500 h-full">请选择一张图片</div>
+        <div v-else class="flex-1 flex items-center justify-center text-gray-400">
+          <div class="text-center">
+            <el-icon :size="48" class="mb-2"><Picture /></el-icon>
+            <div>请从左侧选择要调整的图片</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -114,6 +137,10 @@ import { ElMessage } from 'element-plus'
 import { useRouter, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
 
 const router = useRouter()
+
+// 状态管理
+const loading = ref(false)
+const loadError = ref(null)
 
 // 图库列表
 const galleryList = ref([])
@@ -147,13 +174,47 @@ const loadGalleryList = async () => {
 
 // 加载图库中的图片
 const loadGalleryImages = async () => {
-  if (!selectedGallery.value) return
+  if (!selectedGallery.value) return;
 
-  const response = await window.api['读取全部图片']({ fileName: selectedGallery.value })
-  if (response.success) {
-    imageList.value = response.data.draws
-  } else {
-    ElMessage.error('加载图片列表失败: ' + response.message)
+  loading.value = true;
+  try {
+    const response = await window.api['读取全部图片']({
+      fileName: selectedGallery.value
+    });
+
+    if (response.success) {
+      // 并行获取所有图片的尺寸
+      imageList.value = await Promise.all(
+        response.data.draws.map(async (img) => {
+          const dimensions = await getImageDimensions(img.cover);
+          return {
+            ...img,
+            metadata: {
+              ...img.metadata,
+              dimensions // 添加尺寸信息
+            }
+          };
+        })
+      );
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+//获取图片尺寸
+async function getImageDimensions(imagePath) {
+  try {
+    const metadata = await window.api['获取图片尺寸'](imagePath);
+    if (metadata.success) {
+      return {
+        width: metadata.width,
+        height: metadata.height
+      };
+    }
+    return { width: '未知', height: '未知' };
+  } catch (error) {
+    console.error('获取图片尺寸失败:', error);
+    return { width: '未知', height: '未知' };
   }
 }
 

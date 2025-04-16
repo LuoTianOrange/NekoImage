@@ -647,6 +647,22 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('获取图片尺寸', async (event, imagePath) => {
+    try {
+      const metadata = await sharp(imagePath).metadata();
+      return {
+        success: true,
+        width: metadata.width,
+        height: metadata.height
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  });
+
   ipcMain.handle('打开图库根目录', async () => {
     try {
       const galleryRootPath = getStoragePath(); // 获取当前图库根目录路径
