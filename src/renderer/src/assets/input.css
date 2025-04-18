@@ -15,9 +15,51 @@
 }
 
 /*滚动条隐藏*/
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   display: none;
+} */
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
+
+/* 浅色模式 - 滚动条轨道 */
+:root:not(.dark) ::-webkit-scrollbar-track-piece {
+  background-color: #f0f0f0; /* 浅灰色背景 */
+  border-radius: 4px;
+}
+
+/* 浅色模式 - 滚动条滑块 */
+:root:not(.dark) ::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1; /* 中灰色滑块 */
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+/* 浅色模式 - 悬停效果 */
+:root:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background-color: #a8a8a8; /* 悬停时稍深 */
+}
+
+/* 暗黑模式 - 滚动条轨道 */
+.dark ::-webkit-scrollbar-track-piece {
+  background-color: #232323; /* 深灰色背景 */
+  border-radius: 4px;
+}
+
+/* 暗黑模式 - 滚动条滑块 */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #4f4f4f; /* 中灰色滑块 */
+  border-radius: 4px;
+}
+
+/* 暗黑模式 - 悬停效果 */
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #6b6b6b; /* 悬停时稍亮 */
+}
+
 
 .bg-theme {
   @apply bg-white dark:bg-zinc-800
