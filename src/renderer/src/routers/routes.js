@@ -60,6 +60,12 @@ const routes = [
       name: 'CompressImage',
       title: '图片压缩',
       component: () => import('../pages/Tools/CompressImage.vue'),
+    },
+    {
+      path: '/tools/BatchRename',
+      name: 'BatchRename',
+      title: '批量重命名',
+      component: () => import('../pages/Tools/BatchRename.vue'),
     }
 ]
 

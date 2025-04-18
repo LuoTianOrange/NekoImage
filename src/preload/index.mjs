@@ -116,6 +116,18 @@ const api = {
     const result = await ipcRenderer.invoke('获取图片尺寸', imagePath)
     return result
   },
+  '批量重命名': async (args) => {
+    const result = await ipcRenderer.invoke('批量重命名', args)
+    return result
+  },
+  '压缩导出': async ({ images, zipName }) => {
+    const result = await ipcRenderer.invoke('压缩导出', { images, zipName })
+    return result
+  },
+  '获取文件路径': async (filePath) => {
+    const result = await ipcRenderer.invoke('获取文件路径', filePath)
+    return result
+  },
 
 }
 // Use `contextBridge` APIs to expose Electron APIs to

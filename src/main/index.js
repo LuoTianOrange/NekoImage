@@ -12,6 +12,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 import { v4 as uuid } from 'uuid'
 import Store from 'electron-store'
+const archiver = require('archiver')
 import _ from 'lodash'
 // import { devtools } from '@vue/devtools'
 // 初始化配置存储
@@ -1384,6 +1385,82 @@ app.whenReady().then(() => {
       return { success: false, message: '排序失败', error: error.message };
     }
   });
+  ipcMain.handle('获取文件路径', (event, filePath) => {
+    return {
+      basename: path.basename(filePath),
+      extname: path.extname(filePath),
+      dirname: path.dirname(filePath)
+    }
+  })
+  // 批量重命名
+  ipcMain.handle('批量重命名', async (event, args) => {
+    // 使用lodash深拷贝参数
+    const { images, namePatterns, galleryName } = _.cloneDeep(args)
+
+    const storagePath = getStoragePath()
+    const galleryPath = path.join(storagePath, 'Galleries', `${galleryName}.json`)
+
+    try {
+      const galleryData = JSON.parse(await fsPromises.readFile(galleryPath, 'utf-8'))
+      const results = []
+
+      for (let i = 0; i < images.length; i++) {
+        const img = _.cloneDeep(images[i]) // 深拷贝图片对象
+        const customName = namePatterns[i] || `图片_${i + 1}`
+        const ext = path.extname(img.path)
+        const newName = customName.replace(/\{index\}/g, (i + 1).toString().padStart(2, '0'))
+        const newPath = path.join(path.dirname(img.path), `${newName}${ext}`)
+
+        await fsPromises.rename(img.path, newPath)
+
+        const imageIndex = galleryData.draws.findIndex(d => d.cover === img.path)
+        if (imageIndex !== -1) {
+          galleryData.draws[imageIndex].cover = newPath
+          galleryData.draws[imageIndex].name = newName
+        }
+
+        results.push({
+          original: img.path,
+          newPath,
+          newName,
+          success: true
+        })
+      }
+
+      await fsPromises.writeFile(galleryPath, JSON.stringify(galleryData, null, 2))
+      return { success: true, results: _.cloneDeep(results) } // 返回前深拷贝
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  // 压缩导出
+  ipcMain.handle('压缩导出', async (_, { images, zipName }) => {
+    const downloadsPath = app.getPath('downloads')
+    const zipPath = path.join(downloadsPath, `${zipName}.zip`)
+
+    return new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(zipPath)
+      const archive = archiver('zip', { zlib: { level: 9 } })
+
+      output.on('close', () => {
+        resolve({
+          success: true,
+          path: zipPath,
+          size: archive.pointer()
+        })
+      })
+
+      archive.on('error', err => reject({ success: false, error: err.message }))
+      archive.pipe(output)
+
+      images.forEach(img => {
+        archive.file(img.path, { name: path.basename(img.path) })
+      })
+
+      archive.finalize()
+    })
+  })
 
   createWindow()
 
