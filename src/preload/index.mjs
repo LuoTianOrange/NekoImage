@@ -128,6 +128,10 @@ const api = {
     const result = await ipcRenderer.invoke('获取文件路径', filePath)
     return result
   },
+  '改变主题': async (theme) => {
+    const result = await ipcRenderer.invoke('改变主题', theme)
+    return result
+  },
 
 }
 // Use `contextBridge` APIs to expose Electron APIs to

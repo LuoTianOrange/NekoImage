@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Notification, dialog } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification, dialog, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'fs'
@@ -92,7 +92,37 @@ function createWindow() {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+  // 设置标题栏主题
+  function updateTitleBarTheme(mainWindow) {
+    if (nativeTheme.shouldUseDarkColors) {
+      // 深色主题
+      mainWindow.setBackgroundColor('#1e1e1e')
+      if (process.platform === 'darwin') {
+        mainWindow.setTitleBarOverlay({
+          color: '#1e1e1e',
+          symbolColor: '#ffffff',
+          height: 30
+        })
+      }
+    } else {
+      // 浅色主题
+      mainWindow.setBackgroundColor('#ffffff')
+      if (process.platform === 'darwin') {
+        mainWindow.setTitleBarOverlay({
+          color: '#ffffff',
+          symbolColor: '#000000',
+          height: 30
+        })
+      }
+    }
+  }
+  // 监听主题变化
+  nativeTheme.on('updated', () => {
+    updateTitleBarTheme(mainWindow)
+  })
 
+  // 初始设置
+  updateTitleBarTheme(mainWindow)
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -1385,6 +1415,7 @@ app.whenReady().then(() => {
       return { success: false, message: '排序失败', error: error.message };
     }
   });
+
   ipcMain.handle('获取文件路径', (event, filePath) => {
     return {
       basename: path.basename(filePath),
@@ -1435,7 +1466,7 @@ app.whenReady().then(() => {
   })
 
   // 压缩导出
-  ipcMain.handle('压缩导出', async (_, { images, zipName }) => {
+  ipcMain.handle('压缩导出', async (event, { images, zipName }) => {
     const downloadsPath = app.getPath('downloads')
     const zipPath = path.join(downloadsPath, `${zipName}.zip`)
 
@@ -1459,6 +1490,20 @@ app.whenReady().then(() => {
       })
 
       archive.finalize()
+    })
+  })
+
+  ipcMain.handle('改变主题', (event, theme) => {
+    const windows = BrowserWindow.getAllWindows()
+    windows.forEach(win => {
+      if (process.platform === 'darwin') {
+        win.setTitleBarOverlay({
+          color: theme === 'dark' ? '#1e1e1e' : '#ffffff',
+          symbolColor: theme === 'dark' ? '#ffffff' : '#000000'
+        })
+      } else {
+        win.setBackgroundColor(theme === 'dark' ? '#1e1e1e' : '#ffffff')
+      }
     })
   })
 

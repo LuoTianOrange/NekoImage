@@ -6,7 +6,13 @@
           绘枢<br />图片管理工具
         </div>
         <div class="absolute bg-black w-full h-full opacity-20 z-10"></div>
-        <el-image :src="bg" class="w-full h-auto object-cover" />
+        <div class="w-full h-full flex items-center justify-center">
+          <el-image
+            :src="bg"
+            class="w-full h-auto object-cover object-center"
+            style="min-height: 100%; min-width: 100%"
+          />
+        </div>
       </div>
     </div>
 
@@ -39,7 +45,7 @@
 
 <script setup>
 import { ref, onActivated, onDeactivated } from 'vue'
-import { Folder } from 'lucide-vue-next';
+import { Folder } from 'lucide-vue-next'
 import GalleryCard from './components/GalleryCard.vue'
 import StatCard from './components/StatCard.vue'
 import bg from '../../assets/bg.jpg'

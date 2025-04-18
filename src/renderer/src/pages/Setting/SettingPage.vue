@@ -78,6 +78,9 @@ const isDark = computed(() => themeStore.isDark)
 
 const handleThemeChange = (val) => {
   themeStore.toggleDark(val)
+  localStorage.setItem('theme', val ? 'dark' : 'light')
+  // 通知主进程更新标题栏
+  window.api['改变主题'](val ? 'dark' : 'light')
   ElMessage.success(`已切换至${val ? '深色' : '浅色'}模式`)
 }
 
