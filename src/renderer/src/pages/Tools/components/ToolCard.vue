@@ -1,17 +1,13 @@
 <template>
   <div
     @click="router.push(path)"
-    class="w-[200px] h-[60px] bg-theme rounded-lg flex flex-row items-center justify-between p-3 m-1 cursor-pointer hover:bg-gray-300"
+    class="tool-card"
   >
-    <div class="flex flex-row items-center">
-      <component :is="icon" :size="22" />
-      <div class="flex flex-col ml-4 content-center text-[18px]">
-        <div>{{ title }}</div>
-      </div>
+    <div class="tool-content">
+      <component :is="icon" class="tool-icon" />
+      <span class="tool-title">{{ title }}</span>
     </div>
-    <el-icon :size="16">
-      <ArrowRight />
-    </el-icon>
+    <ArrowRight class="tool-arrow" />
   </div>
 </template>
 
@@ -27,3 +23,30 @@ defineProps({
 
 const router = useRouter()
 </script>
+
+<style scoped>
+.tool-card {
+  @apply w-full h-16 p-4 my-1 rounded-lg;
+  @apply bg-white dark:bg-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-600;
+  @apply border border-gray-200 dark:border-zinc-600;
+  @apply flex items-center justify-between;
+  @apply cursor-pointer transition-all duration-200;
+  @apply shadow-sm hover:shadow-md;
+}
+
+.tool-content {
+  @apply flex items-center gap-4;
+}
+
+.tool-icon {
+  @apply w-6 h-6 !text-[20px] text-gray-700 dark:text-gray-300;
+}
+
+.tool-title {
+  @apply text-lg font-medium text-gray-800 dark:text-gray-200;
+}
+
+.tool-arrow {
+  @apply w-5 h-5 text-gray-500 dark:text-gray-400;
+}
+</style>

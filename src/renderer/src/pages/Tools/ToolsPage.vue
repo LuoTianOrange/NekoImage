@@ -1,5 +1,5 @@
 <template>
-  <div class="p-[20px]">
+  <div class="p-[20px] flex-1">
     <div class="text-[20px]">工具</div>
     <div class="mt-5">
       <div class="flex flex-row flex-wrap">

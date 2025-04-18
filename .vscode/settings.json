@@ -11,6 +11,7 @@
   "css.lint.unknownAtRules": "ignore",
   "cSpell.words": [
     "asar",
-    "bloghover"
+    "bloghover",
+    "lucide"
   ]
 }
