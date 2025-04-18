@@ -61,10 +61,10 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import _ from 'lodash'
 import { ElMessage, ElLoading } from 'element-plus'
-import { useDark, useToggle } from '@vueuse/core'
+import { useThemeStore } from '@/stores/theme'
 
 const tabActiveItem = ref('默认')
 const version = ref('')
@@ -73,16 +73,11 @@ const GalleryPath = ref('')
 const GithubUrl = ref('https://github.com/LuoTianOrange/NekoImage')
 
 // 深色模式相关
-const isDark = useDark({
-  selector: 'html',
-  attribute: 'class',
-  valueDark: 'dark',
-  valueLight: ''
-})
-const toggleDark = useToggle(isDark)
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
+
 const handleThemeChange = (val) => {
-  toggleDark(val)
-  localStorage.setItem('theme', val ? 'dark' : 'light')
+  themeStore.toggleDark(val)
   ElMessage.success(`已切换至${val ? '深色' : '浅色'}模式`)
 }
 

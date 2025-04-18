@@ -16,12 +16,13 @@
       </el-breadcrumb>
       <!--按钮组-->
       <div class="mt-3 flex">
-        <el-button type="primary" plain class="flex flex-row">
+        <!--暂时禁用-->
+        <!-- <el-button type="primary" plain class="flex flex-row">
           <el-icon>
             <Tools />
           </el-icon>
           <div class="ml-1">设置</div>
-        </el-button>
+        </el-button> -->
         <el-button type="primary" plain class="flex flex-row" @click="openImageFolder">
           <el-icon>
             <FolderOpen />

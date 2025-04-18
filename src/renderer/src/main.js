@@ -9,6 +9,7 @@ import '@icon-park/vue-next/styles/index.css';
 import router from '../src/routers/index'
 import 'viewerjs/dist/viewer.css'
 import VueViewer from 'v-viewer'
+import { createPinia } from 'pinia'
 
 // import '@renderer/assets/output.css'
 const app = createApp(App)
@@ -20,4 +21,5 @@ install(app, 'park')
 app.use(ElementPlus)
 app.use(router)
 app.use(VueViewer)
+app.use(createPinia())
 app.mount('#app')

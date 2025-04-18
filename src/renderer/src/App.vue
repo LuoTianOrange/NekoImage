@@ -1,16 +1,24 @@
-<script>
+<script setup>
 import LeftMenu from "./components/LeftMenu.vue";
 import { RouterView } from "vue-router";
-import { KeepAlive } from "vue";
+import { KeepAlive, onMounted } from "vue";
+import { useDark, useToggle } from '@vueuse/core'
 
-export default {
-  name: "App",
-  components: {
-    LeftMenu,
-    RouterView,
-    KeepAlive,
-  },
-};
+const isDark = useDark({
+  selector: 'html',
+  attribute: 'class',
+  valueDark: 'dark',
+  valueLight: ''
+})
+
+onMounted(() => {
+  // 初始化主题
+  const savedTheme = localStorage.getItem('theme')
+  if (savedTheme) {
+    isDark.value = savedTheme === 'dark'
+  }
+})
+
 </script>
 
 <template>
