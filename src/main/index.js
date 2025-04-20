@@ -65,8 +65,8 @@ const setStoragePath = (newPath) => {
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1000,
-    minWidth: 1000,
+    width: 1050,
+    minWidth: 1050,
     height: 700,
     minHeight: 700,
     show: false,

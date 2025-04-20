@@ -55,13 +55,22 @@ const mainMenuItems = [
 
 const settingItem = { index: '5', icon: Bolt, text: '设置', path: '/setting' }
 
-// 合并所有菜单项用于查找
-const allMenuItems = [...mainMenuItems, settingItem]
-
 // 计算当前激活的菜单项index
 const activeIndex = computed(() => {
-  const matchedItem = allMenuItems.find((item) => item.path === route.path)
-  return matchedItem?.index || '1' // 默认返回首页的index
+  // 优先从路由元数据获取menuIndex
+  if (route.meta?.menuIndex) {
+    return route.meta.menuIndex
+  }
+
+  // 如果没有设置menuIndex，则使用原来的路径匹配逻辑
+  const currentPath = route.path
+  const allMenuItems = [...mainMenuItems, settingItem]
+
+  const matchedItem = allMenuItems.find(
+    (item) => currentPath === item.path || currentPath.startsWith(item.path + '/')
+  )
+
+  return matchedItem?.index || '1'
 })
 
 const goToPage = (path) => {
