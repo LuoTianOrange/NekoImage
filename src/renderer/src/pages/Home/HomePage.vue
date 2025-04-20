@@ -37,6 +37,7 @@
         <div class="stats-grid">
           <StatCard label="图库数量" :value="GalleryCount" />
           <StatCard label="图片数量" :value="PhotoCount" />
+          <StatCard label="图片大小" :value="PhotoSize" />
         </div>
       </section>
     </div>
@@ -52,6 +53,7 @@ import bg from '../../assets/bg.jpg'
 
 const GalleryCount = ref(0)
 const PhotoCount = ref(0)
+const PhotoSize = ref('123MB')
 
 onActivated(async () => {
   const res = await window.api['读取全部图库']()

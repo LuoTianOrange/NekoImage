@@ -62,17 +62,111 @@
       </div>
     </div>
     <!-- 信息展示部分 -->
+
     <div
-      class="sticky right-0 top-0 h-screen w-[240px] min-w-[240px] border-l border-theme bg-white dark:bg-zinc-900"
+      class="sticky right-0 top-0 h-screen w-[280px] min-w-[280px] border-l border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg"
     >
-      <div class="p-4 h-full overflow-y-auto">
-        <h3 class="text-lg font-bold">图片信息</h3>
-        <div v-if="fileInfo && Object.keys(fileInfo).length > 0">
-          <div v-for="(value, key) in fileInfo" :key="key" class="mb-1 py-1">
-            <strong>{{ key }}:</strong> {{ value }}
+      <div class="p-4 h-full flex flex-col">
+        <!-- 标题区域 -->
+        <div class="flex items-center justify-between mb-2 pb-2">
+          <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">图片信息</h3>
+          <el-button type="info" size="small" plain circle @click="refreshExifData">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
+
+        <!-- 信息内容区域 -->
+        <div class="flex-1 overflow-y-auto">
+          <div v-if="fileInfo" class="space-y-4">
+            <!-- 基本信息卡片 -->
+            <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <div class="flex items-center mb-2">
+                <el-icon class="text-blue-500 mr-2"><Picture /></el-icon>
+                <span class="font-medium text-gray-700 dark:text-gray-300">基本信息</span>
+              </div>
+
+              <div class="space-y-2 pl-8">
+                <div class="flex items-start">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">名称:</span>
+                  <span class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal">
+                    {{ item.name }}
+                  </span>
+                </div>
+                <div class="flex items-start">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">类型:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.文件类型 }}</span>
+                </div>
+                <div class="flex items-start">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">大小:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.大小 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 尺寸信息卡片 -->
+            <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <div class="flex items-center mb-2">
+                <el-icon class="text-green-500 mr-2"><Crop /></el-icon>
+                <span class="font-medium text-gray-700 dark:text-gray-300">尺寸信息</span>
+              </div>
+
+              <div class="space-y-2 pl-8">
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">宽度:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.宽度 }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">高度:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.高度 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 拍摄信息卡片 -->
+            <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <div class="flex items-center mb-2">
+                <el-icon class="text-purple-500 mr-2"><Camera /></el-icon>
+                <span class="font-medium text-gray-700 dark:text-gray-300">拍摄信息</span>
+              </div>
+
+              <div class="space-y-2 pl-8">
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">时间:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.拍摄时间 }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">相机:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.相机型号 }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">光圈:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.光圈值 }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">曝光:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.曝光时间 }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">ISO:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.ISO }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">焦距:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.焦距 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 无数据状态 -->
+          <div v-else class="h-full flex flex-col items-center justify-center text-gray-400">
+            <el-icon :size="48" class="mb-2"><DocumentRemove /></el-icon>
+            <span>未找到图片信息</span>
+            <el-button type="primary" size="small" class="mt-4" @click="refreshExifData">
+              刷新数据
+            </el-button>
           </div>
         </div>
-        <div v-else>未找到图片信息</div>
       </div>
     </div>
   </div>
@@ -85,6 +179,14 @@ import { watchEffect, ref, onActivated, onMounted, computed } from 'vue'
 import _ from 'lodash'
 import 'viewerjs/dist/viewer.css'
 import { ElMessage, ElDatePicker, ElMessageBox, ElLoading } from 'element-plus'
+import {
+  Refresh,
+  Folder,
+  DataAnalysis,
+  Clock,
+  DocumentRemove,
+  Setting
+} from '@element-plus/icons-vue'
 import { FolderOpen } from '@icon-park/vue-next'
 import { readExifData } from '../../libs/exifReader'
 import moment from 'moment'
@@ -98,6 +200,37 @@ const imageSrc = ref([])
 //图片Exif信息
 const exifData = ref({})
 const imageSize = ref(0)
+
+// 刷新图库信息
+const refreshExifData = async () => {
+  if (!item.value?.cover) return
+
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在刷新图片信息...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
+  try {
+    // 重新获取EXIF信息
+    const exifResult = await window.api['读取EXIF信息'](item.value.cover)
+    if (exifResult.success) {
+      exifData.value = exifResult.data
+    }
+
+    // 重新获取图片大小
+    const sizeResult = await window.api['获取图片大小'](item.value.cover)
+    if (sizeResult.success) {
+      imageSize.value = sizeResult.size
+    }
+
+    ElMessage.success('图片信息已刷新')
+  } catch (error) {
+    ElMessage.error(`刷新失败: ${error.message}`)
+  } finally {
+    loading.close()
+  }
+}
 
 // watchEffect(() => {
 //   name.value = route.query.name

@@ -4,21 +4,29 @@
     <div class="flex h-[calc(100vh-100px)] flex-row gap-4">
       <!-- 左侧图库选择 -->
       <div class="w-[280px] h-full pr-4 flex flex-col">
-        <el-select
-          v-model="selectedGallery"
-          placeholder="选择图库"
-          class="w-full"
-          @change="loadGalleryImages"
-          :loading="loading"
-        >
-          <el-option
-            v-for="gallery in galleryList"
-            :key="gallery.name"
-            :label="gallery.name"
-            :value="gallery.name"
-          />
-        </el-select>
-
+        <div class="flex items-center gap-2 mb-4">
+          <el-select
+            v-model="selectedGallery"
+            placeholder="选择图库"
+            class="flex-1"
+            @change="loadGalleryImages"
+            :loading="loading"
+          >
+            <el-option
+              v-for="gallery in galleryList"
+              :key="gallery.name"
+              :label="gallery.name"
+              :value="gallery.name"
+            />
+          </el-select>
+          <el-button
+            type="primary"
+            @click="resetSelection"
+            :disabled="!selectedGallery"
+          >
+            清空选择
+          </el-button>
+        </div>
         <div class="mt-4 flex-1 relative h-full overflow-y-scroll">
           <div v-if="loading" class="absolute inset-0 flex items-center justify-center">
             <el-icon class="animate-spin text-blue-500"><Loading /></el-icon>
@@ -152,6 +160,11 @@ const customNames = ref([])
 // 检查是否选中
 const isSelected = (image) => {
   return selectedImages.value.some((img) => img.pid === image.pid)
+}
+
+// 添加清空选择的方法
+const resetSelection = () => {
+  selectedImages.value = []
 }
 
 // 预览新文件名
@@ -316,10 +329,10 @@ onBeforeRouteUpdate((to, from) => {
 }
 
 .preview-box {
-  @apply border rounded p-2 max-h-[200px] overflow-y-auto;
+  @apply rounded p-2 max-h-[200px] overflow-y-auto;
 }
 
 .preview-item {
-  @apply py-1 px-2 text-sm border-b last:border-b-0;
+  @apply py-1 px-2 text-sm;
 }
 </style>

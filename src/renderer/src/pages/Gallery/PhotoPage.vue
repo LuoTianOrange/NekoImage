@@ -147,18 +147,106 @@
     </div>
     <!-- 信息展示部分 -->
     <div
-      class="sticky right-0 top-0 h-screen w-[240px] min-w-[240px] border-l border-theme bg-white dark:bg-zinc-900"
+      class="sticky right-0 top-0 h-screen w-[280px] min-w-[280px] border-l border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg"
     >
-      <div class="p-4 h-full overflow-y-auto">
-        <h3 class="text-lg font-bold">图库信息</h3>
-        <div v-if="GalleryInfo">
-          <div v-for="(value, key) in GalleryInfo" :key="key" class="mb-1 py-1">
-            <strong>{{ key }}:</strong> {{ value }}
+      <div class="p-4 h-full flex flex-col">
+        <!-- 标题区域 -->
+        <div
+          class="flex items-center justify-between mb-2 pb-2"
+        >
+          <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">图库信息</h3>
+          <el-button type="info" size="small" plain circle @click="refreshGalleryInfo">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
+
+        <!-- 信息内容区域 -->
+        <div class="flex-1 overflow-y-auto">
+          <div v-if="GalleryInfo" class="space-y-4">
+            <!-- 基本信息卡片 -->
+            <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <div class="flex items-center mb-2">
+                <el-icon class="text-blue-500 mr-2"><Folder /></el-icon>
+                <span class="font-medium text-gray-700 dark:text-gray-300">基本信息</span>
+              </div>
+
+              <div class="space-y-2 pl-8">
+                <div class="flex items-start">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">名称:</span>
+                  <span
+                    class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal"
+                  >
+                    {{ GalleryInfo['图库名称'] }}
+                  </span>
+                </div>
+                <div class="flex items-start">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">描述:</span>
+                  <span class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal">{{
+                    GalleryInfo['图库描述'] || '无描述'
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 统计信息卡片 -->
+            <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <div class="flex items-center mb-2">
+                <el-icon class="text-green-500 mr-2"><DataAnalysis /></el-icon>
+                <span class="font-medium text-gray-700 dark:text-gray-300">统计信息</span>
+              </div>
+
+              <div class="space-y-2 pl-8">
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">图片数:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{
+                    GalleryInfo['图片数量']
+                  }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">大小:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{
+                    GalleryInfo['图库大小'] || '未知'
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 时间信息卡片 -->
+            <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <div class="flex items-center mb-2">
+                <el-icon class="text-purple-500 mr-2"><Clock /></el-icon>
+                <span class="font-medium text-gray-700 dark:text-gray-300">时间信息</span>
+              </div>
+
+              <div class="space-y-2 pl-8">
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">创建:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{
+                    GalleryInfo['创建时间']
+                  }}</span>
+                </div>
+                <div class="flex items-center">
+                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">更新:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{
+                    GalleryInfo['更新时间']
+                  }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 无数据状态 -->
+          <div v-else class="h-full flex flex-col items-center justify-center text-gray-400">
+            <el-icon :size="48" class="mb-2"><DocumentRemove /></el-icon>
+            <span>未找到图库信息</span>
+            <el-button type="primary" size="small" class="mt-4" @click="refreshGalleryInfo">
+              刷新数据
+            </el-button>
           </div>
         </div>
-        <div v-else>未找到图库信息</div>
       </div>
     </div>
+
     <!--设置弹窗-->
     <el-dialog v-model="showForm" :width="600">
       <div class="text-[20px] flex flex-col">编辑图库</div>
@@ -421,6 +509,27 @@ const { getRootProps, getInputProps, open, isDragActive, rootRef } = useDropzone
     isDragging.value = false
   }
 })
+
+// 刷新图库信息方法
+const refreshGalleryInfo = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在刷新图库信息...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
+  try {
+    const data = await getGalleryInfo()
+    if (data) {
+      GalleryInfo.value = data
+      ElMessage.success('图库信息已刷新')
+    } else {
+      ElMessage.error('获取图库信息失败')
+    }
+  } finally {
+    loading.close()
+  }
+}
 
 // 从 handleAddPicture 提取出的核心上传逻辑
 const handleAddPictureFiles = async (files) => {
