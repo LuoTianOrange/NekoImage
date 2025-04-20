@@ -12,7 +12,7 @@
           :path="tool.path"
         />
       </div>
-      <!-- <div class="text-xl font-bold my-2">文件处理</div>
+      <div class="text-xl font-bold my-2">文件处理</div>
       <div class="flex flex-row flex-wrap">
         <ToolCard
           v-for="tool in fileTools"
@@ -21,7 +21,7 @@
           :title="tool.title"
           :path="tool.path"
         />
-      </div> -->
+      </div>
     </div>
   </div>
 </template>

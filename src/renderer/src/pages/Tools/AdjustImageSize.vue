@@ -10,6 +10,7 @@
           placeholder="选择图库"
           class="w-full"
           @change="loadGalleryImages"
+          :loading="loading"
         >
           <el-option
             v-for="gallery in galleryList"
@@ -45,7 +46,9 @@
               <div class="ml-2 flex-1 min-w-0">
                 <div class="truncate text-sm">{{ image.name }}</div>
                 <div class="text-xs text-gray-500">
-                  {{ image.metadata?.dimensions?.width || '未知' }}×{{ image.metadata?.dimensions?.height || '未知' }}
+                  {{ image.metadata?.dimensions?.width || '未知' }}×{{
+                    image.metadata?.dimensions?.height || '未知'
+                  }}
                 </div>
               </div>
             </div>
@@ -162,59 +165,68 @@ const originalSize = reactive({
   height: null
 })
 // 加载图库列表
+// 加载图库列表
 const loadGalleryList = async () => {
-  resetState()
-  const response = await window.api['读取全部图库']()
-  if (response.success) {
-    galleryList.value = response.data
-  } else {
-    ElMessage.error('加载图库列表失败: ' + response.message)
+  resetState() // 先重置状态
+  loading.value = true
+  loadError.value = null
+  try {
+    const response = await window.api['读取全部图库']()
+    if (response.success) {
+      galleryList.value = response.data // 直接覆盖，不保留旧数据
+    } else {
+      throw new Error(response.message)
+    }
+  } catch (error) {
+    loadError.value = `加载图库失败: ${error.message}`
+  } finally {
+    loading.value = false
   }
 }
 
 // 加载图库中的图片
 const loadGalleryImages = async () => {
-  if (!selectedGallery.value) return;
+  if (!selectedGallery.value) return
 
-  loading.value = true;
+  loading.value = true
   try {
     const response = await window.api['读取全部图片']({
       fileName: selectedGallery.value
-    });
+    })
 
     if (response.success) {
       // 并行获取所有图片的尺寸
       imageList.value = await Promise.all(
         response.data.draws.map(async (img) => {
-          const dimensions = await getImageDimensions(img.cover);
+          const dimensions = await getImageDimensions(img.cover)
           return {
             ...img,
             metadata: {
               ...img.metadata,
               dimensions // 添加尺寸信息
             }
-          };
+          }
         })
-      );
+      )
     }
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 //获取图片尺寸
 async function getImageDimensions(imagePath) {
   try {
-    const metadata = await window.api['获取图片尺寸'](imagePath);
+    const metadata = await window.api['获取图片尺寸'](imagePath)
     if (metadata.success) {
       return {
         width: metadata.width,
         height: metadata.height
-      };
+      }
     }
-    return { width: '未知', height: '未知' };
+    return { width: '未知', height: '未知' }
   } catch (error) {
-    console.error('获取图片尺寸失败:', error);
-    return { width: '未知', height: '未知' };
+    console.error('获取图片尺寸失败:', error)
+    return { width: '未知', height: '未知' }
   }
 }
 
@@ -358,16 +370,18 @@ onMounted(() => {
 })
 
 // 路由离开守卫
-onBeforeRouteLeave((to, from) => {
+onBeforeRouteLeave(async (to, from) => {
   if (from.name === 'AdjustImageSize') {
     resetState()
+    await loadGalleryList()
   }
 })
 
 // 路由更新守卫（相同路由参数变化时）
-onBeforeRouteUpdate((to, from) => {
+onBeforeRouteUpdate(async (to, from) => {
   if (from.name === 'AdjustImageSize') {
     resetState()
+    await loadGalleryList()
   }
 })
 </script>

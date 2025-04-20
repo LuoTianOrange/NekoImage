@@ -66,6 +66,12 @@ const routes = [
       name: 'BatchRename',
       title: '批量重命名',
       component: () => import('../pages/Tools/BatchRename.vue'),
+    },
+    {
+      path: '/search',
+      name: 'Search',
+      title: '搜索',
+      component: () => import('../pages/Search/index.vue'),
     }
 ]
 
