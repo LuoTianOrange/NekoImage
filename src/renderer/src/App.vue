@@ -22,7 +22,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-row font-[MiSans-Normal]">
+  <div class="min-h-screen flex flex-row font-[MiSans-Normal] bg-white dark:bg-zinc-900">
     <LeftMenu class="!sticky top-0 left-0" />
     <router-view v-slot="{ Component }">
       <keep-alive>

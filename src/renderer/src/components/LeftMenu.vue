@@ -1,6 +1,6 @@
 <template>
   <el-menu
-    class="h-full min-h-screen w-[80px] flex-shrink-0 z-10 flex flex-col"
+    class="h-full min-h-screen w-[80px] flex-shrink-0 z-10 flex flex-col !bg-zinc-50 dark:!bg-zinc-800"
     :default-active="activeIndex"
   >
     <!-- 主菜单部分 -->
@@ -122,7 +122,8 @@ const goToPage = (path) => {
 }
 
 /* 确保 el-menu 使用 flex 布局 */
-:deep(.el-menu) {
+:global(.el-menu) {
+  border-right: 0 !important;
   @apply !flex !flex-col;
 }
 </style>
