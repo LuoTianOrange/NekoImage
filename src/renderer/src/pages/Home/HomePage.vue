@@ -3,7 +3,7 @@
     <div class="p-[20px]">
       <div class="h-[200px] overflow-hidden rounded-lg relative">
         <div class="absolute top-10 left-10 text-[30px] text-white font-bold z-20">
-          绘枢<br />图片管理工具
+          {{ softName }}<br />图片管理工具
         </div>
         <div class="absolute bg-black w-full h-full opacity-20 z-10"></div>
         <div class="w-full h-full flex items-center justify-center">
@@ -37,7 +37,7 @@
         <div class="stats-grid">
           <StatCard label="图库数量" :value="GalleryCount" />
           <StatCard label="图片数量" :value="PhotoCount" />
-          <StatCard label="图片大小" :value="PhotoSize" />
+          <!-- <StatCard label="图片大小" :value="PhotoSize" /> -->
         </div>
       </section>
     </div>
@@ -54,6 +54,7 @@ import bg from '../../assets/bg.jpg'
 const GalleryCount = ref(0)
 const PhotoCount = ref(0)
 const PhotoSize = ref('123MB')
+const softName = '橘橘'
 
 onActivated(async () => {
   const res = await window.api['读取全部图库']()

@@ -25,7 +25,7 @@ onMounted(() => {
   <div class="root min-h-screen flex flex-col font-[MiSans-Normal] bg-white dark:bg-zinc-900">
     <div class="custom-titlebar">
       <img :src="icon" class="w-[18px] h-[18px] mr-2" alt="" />
-      <span class="text-[14px]">图库管理工具</span>
+      <span class="text-[14px]">图片管理工具</span>
     </div>
     <div class="content flex flex-row">
       <LeftMenu class="!sticky top-0 left-0 flex-shrink-0" />

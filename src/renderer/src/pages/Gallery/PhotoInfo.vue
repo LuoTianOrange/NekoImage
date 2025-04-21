@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-row w-full min-h-screen">
-    <div class="p-[20px] w-full">
+  <div class="flex flex-row w-full min-h-calc(100vh-35px)">
+    <div class="p-[20px] overflow-y-auto w-full">
       <div class="text-[20px]">{{ item.name }}</div>
       <div class="mt-5"></div>
       <el-breadcrumb :separator-icon="ArrowRight">
@@ -63,7 +63,7 @@
     <!-- 信息展示部分 -->
 
     <div
-      class="sticky right-0 top-0 h-screen w-[280px] min-w-[280px] border-l border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg"
+      class="sticky right-0 top-0 h-full w-[280px] min-w-[280px] border-l border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg"
     >
       <div class="p-4 h-full flex flex-col">
         <!-- 标题区域 -->
