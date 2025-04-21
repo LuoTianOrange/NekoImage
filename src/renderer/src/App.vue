@@ -24,7 +24,7 @@ onMounted(() => {
 <template>
   <div class="root min-h-screen flex flex-col font-[MiSans-Normal] bg-white dark:bg-zinc-900">
     <div class="custom-titlebar">
-      <img :src="icon" class="w-[16px] h-[16px] mr-2" alt="">
+      <img :src="icon" class="w-[18px] h-[18px] mr-2" alt="" />
       <span class="text-[14px]">图库管理工具</span>
     </div>
     <div class="content flex flex-row">
@@ -67,12 +67,15 @@ body {
   z-index: 9999;
   background-color: #23272e;
   color: white;
+  /* background-color: white;
+  color: #23272e; */
   padding-left: 12px;
   font-size: 14px;
   user-select: none;
   /* 设置该属性表明这是可拖拽区域，用来移动窗口 */
   -webkit-app-region: drag;
 }
+
 .content {
   /* 内容区需要设置可滚动 */
   overflow: auto;
@@ -80,7 +83,7 @@ body {
 }
 
 :root {
-  --title-bar-height: 35px; /* 与你的标题栏高度一致 */
+  --title-bar-height: 35px; /* 与标题栏高度一致 */
 }
 
 /* 基础位置调整 */

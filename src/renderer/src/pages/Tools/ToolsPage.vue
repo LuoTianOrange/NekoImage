@@ -2,8 +2,8 @@
   <div class="p-[20px] flex-1">
     <div class="text-[20px]">工具</div>
     <div class="mt-5">
-      <div class="text-xl font-bold mb-2">图片处理</div>
-      <div class="flex flex-row flex-wrap">
+      <div class="text-xl font-bold mb-4">图片处理</div>
+      <div class="grid grid-cols-1 xl:gap-2 xl:grid-cols-2">
         <ToolCard
           v-for="tool in photoTools"
           :key="tool.path"
@@ -12,8 +12,8 @@
           :path="tool.path"
         />
       </div>
-      <div class="text-xl font-bold my-2">文件处理</div>
-      <div class="flex flex-row flex-wrap">
+      <div class="text-xl font-bold my-4">文件处理</div>
+      <div class="grid grid-cols-1 xl:gap-2 xl:grid-cols-2">
         <ToolCard
           v-for="tool in fileTools"
           :key="tool.path"
