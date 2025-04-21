@@ -64,3 +64,6 @@
 .bg-theme {
   @apply bg-white dark:bg-zinc-800
 }
+
+/* 调整所有 ElMessage 的位置 */
+

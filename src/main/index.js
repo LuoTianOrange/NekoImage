@@ -78,6 +78,12 @@ function createWindow() {
       sandbox: false,
       webSecurity: false,
       allowRunningInsecureContent: false
+    },
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: 'rgba(0,0,0,0)',
+      height: 35,
+      symbolColor: 'white'
     }
     // resizable: false //禁止改变主窗口尺寸
   })

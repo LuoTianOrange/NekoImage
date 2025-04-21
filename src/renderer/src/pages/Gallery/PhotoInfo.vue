@@ -4,25 +4,24 @@
       <div class="text-[20px]">{{ item.name }}</div>
       <div class="mt-5"></div>
       <el-breadcrumb :separator-icon="ArrowRight">
-        <el-breadcrumb-item :to="{ path: '/gallery' }">
+        <el-breadcrumb-item class="mb-2" :to="{ path: '/gallery' }">
           <div class="flex">
             <el-icon>
               <House />
             </el-icon>
           </div>
         </el-breadcrumb-item>
-        <el-breadcrumb-item @click="goToPage('/photo', name)">{{ name }}</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ item.name }}</el-breadcrumb-item>
+        <el-breadcrumb-item class="mb-2" @click="goToPage('/photo', name)">{{ name }}</el-breadcrumb-item>
+        <el-breadcrumb-item class="mb-2">{{ item.name }}</el-breadcrumb-item>
       </el-breadcrumb>
       <!--按钮组-->
       <div class="mt-3 flex">
-        <!--暂时禁用-->
-        <!-- <el-button type="primary" plain class="flex flex-row">
+        <el-button type="primary" plain class="flex flex-row">
           <el-icon>
             <Tools />
           </el-icon>
           <div class="ml-1">设置</div>
-        </el-button> -->
+        </el-button>
         <el-button type="primary" plain class="flex flex-row" @click="openImageFolder">
           <el-icon>
             <FolderOpen />
@@ -76,7 +75,9 @@
         </div>
 
         <!-- 信息内容区域 -->
-        <div class="flex-1 overflow-y-auto">
+        <div
+          class="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        >
           <div v-if="fileInfo" class="space-y-4">
             <!-- 基本信息卡片 -->
             <div class="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
@@ -88,7 +89,9 @@
               <div class="space-y-2 pl-8">
                 <div class="flex items-start">
                   <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">名称:</span>
-                  <span class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal">
+                  <span
+                    class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal"
+                  >
                     {{ item.name }}
                   </span>
                 </div>

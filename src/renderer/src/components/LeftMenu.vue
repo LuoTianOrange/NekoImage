@@ -1,6 +1,6 @@
 <template>
   <el-menu
-    class="h-full min-h-screen w-[80px] flex-shrink-0 z-10 flex flex-col !bg-zinc-50 dark:!bg-zinc-800"
+    class="h-full min-h-[calc(100vh-35px)] w-[80px] flex-shrink-0 z-10 flex flex-col !bg-zinc-50 dark:!bg-zinc-800"
     :default-active="activeIndex"
   >
     <!-- 主菜单部分 -->
