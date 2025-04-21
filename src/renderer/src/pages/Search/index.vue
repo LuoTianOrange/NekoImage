@@ -1,54 +1,83 @@
 <template>
   <div class="flex flex-col w-full min-h-screen">
     <div class="p-[20px]">
-      <div class="text-[20px]">搜索</div>
+      <div class="text-[20px]">图片搜索</div>
       <div class="my-5 flex items-center">
-        <!-- 下拉选择器 -->
-        <el-select
-          v-model="searchType"
-          style="width: 120px"
-          placeholder="选择类型"
-          class="mr-3"
-        >
-          <el-option
-            v-for="item in searchOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-
-        <!-- 搜索输入框 -->
         <el-input
           v-model="searchKeyword"
-          style="width: 300px"
-          :placeholder="getPlaceholder(searchType)"
+          placeholder="输入图片名称关键词"
           clearable
-          show-word-limit
-          :maxlength="searchType === 'name' ? 10 : 20"
-        ></el-input>
-
-        <el-button class="ml-3" type="primary" @click="handleSearch">
+          @keyup.enter="handleSearch"
+          style="width: 400px"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button
+          type="primary"
+          class="ml-3"
+          @click="handleSearch"
+          :loading="isLoading"
+        >
           搜索
-        </el-button>
-        <el-button class="ml-3" type="warning" @click="clearSearchResults">
-          清除搜索结果
         </el-button>
       </div>
 
-      <!-- 搜索结果展示区域 -->
-      <div class="flex flex-wrap items-start w-full">
-        <div v-if="searchResults.length > 0" class="w-full">
-          <div class="text-gray-500 mb-2">共找到 {{ searchResults.length }} 条结果</div>
+      <!-- 搜索结果展示 -->
+      <div v-if="isLoading" class="flex justify-center py-8">
+        <el-icon class="animate-spin" :size="30"><Loading /></el-icon>
+      </div>
+
+      <div v-else>
+        <div v-if="searchResults.length > 0" class="mt-4">
+          <div class="text-gray-500 mb-4">
+            共找到 {{ searchResults.length }} 个结果
+            <span v-if="searchKeyword"> - 关键词: "{{ searchKeyword }}"</span>
+          </div>
+
           <el-table :data="searchResults" style="width: 100%">
-            <el-table-column prop="name" label="名称" width="180" />
-            <el-table-column prop="type" label="类型" width="120" />
-            <el-table-column prop="description" label="描述" />
+            <el-table-column label="图片" width="180">
+              <template #default="{ row }">
+                <div
+                  class="image-container"
+                  @click.stop="goToPhotoInfo(row)"
+                >
+                  <el-image
+                    :src="getImageUrl(row.cover)"
+                    fit="contain"
+                    style="width: 160px; height: 120px; background: #f5f5f5; cursor: pointer"
+                    hide-on-click-modal
+                  >
+                    <template #error>
+                      <div class="image-error">
+                        <el-icon><Picture /></el-icon>
+                        <span>加载失败</span>
+                      </div>
+                    </template>
+                  </el-image>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="name" label="图片名称" />
+            <el-table-column prop="galleryName" label="所属图库" width="150" />
+            <el-table-column label="创建时间" width="180">
+              <template #default="{ row }">
+                {{ formatDate(row.createTime) }}
+              </template>
+            </el-table-column>
           </el-table>
         </div>
-        <div v-else-if="hasSearched" class="text-gray-500">
-          没有找到匹配的结果
-        </div>
+
+        <el-empty
+          v-else-if="hasSearched"
+          description="没有找到匹配的图片"
+          :image-size="200"
+        >
+          <template #image>
+            <el-icon :size="50"><Picture /></el-icon>
+          </template>
+        </el-empty>
       </div>
     </div>
   </div>
@@ -56,70 +85,83 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Search, Picture, Loading } from '@element-plus/icons-vue'
 
-// 搜索类型选项
-const searchOptions = ref([
-  { value: 'name', label: '按名称' },
-  { value: 'tag', label: '按标签' },
-  { value: 'date', label: '按日期' },
-  { value: 'size', label: '按描述' }
-])
-
-// 搜索相关数据
-const searchType = ref('name') // 默认按名称搜索
+const router = useRouter()
 const searchKeyword = ref('')
 const searchResults = ref([])
 const hasSearched = ref(false)
+const isLoading = ref(false)
 
-// 根据搜索类型获取不同的placeholder
-const getPlaceholder = (type) => {
-  const placeholders = {
-    name: '请输入名称',
-    tag: '请输入标签，多个标签用逗号分隔',
-    date: '请输入日期范围，如：2023-01-01~2023-12-31',
-    size: '请输入大小范围，如：1MB~5MB'
-  }
-  return placeholders[type] || '请输入搜索内容'
-}
-
-// 搜索处理函数
-const handleSearch = () => {
+const handleSearch = async () => {
   if (!searchKeyword.value.trim()) {
     ElMessage.warning('请输入搜索关键词')
     return
   }
 
-  // 模拟搜索请求 - 实际项目中替换为API调用
-  hasSearched.value = true
-  searchResults.value = [
-    { name: '示例结果1', type: searchType.value, description: '这是第一个搜索结果' },
-    { name: '示例结果2', type: searchType.value, description: '这是第二个搜索结果' }
-  ]
+  isLoading.value = true
+  searchResults.value = []
 
-  ElMessage.success('搜索完成')
+  try {
+    const { success, data, error } = await window.api['关键词搜索图片']({
+      keyword: searchKeyword.value
+    })
+
+    if (success) {
+      searchResults.value = data
+      hasSearched.value = true
+    } else {
+      throw new Error(error || '搜索失败')
+    }
+  } catch (error) {
+    ElMessage.error(error.message)
+  } finally {
+    isLoading.value = false
+  }
 }
 
-const clearSearchResults = () => {
-  searchResults.value = []
-  hasSearched.value = false
-  searchKeyword.value = ''
+// 跳转到图片详情页
+const goToPhotoInfo = (item) => {
+  router.push({
+    path: '/photoInfo',
+    query: {
+      name: item.galleryName,
+      item: JSON.stringify(item)
+    }
+  })
+}
+
+// 直接使用原图URL
+const getImageUrl = (path) => {
+  if (path.startsWith('http')) {
+    return path
+  }
+  return `file://${path}`
+}
+
+// 日期格式化
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleString()
 }
 </script>
 
 <style scoped>
-/* 可以添加自定义样式 */
-.el-select {
-  margin-right: 12px;
+.image-container {
+  display: inline-block;
+  cursor: pointer;
 }
 
-.search-container {
+.image-container:hover {
+  opacity: 0.8;
+}
+
+.image-error {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.results-count {
-  color: #909399;
-  margin-bottom: 10px;
+  justify-content: center;
+  height: 100%;
+  color: var(--el-text-color-secondary);
 }
 </style>

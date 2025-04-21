@@ -42,7 +42,8 @@ const api = {
   '改变主题': async (theme) => await ipcRenderer.invoke('改变主题', theme),
   '读取应用版本': async (data) => await ipcRenderer.invoke('读取应用版本', data),
   '读取文件信息': async (filePath) => await ipcRenderer.invoke('读取文件信息', filePath),
-  '修改图库信息': async ({ galleryName, updates }) => await ipcRenderer.invoke('修改图库信息', { galleryName, updates })
+  '修改图库信息': async ({ galleryName, updates }) => await ipcRenderer.invoke('修改图库信息', { galleryName, updates }),
+  '关键词搜索图片': async ({ keyword }) => await ipcRenderer.invoke('关键词搜索图片', { keyword })
 }
 
 // 暴露API到渲染进程

@@ -1220,6 +1220,60 @@ app.whenReady().then(() => {
     }
   });
 
+  // 使用现有路径管理功能
+  ipcMain.handle('关键词搜索图片', async (event, { keyword }) => {
+    try {
+      const storagePath = getStoragePath();
+      const galleriesPath = path.join(storagePath, 'Galleries');
+
+      // 检查Galleries目录是否存在
+      if (!fs.existsSync(galleriesPath)) {
+        return { success: false, error: '图库目录不存在', data: [] };
+      }
+
+      const galleryFiles = await fs.promises.readdir(galleriesPath, { withFileTypes: true });
+      let results = [];
+
+      // 遍历所有JSON文件
+      for (const file of galleryFiles) {
+        if (file.isFile() && path.extname(file.name) === '.json') {
+          try {
+            const filePath = path.join(galleriesPath, file.name);
+            const rawData = await fs.promises.readFile(filePath, 'utf-8');
+            const galleryData = JSON.parse(rawData);
+
+            // 获取图库名称（去掉.json后缀）
+            const galleryName = path.basename(file.name, '.json');
+
+            // 过滤匹配关键字的图片
+            const matches = galleryData.draws.filter(image => {
+              return image.name.toLowerCase().includes(keyword.toLowerCase()) ||
+                     (image.savedName && image.savedName.toLowerCase().includes(keyword.toLowerCase()));
+            });
+
+            // 添加图库信息到结果中
+            results.push(...matches.map(img => ({
+              ...img,
+              galleryName: galleryName,
+              galleryFile: file.name
+            })));
+          } catch (err) {
+            console.error(`解析图库文件 ${file.name} 失败:`, err);
+          }
+        }
+      }
+
+      return { success: true, data: results };
+    } catch (error) {
+      console.error('搜索出错:', error);
+      return { success: false, error: error.message, data: [] };
+    }
+  });
+
+
+
+
+
 
   function validateGalleryName(name) {
     if (!name || typeof name !== 'string') {
