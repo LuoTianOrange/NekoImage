@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full min-h-screen">
+  <div class="flex flex-col w-screen min-h-[calc(100vh-35px)]">
     <div class="p-[20px]">
       <div class="text-[20px]">图片搜索</div>
       <div class="my-5 flex items-center">
@@ -22,6 +22,7 @@
         >
           搜索
         </el-button>
+        <el-button type="warning" @click="ClearSearchResults">清除搜索结果</el-button>
       </div>
 
       <!-- 搜索结果展示 -->
@@ -36,37 +37,44 @@
             <span v-if="searchKeyword"> - 关键词: "{{ searchKeyword }}"</span>
           </div>
 
-          <el-table :data="searchResults" style="width: 100%">
-            <el-table-column label="图片" width="180">
-              <template #default="{ row }">
-                <div
-                  class="image-container"
-                  @click.stop="goToPhotoInfo(row)"
-                >
-                  <el-image
-                    :src="getImageUrl(row.cover)"
-                    fit="contain"
-                    style="width: 160px; height: 120px; background: #f5f5f5; cursor: pointer"
-                    hide-on-click-modal
+          <!-- 添加表格容器 -->
+          <div class="table-container">
+            <el-table
+              :data="searchResults"
+              style="width: 100%"
+              height="100%"
+            >
+              <el-table-column label="图片" width="180">
+                <template #default="{ row }">
+                  <div
+                    class="image-container"
+                    @click.stop="goToPhotoInfo(row)"
                   >
-                    <template #error>
-                      <div class="image-error">
-                        <el-icon><Picture /></el-icon>
-                        <span>加载失败</span>
-                      </div>
-                    </template>
-                  </el-image>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="name" label="图片名称" />
-            <el-table-column prop="galleryName" label="所属图库" width="150" />
-            <el-table-column label="创建时间" width="180">
-              <template #default="{ row }">
-                {{ formatDate(row.createTime) }}
-              </template>
-            </el-table-column>
-          </el-table>
+                    <el-image
+                      :src="getImageUrl(row.cover)"
+                      fit="cover"
+                      style="width: 160px; height: 120px; background: #f5f5f5; cursor: pointer"
+                      hide-on-click-modal
+                    >
+                      <template #error>
+                        <div class="image-error">
+                          <el-icon><Picture /></el-icon>
+                          <span>加载失败</span>
+                        </div>
+                      </template>
+                    </el-image>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column prop="name" label="图片名称" />
+              <el-table-column prop="galleryName" label="所属图库" width="150" />
+              <el-table-column label="创建时间" width="180">
+                <template #default="{ row }">
+                  {{ formatDate(row.createTime) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
 
         <el-empty
@@ -144,9 +152,44 @@ const getImageUrl = (path) => {
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString()
 }
+
+const ClearSearchResults = () => {
+  searchResults.value = []
+  searchKeyword.value = ''
+  hasSearched.value = false
+}
 </script>
 
 <style scoped>
+/* 新增表格容器样式 */
+.table-container {
+  height: calc(100vh - 230px); /* 根据实际布局调整 */
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--el-border-color);
+  border-radius: 4px;
+}
+
+/* 确保表格填满容器 */
+:deep(.el-table) {
+  height: 100% !important;
+}
+
+/* 表格内容区域滚动 */
+:deep(.el-table__body-wrapper) {
+  overflow-y: auto !important;
+  max-height: calc(100% - 40px); /* 减去表头高度 */
+}
+
+/* 固定表头 */
+:deep(.el-table__header-wrapper) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+}
+
+/* 原有样式保持不变 */
 .image-container {
   display: inline-block;
   cursor: pointer;

@@ -1220,7 +1220,6 @@ app.whenReady().then(() => {
     }
   });
 
-  // 使用现有路径管理功能
   ipcMain.handle('关键词搜索图片', async (event, { keyword }) => {
     try {
       const storagePath = getStoragePath();
@@ -1269,11 +1268,6 @@ app.whenReady().then(() => {
       return { success: false, error: error.message, data: [] };
     }
   });
-
-
-
-
-
 
   function validateGalleryName(name) {
     if (!name || typeof name !== 'string') {
