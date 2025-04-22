@@ -11,7 +11,9 @@
             </el-icon>
           </div>
         </el-breadcrumb-item>
-        <el-breadcrumb-item class="mb-2" @click="goToPage('/photo', name)">{{ name }}</el-breadcrumb-item>
+        <el-breadcrumb-item class="mb-2" @click="goToPage('/photo', name)">{{
+          name
+        }}</el-breadcrumb-item>
         <el-breadcrumb-item class="mb-2">{{ item.name }}</el-breadcrumb-item>
       </el-breadcrumb>
       <!--按钮组-->
@@ -86,9 +88,9 @@
                 <span class="font-medium text-gray-700 dark:text-gray-300">基本信息</span>
               </div>
 
-              <div class="space-y-2 pl-8">
+              <div class="space-y-2 pl-4">
                 <div class="flex items-start">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">名称:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">名称:</span>
                   <span
                     class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal"
                   >
@@ -96,12 +98,18 @@
                   </span>
                 </div>
                 <div class="flex items-start">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">类型:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">类型:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.文件类型 }}</span>
                 </div>
                 <div class="flex items-start">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">大小:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">大小:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.大小 }}</span>
+                </div>
+                <div class="flex items-start">
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">添加时间:</span>
+                  <span class="text-gray-800 dark:text-gray-200">{{
+                    formatCreateTime(item.createTime)
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -113,13 +121,13 @@
                 <span class="font-medium text-gray-700 dark:text-gray-300">尺寸信息</span>
               </div>
 
-              <div class="space-y-2 pl-8">
+              <div class="space-y-2 pl-4">
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">宽度:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">宽度:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.宽度 }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">高度:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">高度:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.高度 }}</span>
                 </div>
               </div>
@@ -132,29 +140,29 @@
                 <span class="font-medium text-gray-700 dark:text-gray-300">拍摄信息</span>
               </div>
 
-              <div class="space-y-2 pl-8">
+              <div class="space-y-2 pl-4">
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">时间:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">时间:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.拍摄时间 }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">相机:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">相机:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.相机型号 }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">光圈:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">光圈:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.光圈值 }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">曝光:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">曝光:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.曝光时间 }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">ISO:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">ISO:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.ISO }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">焦距:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">焦距:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{ fileInfo.焦距 }}</span>
                 </div>
               </div>
@@ -235,6 +243,16 @@ const refreshExifData = async () => {
   }
 }
 
+const formatCreateTime = (timeString) => {
+  if (!timeString) return '未知时间'
+  try {
+    return moment(timeString).format('YYYY/MM/DD a h:mm:ss')
+      .replace('am', '上午')
+      .replace('pm', '下午')
+  } catch {
+    return timeString
+  }
+}
 // watchEffect(() => {
 //   name.value = route.query.name
 //   if (!route.query.item) {

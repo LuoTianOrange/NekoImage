@@ -28,7 +28,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { ArrowLeftRight, ImageUpscale, Minimize2, SquarePen } from 'lucide-vue-next'
+import { ArrowLeftRight, ImageUpscale, Minimize2, SquarePen,TextCursorInput } from 'lucide-vue-next'
 import ToolCard from './components/ToolCard.vue'
 
 const router = useRouter()
@@ -56,6 +56,11 @@ const fileTools = [
     title: '批量修改文件名',
     path: '/tools/BatchRename',
     icon: SquarePen
+  },
+  {
+    title: '批量添加文件名后缀',
+    path: '/tools/BatchAddSuffix',
+    icon: TextCursorInput
   }
 ]
 </script>

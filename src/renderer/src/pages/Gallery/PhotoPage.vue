@@ -170,9 +170,9 @@
                 <span class="font-medium text-gray-700 dark:text-gray-300">基本信息</span>
               </div>
 
-              <div class="space-y-2 pl-8">
+              <div class="space-y-2 pl-4">
                 <div class="flex items-start">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">名称:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">名称:</span>
                   <span
                     class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal"
                   >
@@ -180,7 +180,7 @@
                   </span>
                 </div>
                 <div class="flex items-start">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">描述:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">描述:</span>
                   <span class="text-gray-800 dark:text-gray-200 font-medium break-all whitespace-normal">{{
                     GalleryInfo['图库描述'] || '无描述'
                   }}</span>
@@ -195,15 +195,15 @@
                 <span class="font-medium text-gray-700 dark:text-gray-300">统计信息</span>
               </div>
 
-              <div class="space-y-2 pl-8">
+              <div class="space-y-2 pl-4">
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">图片数:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">图片数:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{
                     GalleryInfo['图片数量']
                   }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">大小:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">大小:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{
                     GalleryInfo['图库大小'] || '未知'
                   }}</span>
@@ -218,15 +218,15 @@
                 <span class="font-medium text-gray-700 dark:text-gray-300">时间信息</span>
               </div>
 
-              <div class="space-y-2 pl-8">
+              <div class="space-y-2 pl-4">
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">创建:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">创建:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{
                     GalleryInfo['创建时间']
                   }}</span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-gray-500 dark:text-gray-400 w-20 flex-shrink-0">更新:</span>
+                  <span class="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0">更新:</span>
                   <span class="text-gray-800 dark:text-gray-200">{{
                     GalleryInfo['更新时间']
                   }}</span>

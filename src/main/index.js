@@ -1471,10 +1471,12 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('获取文件路径', (event, filePath) => {
+    const cleanPath = filePath.replace('file://', '')
     return {
-      basename: path.basename(filePath),
-      extname: path.extname(filePath),
-      dirname: path.dirname(filePath)
+      basename: path.basename(cleanPath, path.extname(cleanPath)),
+      extname: path.extname(cleanPath),
+      dirname: path.dirname(cleanPath),
+      fullPath: cleanPath
     }
   })
   // 批量重命名
@@ -1560,6 +1562,59 @@ app.whenReady().then(() => {
       }
     })
   })
+
+  ipcMain.handle('批量添加文件名后缀', async (event, { galleryName, selectedImages }) => {
+    const storagePath = getStoragePath()
+    const galleryPath = path.join(storagePath, 'Galleries', `${galleryName}.json`)
+
+    try {
+      // 读取图库数据
+      const galleryData = await fs.readJson(galleryPath)
+      const results = []
+
+      // 处理每张图片
+      for (let i = 0; i < selectedImages.length; i++) {
+        const img = selectedImages[i]
+        const fileInfo = await getFileInfo(img.cover)
+
+        // 生成新文件名
+        const newFileName = `${fileInfo.basename}_${(i + 1).toString().padStart(2, '0')}${fileInfo.extname}`
+        const newPath = path.join(fileInfo.dirname, newFileName)
+
+        // 执行重命名
+        await fs.rename(img.cover.replace('file://', ''), newPath)
+
+        // 更新图库数据
+        const imgIndex = galleryData.draws.findIndex(item => item.pid === img.pid)
+        if (imgIndex !== -1) {
+          galleryData.draws[imgIndex].cover = `file://${newPath}`
+          galleryData.draws[imgIndex].name = newFileName
+        }
+
+        results.push({
+          pid: img.pid,
+          oldPath: img.cover,
+          newPath: `file://${newPath}`,
+          success: true
+        })
+      }
+
+      // 保存更新后的图库数据
+      await fs.writeJson(galleryPath, galleryData, { spaces: 2 })
+
+      return {
+        success: true,
+        results,
+        message: `成功更新 ${results.length} 个文件`
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  })
+
 
   createWindow()
 

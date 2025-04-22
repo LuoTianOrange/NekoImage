@@ -70,6 +70,13 @@ const routes = [
       meta: { menuIndex: '4' },
     },
     {
+      path: '/tools/BatchAddSuffix',
+      name: 'BatchAddSuffix',
+      title: '批量添加后缀',
+      component: () => import('../pages/Tools/BatchAddSuffix.vue'),
+      meta: { menuIndex: '4' },
+    },
+    {
       path: '/search',
       name: 'Search',
       title: '搜索',
