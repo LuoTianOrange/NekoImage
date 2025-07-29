@@ -9,7 +9,7 @@
             v-model="selectedGallery"
             placeholder="选择图库"
             class="flex-1"
-            @change="loadGalleryImages"
+            @change="handleGalleryChange"
             :loading="loading"
           >
             <el-option
@@ -133,21 +133,29 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onActivated } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { Picture, Loading } from '@element-plus/icons-vue'
 import { onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
 import { cloneDeep } from 'lodash'
-// 状态管理
-const loading = ref(false)
-const loadError = ref(null)
+import { useGallery } from '@/composables/useGallery'
+
+// 使用图库组合式函数
+const {
+  loading,
+  loadError,
+  galleryList,
+  imageList,
+  selectedGallery,
+  loadGalleryList,
+  loadGalleryImages,
+  resetImageState,
+  forceRefreshCurrentGallery
+} = useGallery()
+
+// 其他状态管理
 const isRenaming = ref(false)
 const isExporting = ref(false)
-
-// 图库数据
-const galleryList = ref([])
-const selectedGallery = ref('')
-const imageList = ref([])
 const selectedImages = ref([])
 
 // 重命名设置
@@ -165,6 +173,12 @@ const isSelected = (image) => {
 // 添加清空选择的方法
 const resetSelection = () => {
   selectedImages.value = []
+}
+
+// 处理图库切换，同时重置选中的图片
+const handleGalleryChange = async () => {
+  selectedImages.value = [] // 切换图库时清空选中的图片
+  await loadGalleryImages()
 }
 
 // 预览新文件名
@@ -186,47 +200,6 @@ const previewNames = computed(() => {
     }
   })
 })
-// 加载图库列表
-const loadGalleryList = async () => {
-  loading.value = true
-  loadError.value = null
-  try {
-    const response = await window.api['读取全部图库']()
-    console.log('图库响应:', response) // 调试日志
-
-    if (response.success) {
-      galleryList.value = response.data
-      console.log('加载的图库列表:', galleryList.value) // 调试日志
-    } else {
-      throw new Error(response.message || '未知错误')
-    }
-  } catch (error) {
-    console.error('加载图库出错:', error)
-    loadError.value = `加载图库失败: ${error.message}`
-    ElMessage.error(`加载图库失败: ${error.message}`)
-  } finally {
-    loading.value = false
-  }
-}
-
-// 加载图库图片
-const loadGalleryImages = async () => {
-  if (!selectedGallery.value) return
-
-  loading.value = true
-  selectedImages.value = []
-  try {
-    const response = await window.api['读取全部图片']({
-      fileName: selectedGallery.value
-    })
-
-    if (response.success) {
-      imageList.value = response.data.draws
-    }
-  } finally {
-    loading.value = false
-  }
-}
 
 // 执行重命名
 const handleRename = async () => {
@@ -297,15 +270,28 @@ const handleExport = async () => {
 
 const resetState = () => {
   selectedImages.value = []
-  selectedGallery.value = ''
-  imageList.value = []
+  customNames.value = []
   namePattern.value = '图片_{index}'
   patternType.value = 'index'
+  resetImageState() // 只重置图片状态，保持图库列表
 }
 
 // 初始化
-onMounted(() => {
-  loadGalleryList()
+onMounted(async () => {
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+})
+
+// 页面激活时确保有图库数据
+onActivated(async () => {
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+  // 强制刷新当前图库的图片（确保数据是最新的）
+  if (selectedGallery.value) {
+    await forceRefreshCurrentGallery()
+  }
 })
 
 // 路由离开守卫

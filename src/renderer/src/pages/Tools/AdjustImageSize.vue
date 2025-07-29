@@ -9,7 +9,7 @@
           v-model="selectedGallery"
           placeholder="选择图库"
           class="w-full"
-          @change="loadGalleryImages"
+          @change="handleGalleryChange"
           :loading="loading"
         >
           <el-option
@@ -135,22 +135,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, watch, onUnmounted } from 'vue'
+import { ref, onMounted, reactive, watch, onUnmounted, onActivated } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
+import { useGallery } from '@/composables/useGallery'
 
 const router = useRouter()
 
-// 状态管理
-const loading = ref(false)
-const loadError = ref(null)
+// 使用图库组合式函数
+const {
+  loading,
+  loadError,
+  galleryList,
+  imageList,
+  selectedGallery,
+  loadGalleryList,
+  loadGalleryImages,
+  resetImageState,
+  forceRefreshCurrentGallery
+} = useGallery()
 
-// 图库列表
-const galleryList = ref([])
-// 当前选中的图库
-const selectedGallery = ref('')
-// 图片列表
-const imageList = ref([])
 // 当前选中的图片
 const selectedImage = ref(null)
 const toggleMode = ref('pixel')
@@ -164,28 +168,15 @@ const originalSize = reactive({
   width: null,
   height: null
 })
-// 加载图库列表
-// 加载图库列表
-const loadGalleryList = async () => {
-  resetState() // 先重置状态
-  loading.value = true
-  loadError.value = null
-  try {
-    const response = await window.api['读取全部图库']()
-    if (response.success) {
-      galleryList.value = response.data // 直接覆盖，不保留旧数据
-    } else {
-      throw new Error(response.message)
-    }
-  } catch (error) {
-    loadError.value = `加载图库失败: ${error.message}`
-  } finally {
-    loading.value = false
-  }
+
+// 处理图库切换，重置图片选择
+const handleGalleryChange = async () => {
+  selectedImage.value = null
+  await loadGalleryImagesWithDimensions()
 }
 
-// 加载图库中的图片
-const loadGalleryImages = async () => {
+// 加载图库图片并获取尺寸信息（重写以包含特殊逻辑）
+const loadGalleryImagesWithDimensions = async () => {
   if (!selectedGallery.value) return
 
   loading.value = true
@@ -208,7 +199,13 @@ const loadGalleryImages = async () => {
           }
         })
       )
+    } else {
+      throw new Error(response.message || '加载图片失败')
     }
+  } catch (error) {
+    console.error('加载图片出错:', error)
+    loadError.value = `加载图片失败: ${error.message}`
+    ElMessage.error(`加载图片失败: ${error.message}`)
   } finally {
     loading.value = false
   }
@@ -281,7 +278,7 @@ const resizeImage = async () => {
 
     if (response.success) {
       ElMessage.success('图片调整尺寸成功')
-      loadGalleryImages() // 刷新图片列表
+      loadGalleryImagesWithDimensions() // 刷新图片列表
     } else {
       ElMessage.error('图片调整尺寸失败: ' + response.message)
     }
@@ -343,7 +340,7 @@ const resizeImageByPercentage = async (percentage) => {
 
     if (response.success) {
       ElMessage.success('图片调整尺寸成功')
-      loadGalleryImages() // 刷新图片列表
+      loadGalleryImagesWithDimensions() // 刷新图片列表
     } else {
       ElMessage.error('图片调整尺寸失败: ' + response.message)
     }
@@ -355,33 +352,45 @@ const resizeImageByPercentage = async (percentage) => {
 
 const resetState = () => {
   selectedImage.value = null
-  selectedGallery.value = ''
-  imageList.value = []
   resizeForm.width = null
   resizeForm.height = null
   originalSize.width = null
   originalSize.height = null
-  console.log('状态已重置')
+  resetImageState() // 只重置图片状态，保持图库列表
+  console.log('页面状态已重置')
 }
 
 // 初始化加载图库列表
-onMounted(() => {
-  loadGalleryList()
+onMounted(async () => {
+  // 如果图库列表为空，则加载
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+})
+
+// 页面激活时确保有图库数据
+onActivated(async () => {
+  // 如果图库列表为空，则重新加载
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+  // 强制刷新当前图库的图片（确保数据是最新的）
+  if (selectedGallery.value) {
+    await forceRefreshCurrentGallery()
+  }
 })
 
 // 路由离开守卫
 onBeforeRouteLeave(async (to, from) => {
   if (from.name === 'AdjustImageSize') {
-    resetState()
-    await loadGalleryList()
+    resetState() // 只重置页面特定状态
   }
 })
 
 // 路由更新守卫（相同路由参数变化时）
 onBeforeRouteUpdate(async (to, from) => {
   if (from.name === 'AdjustImageSize') {
-    resetState()
-    await loadGalleryList()
+    resetState() // 只重置页面特定状态
   }
 })
 </script>

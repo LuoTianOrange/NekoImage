@@ -8,7 +8,7 @@
           v-model="selectedGallery"
           placeholder="选择图库"
           class="w-full"
-          @change="loadGalleryImages"
+          @change="handleGalleryChange"
           :loading="loading"
         >
           <el-option
@@ -44,7 +44,7 @@
               <div class="ml-2 flex-1 min-w-0">
                 <div class="truncate text-sm">{{ image.name }}</div>
                 <div class="text-xs text-gray-500">
-                  {{ getFileExtension(image.cover).toUpperCase() }}
+                  {{ image.cover ? getFileExtension(image.cover).toUpperCase() : '' }}
                 </div>
               </div>
             </div>
@@ -74,7 +74,7 @@
               <div class="text-[12px] mt-2 flex flex-row items-center">
                 <el-tooltip :content="'图片原始格式'" placement="bottom">
                   <div class="bg-zinc-700 text-white p-1 rounded-[4px]">
-                    {{ getFileExtension(selectedImage.cover).toUpperCase() }}
+                    {{ selectedImage.cover ? getFileExtension(selectedImage.cover).toUpperCase() : '' }}
                   </div>
                 </el-tooltip>
                 <div class="">→</div>
@@ -138,20 +138,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Loading, Picture } from '@element-plus/icons-vue'
 import { useRouter, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
+import { useGallery } from '@/composables/useGallery'
 
-// 图库和图片列表相关状态（与调整尺寸页面相同）
-const galleryList = ref([])
-const selectedGallery = ref('')
-const imageList = ref([])
+// 使用图库组合式函数
+const {
+  loading,
+  loadError,
+  galleryList,
+  imageList,
+  selectedGallery,
+  loadGalleryList,
+  loadGalleryImages,
+  resetImageState,
+  forceRefreshCurrentGallery
+} = useGallery()
+
+// 页面特定状态
 const selectedImage = ref(null)
 const isConverting = ref(false)
-
-// 状态管理
-const loading = ref(false)
-const loadError = ref(null)
 
 // 格式转换相关状态
 const targetFormat = ref('jpg')
@@ -160,25 +168,10 @@ const pngCompression = ref(true)
 const webpQuality = ref(80)
 const webpLossless = ref(false)
 
-// 加载图库列表（与调整尺寸页面相同）
-const loadGalleryList = async () => {
-  const response = await window.api['读取全部图库']()
-  if (response.success) {
-    galleryList.value = response.data
-  } else {
-    ElMessage.error('加载图库列表失败: ' + response.message)
-  }
-}
-
-// 加载图库图片（与调整尺寸页面相同）
-const loadGalleryImages = async () => {
-  if (!selectedGallery.value) return
-  const response = await window.api['读取全部图片']({ fileName: selectedGallery.value })
-  if (response.success) {
-    imageList.value = response.data.draws
-  } else {
-    ElMessage.error('加载图片列表失败: ' + response.message)
-  }
+// 处理图库切换，重置图片选择
+const handleGalleryChange = async () => {
+  selectedImage.value = null
+  await loadGalleryImages()
 }
 
 // 选择图片
@@ -188,6 +181,7 @@ const selectImage = (image) => {
 
 // 获取文件扩展名
 const getFileExtension = (filename) => {
+  if (!filename) return ''
   return filename.split('.').pop().toLowerCase()
 }
 
@@ -228,8 +222,6 @@ const convertImage = async () => {
 }
 
 const resetState = () => {
-  selectedGallery.value = ''
-  imageList.value = []
   selectedImage.value = null
   isConverting.value = false
   targetFormat.value = 'jpg' // 重置格式选择
@@ -237,11 +229,27 @@ const resetState = () => {
   pngCompression.value = true // 重置压缩选项
   webpQuality.value = 80 // 重置WebP质量
   webpLossless.value = false // 重置WebP无损选项
+  resetImageState() // 只重置图片状态，保持图库列表
 }
 
 // 初始化加载图库列表
-onMounted(() => {
-  loadGalleryList()
+onMounted(async () => {
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+})
+
+// 页面激活时确保有图库数据
+onActivated(async () => {
+  console.log('ImageFormatConverter activated')
+  try {
+    await loadGalleryList() // 重新加载图库列表
+    if (selectedGallery.value) {
+      await forceRefreshCurrentGallery() // 强制刷新当前图库的图片
+    }
+  } catch (error) {
+    console.error('刷新图库数据失败:', error)
+  }
 })
 
 // 路由离开守卫

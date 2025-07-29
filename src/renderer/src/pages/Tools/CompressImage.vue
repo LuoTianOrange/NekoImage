@@ -8,7 +8,7 @@
           v-model="selectedGallery"
           placeholder="选择图库"
           class="w-full"
-          @change="loadGalleryImages"
+          @change="handleGalleryChange"
           :loading="loading"
         >
           <el-option
@@ -141,20 +141,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onActivated } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { Picture, Loading } from '@element-plus/icons-vue'
 import { onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
-// 状态管理
-const loading = ref(false)
-const loadError = ref(null)
+import { useGallery } from '@/composables/useGallery'
+
+// 使用图库组合式函数
+const {
+  loading,
+  loadError,
+  galleryList,
+  imageList,
+  selectedGallery,
+  loadGalleryList,
+  loadGalleryImages,
+  resetImageState,
+  forceRefreshCurrentGallery
+} = useGallery()
+
+// 页面特定状态
 const isCompressing = ref(false)
 const fileSize = ref('计算中...')
-
-// 图库数据
-const galleryList = ref([])
-const selectedGallery = ref('')
-const imageList = ref([])
 const selectedImage = ref(null)
 
 // 压缩设置
@@ -187,27 +195,14 @@ const formatSize = (bytes) => {
   }
 }
 
-// 加载图库列表
-const loadGalleryList = async () => {
-  loading.value = true
-  loadError.value = null
-  try {
-    const response = await window.api['读取全部图库']()
-    if (response.success) {
-      galleryList.value = response.data
-    } else {
-      throw new Error(response.message)
-    }
-  } catch (error) {
-    loadError.value = `加载图库失败: ${error.message}`
-    console.error('加载图库失败:', error)
-  } finally {
-    loading.value = false
-  }
+// 处理图库切换，重置图片选择
+const handleGalleryChange = async () => {
+  selectedImage.value = null
+  await loadGalleryImagesWithSize()
 }
 
-// 加载图库图片
-const loadGalleryImages = async () => {
+// 扩展图片加载功能以包含文件大小信息
+const loadGalleryImagesWithSize = async () => {
   if (!selectedGallery.value) return
 
   loading.value = true
@@ -249,7 +244,13 @@ const loadGalleryImages = async () => {
           }
         })
       )
+    } else {
+      throw new Error(response.message || '加载图片失败')
     }
+  } catch (error) {
+    console.error('加载图片出错:', error)
+    loadError.value = `加载图片失败: ${error.message}`
+    ElMessage.error(`加载图片失败: ${error.message}`)
   } finally {
     loading.value = false
   }
@@ -325,7 +326,7 @@ const compressImage = async () => {
       }
 
       // 强制刷新图片列表
-      await loadGalleryImages()
+      await loadGalleryImagesWithSize()
 
       // 重新选择当前图片以更新显示
       const newImage = imageList.value.find((img) => img.pid === response.newImage.pid)
@@ -346,11 +347,10 @@ const compressImage = async () => {
 
 const resetState = () => {
   selectedImage.value = null
-  selectedGallery.value = ''
-  imageList.value = []
-  compressionQuality.value = 75
+  isCompressing.value = false
+  compressionQuality.value = 75 // 重置压缩质量
   preserveMetadata.value = true
-  progressive.value = false
+  resetImageState() // 只重置图片状态，保持图库列表
 }
 
 //计算处理后的图片大小
@@ -408,8 +408,23 @@ const calculateEstimatedSize = () => {
 }
 
 // 初始化
-onMounted(() => {
-  loadGalleryList()
+onMounted(async () => {
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+})
+
+// 页面激活时确保有图库数据
+onActivated(async () => {
+  console.log('CompressImage activated')
+  try {
+    await loadGalleryList() // 重新加载图库列表
+    if (selectedGallery.value) {
+      await forceRefreshCurrentGallery() // 强制刷新当前图库的图片
+    }
+  } catch (error) {
+    console.error('刷新图库数据失败:', error)
+  }
 })
 
 // 路由离开守卫

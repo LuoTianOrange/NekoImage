@@ -8,7 +8,7 @@
           <el-select
             v-model="selectedGallery"
             placeholder="选择图库"
-            @change="loadGalleryImages"
+            @change="handleGalleryChange"
             class="mb-4"
           >
             <el-option
@@ -88,15 +88,26 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import { Picture, ArrowRight, Check } from '@element-plus/icons-vue'
+import { useRouter, onBeforeRouteUpdate, onBeforeRouteLeave } from 'vue-router'
+import { useGallery } from '@/composables/useGallery'
 
-// 状态管理
-const loading = ref(false)
-const galleryList = ref([])
-const selectedGallery = ref('')
-const imageList = ref([])
+// 使用图库组合式函数
+const {
+  loading,
+  loadError,
+  galleryList,
+  imageList,
+  selectedGallery,
+  loadGalleryList,
+  loadGalleryImages,
+  resetImageState,
+  forceRefreshCurrentGallery
+} = useGallery()
+
+// 页面特定状态
 const selectedImages = ref([])
 const isProcessing = ref(false)
 
@@ -171,37 +182,20 @@ const handleAutoSuffix = async () => {
   }
 }
 
-// 加载图库列表
-const loadGalleryList = async () => {
-  loading.value = true
-  try {
-    const response = await window.api['读取全部图库']()
-    if (response.success) {
-      galleryList.value = response.data
-    }
-  } finally {
-    loading.value = false
-  }
+// 处理图库切换，重置选择
+const handleGalleryChange = async () => {
+  selectedImages.value = []
+  await loadGalleryImages()
 }
 
-// 加载图库图片
-const loadGalleryImages = async () => {
-  if (!selectedGallery.value) return
-  loading.value = true
-  try {
-    const response = await window.api['读取全部图片']({
-      fileName: selectedGallery.value
-    })
-    if (response.success) {
-      imageList.value = response.data.draws || []
-      selectedImages.value = []
-    }
-  } finally {
-    loading.value = false
-  }
+// 重置状态
+const resetState = () => {
+  selectedImages.value = []
+  isProcessing.value = false
+  resetImageState() // 只重置图片状态，保持图库列表
 }
 
-// 辅助方法
+// 路径处理方法
 const formatDate = (dateString) => {
   return dateString ? new Date(dateString).toLocaleDateString() : '未知日期'
 }
@@ -211,7 +205,36 @@ const getThumbnail = (path) => {
 }
 
 // 初始化
-onMounted(loadGalleryList)
+onMounted(async () => {
+  if (galleryList.value.length === 0) {
+    await loadGalleryList()
+  }
+})
+
+// 页面激活时确保有图库数据
+onActivated(async () => {
+  console.log('BatchAddSuffix activated')
+  try {
+    await loadGalleryList() // 重新加载图库列表
+    if (selectedGallery.value) {
+      await forceRefreshCurrentGallery() // 强制刷新当前图库的图片
+    }
+  } catch (error) {
+    console.error('刷新图库数据失败:', error)
+  }
+})
+
+// 路由离开守卫
+onBeforeRouteLeave((to, from) => {
+  if (from.name === 'BatchAddSuffix') {
+    resetState()
+  }
+})
+
+// 路由更新守卫（相同路由参数变化时）
+onBeforeRouteUpdate((to, from) => {
+  resetState()
+})
 </script>
 
 <style scoped>

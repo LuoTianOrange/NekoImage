@@ -1000,7 +1000,7 @@ app.whenReady().then(() => {
         ...originalImage,
         pid: uuid(), // 新唯一ID
         cover: convertedPath,
-        name: `${originalImage.name}-${ext.toUpperCase()}`,
+        name: `${originalImage.name}-${newExt.toUpperCase()}`,
         createTime: new Date().toISOString()
       }
 
