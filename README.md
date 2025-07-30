@@ -1,6 +1,122 @@
 # NekoImage
 
-基于Electron和Vite的图库管理系统，专门为[橘橘博客](https://blog.nekoorange.cn)设计
+基于Electron和Vite的图库管理系统
+
+## 项目构建
+
+### 环境要求
+
+- Node.js >= 16.0.0
+- npm >= 8.0.0
+
+下载完项目文件后，可以使用pnpm打包和运行项目
+
+### 安装依赖
+
+⚠️ **重要提示**: 下载项目文件时，必须使用`npm install`下载，使用pnpm下载会导致`electron uninstall`错误。
+
+```bash
+# 克隆项目
+git clone https://github.com/LuoTianOrange/NekoImage.git
+cd NekoImage
+
+# 安装依赖
+npm install
+```
+
+### 开发模式
+
+```bash
+# 启动开发环境 (热重载)
+npm run dev
+
+# 启动开发环境并打开开发者工具
+npm run dev:debug
+```
+
+### 构建项目
+
+```bash
+# 构建生产版本
+npm run build
+
+# 仅构建主进程
+npm run build:main
+
+# 仅构建渲染进程
+npm run build:renderer
+
+# 构建预加载脚本
+npm run build:preload
+```
+
+### 打包应用
+
+```bash
+# 打包为可执行文件 (根据当前平台)
+npm run build:win
+
+# 打包并创建安装程序
+npm run dist
+
+# 清理构建文件
+npm run clean
+```
+
+### 项目结构
+
+```
+NekoImage/
+├── src/
+│   ├── main/          # 主进程代码
+│   │   └── index.js   # 主进程入口
+│   ├── preload/       # 预加载脚本
+│   │   └── index.mjs  # 预加载入口
+│   └── renderer/      # 渲染进程代码
+│       ├── index.html # 应用入口页面
+│       └── src/       # Vue应用源码
+├── build/             # 构建资源
+│   └── icons/         # 应用图标
+├── resources/         # 应用资源
+├── docs/              # 项目文档
+└── package.json       # 项目配置
+```
+
+### 开发工具
+
+- **Electron**: 跨平台桌面应用框架
+- **Vite**: 前端构建工具
+- **Vue 3**: 前端框架
+- **Element Plus**: UI组件库
+- **Sharp**: 图像处理库
+
+### 常见问题
+
+#### 1. 依赖安装问题
+```bash
+# 如果遇到安装失败，尝试清理缓存
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### 2. 开发环境启动失败
+```bash
+# 检查端口是否被占用
+netstat -ano | findstr :5173
+# 或使用不同端口
+npm run dev -- --port 5174
+```
+
+#### 3. 打包失败
+```bash
+# 确保已安装所有依赖
+npm install
+# 清理构建缓存
+npm run clean
+# 重新打包
+npm run dist
+```
 
 ## 功能
 
@@ -10,34 +126,34 @@
 - [x] 添加全部图库功能：读取文件夹内所有图库的json文件并渲染到页面
 - [ ] 添加指定图库功能：读取指定图库的json文件
 - [x] 删除图库功能：删除指定图库的json文件和文件夹
-- [ ] 修改图库功能：修改指定图库的名字和描述
+- [x] 修改图库功能：修改指定图库的名字和描述
 
 #### 图片管理
 
 - [x] 添加图片功能：上传指定图片，并且填入图片信息到对应的图库json，将文件名字自动填入输入框，要检查是否有同名图库
 - [x] 读取全部图片功能：从json读取所有图片的路径并返回前端渲染
-- [ ] 删除图片功能：从图库中删除指定图片，并从json中删除对应信息
+- [x] 删除图片功能：从图库中删除指定图片，并从json中删除对应信息
 - [ ] 修改图片功能：从json中修改图片的信息
 - [ ] 导出图库功能：导出指定图库的json
-- [ ] 检测图片重名：上传图片后要检测图片是否有同名，否则删除时会报错
+- [x] 检测图片重名：上传图片后要检测图片是否有同名，否则删除时会报错
 - [x] 查看图片详细信息：点击图片可以查看图片的详细信息
-- [ ] 图片展示排序：按照名字，创建时间，修改时间等排序，并可以调整为升序或降序
-- [ ] 图片收藏功能：可以收藏指定的图片，并在收藏页面显示
+- [x] 图片展示排序：按照名字，创建时间，修改时间等排序，并可以调整为升序或降序
+- [x] 图片收藏功能：可以收藏指定的图片，并在收藏页面显示
 
 #### 软件管理
 
-- [ ] 设置存储路径功能：选择图库存储的默认路径
+- [x] 设置存储路径功能：选择图库存储的默认路径
 - [ ] 设置背景功能：修改软件的背景
-- [ ] 设置主题功能：可以更改想要的背景颜色，包括夜间模式
+- [x] 设置主题功能：可以更改想要的背景颜色，包括夜间模式
 - [ ] 多语言支持：可以切换软件的界面语言
 - [ ] 在线更新：可以手动更新或自动更新软件
 - [ ] 数据展示：首页显示图库信息，图片数量等信息，并以图表显示
 
 #### 图片编辑
 
-- [ ] 转换图片格式功能：将图片转换为jpg，png，gif等常用格式
-- [ ] 调整图片大小：将图片调整为指定尺寸
-- [ ] 压缩图片：减小图片的文件尺寸
+- [x] 转换图片格式功能：将图片转换为jpg，png，gif等常用格式
+- [x] 调整图片大小：将图片调整为指定尺寸
+- [x] 压缩图片：减小图片的文件尺寸
 - [ ] 裁剪图片：裁剪图片的指定部分
 - [ ] 添加水印：给图片添加水印
 - [ ] 任务队列*：支持批量完成对应任务，并自动执行下一步操作(如调整图片大小后自动压缩)
@@ -144,10 +260,6 @@ png调整尺寸网站：https://www.iloveimg.com/zh-cn/resize-image/resize-png
 
 图像处理：
 
-- Pica：https://github.com/nodeca/pica
-- Blurify：https://github.com/JustClear/blurify
-- Cropper.js：https://github.com/fengyuanchen/cropperjs
-- CamanJS：https://github.com/meltingice/CamanJS/
 - Sharp：https://sharp.nodejs.cn/install
 
 ## 页面
